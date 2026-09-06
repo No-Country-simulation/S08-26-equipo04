@@ -60,7 +60,7 @@ Referencia de colores: Vendedor · Jefe de producción · Operario · Calidad ·
 
 ## 05. Catálogo global de fases
 
-El Gerente de producción define, a nivel global, cuántas fases existen, su nombre y qué operarios pueden ejecutar cada una — sin orden fijo de fábrica. El Jefe de producción arma la secuencia real caso por caso, según el pedido, y **una misma fase puede repetirse dentro de la secuencia de una OT** (por ejemplo, Mecanizado → Soldadura → Mecanizado). Así el mismo sistema sirve para cualquier industria de mecanizado sin tocar código.
+El Gerente define, a nivel global, cuántas fases existen, su nombre y qué operarios pueden ejecutar cada una — sin orden fijo de fábrica. El Jefe de producción arma la secuencia real caso por caso, según el pedido, y **una misma fase puede repetirse dentro de la secuencia de una OT** (por ejemplo, Mecanizado → Soldadura → Mecanizado). Así el mismo sistema sirve para cualquier industria de mecanizado sin tocar código.
 
 - **Taller de matrizado**: Corte → Plegado → Soldadura
 - **Fábrica de válvulas**: Fundición → Mecanizado → Ensamble → Prueba
