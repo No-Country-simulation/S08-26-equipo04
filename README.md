@@ -21,6 +21,19 @@
 
 ---
 
+## 📁 Estructura del Repositorio
+
+| Carpeta | Contenido | Responsable |
+|---|---|---|
+| `docs/funcional/` | PRD, Backlog, Changelog de decisiones | Mel |
+| `docs/datos/` | Esquema de Base de Datos | Mel |
+| `docs/backend/` | Especificación Técnica de Backend | Lisandro / Felipe |
+| `docs/frontend/` | Especificación Técnica, Plan de Trabajo, Service Blueprint | Alita |
+| `docs/qa/` | Análisis Funcional QA | Maria |
+| `docs/historico/` | Documentos iniciales, superados por versiones vigentes | — |
+
+---
+
 ## 🌿 Flujo de Trabajo (Git Workflow)
 
 Para mantener la calidad y consistencia del código, el equipo sigue una estrategia de branching basada en **GitFlow**:
