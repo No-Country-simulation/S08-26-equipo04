@@ -6,7 +6,7 @@ Diagrama entidad-relación, diccionario de datos, reglas de integridad y script 
 |---|---|---|---|
 | NO-Country · Semana 1 de 5 | 04/09/2026 | Validado con el equipo y backend | `spec/QualityTrack-PRD.md`, `spec/QualityTrack-Backlog-v1.md` |
 
-Esta versión unifica las dos propuestas independientes de esquema (v1 de Mel Zarate y v1 de Ángel) y aplica las correcciones surgidas de contrastarlas contra el PRD y el Backlog. Los cambios que este trabajo obliga a hacer en esos dos documentos están listados aparte, en `docs/funcional/QualityTrack-Cambios-PRD-Backlog.md`.
+Esta versión corrige y consolida el borrador v1 del esquema, de Mel Zarate, aplicando las correcciones surgidas de contrastarlo contra el PRD y el Backlog. Los cambios que este trabajo obliga a hacer en esos dos documentos están listados aparte, en `docs/funcional/QualityTrack-Cambios-PRD-Backlog.md`.
 
 ---
 
@@ -42,7 +42,7 @@ No se implementan en el MVP, pero el modelo está preparado para recibirlas sin 
 | **Alta de operarios por el Gerente** | Restituir HU-5.2 y hacer `email`/`password_hash` opcionales para el rol `OPERARIO`, o generar credenciales automáticas |
 | **Automatización del precio por variables** | Ya previsto como no-P0 en la sección 09 del PRD |
 
-### Tabla descartada respecto de la propuesta de Ángel
+### Tabla descartada de la versión anterior
 
 `no_conformidades` no se incorporó. Su campo `estado` (`PENDIENTE_ANALISIS` → `FASES_REASIGNADAS` → `EN_CORRECCION` → `CERRADA`) duplica lo que ya expresan `ordenes_trabajo.estado` y el estado de las propias `ot_fases` en retrabajo; su `resolucion_jefe` duplica una nota de origen `JEFE_PRODUCCION`; y el vínculo con la auditoría ya existe vía `orden_trabajo_id`. Sumaba una tabla y tres puntos de sincronización sin agregar un dato que no estuviera disponible.
 
@@ -937,4 +937,4 @@ INSERT INTO clientes (razon_social, contacto_nombre, telefono, direccion, email)
 
 ---
 
-*QualityTrack · NO-Country 2026. Consolidación de las propuestas de esquema de Mel Zarate y Ángel, contrastadas contra la Especificación Funcional v1 y el Backlog v1.*
+*QualityTrack · NO-Country 2026. Corrección y consolidación del esquema de base de datos de Mel Zarate, contrastado contra la Especificación Funcional v1 y el Backlog v1.*
