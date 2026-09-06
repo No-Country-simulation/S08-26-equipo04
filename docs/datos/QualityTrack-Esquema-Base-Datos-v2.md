@@ -137,7 +137,7 @@ erDiagram
     COTIZACIONES {
         bigint id PK
         varchar numero_cotizacion UK
-        bigint solicitud_id FK_UK
+        bigint solicitud_id FK, UK
         bigint jefe_produccion_id FK
         decimal precio_final
         varchar estado
@@ -156,7 +156,7 @@ erDiagram
     ORDENES_TRABAJO {
         bigint id PK
         varchar numero_ot UK
-        bigint cotizacion_id FK_UK
+        bigint cotizacion_id FK, UK
         integer cantidad
         varchar estado
         timestamptz fecha_inicio_produccion
