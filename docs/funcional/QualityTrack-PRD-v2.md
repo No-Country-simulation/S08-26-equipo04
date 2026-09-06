@@ -35,7 +35,7 @@ flowchart TD
     SOL["Solicitud"] --> VEN["Vendedor<br/>plano + documentos<br/>+ datos del cliente"]:::vendedor
     VEN --> JEFE["Jefe de producción<br/>elige fases del catálogo,<br/>las ordena, define tiempos<br/>y precio final"]:::jefe
     JEFE -- "cotización lista" --> VEN2["Vendedor<br/>envía la cotización y<br/>registra la respuesta"]:::vendedor
-    VEN2 -- "cliente no aprueba" --> JEFE
+    VEN2 -- "cliente no aprueba" --> CIERRE["Cotización cerrada<br/>sin versionado — recotizar es<br/>una solicitud nueva"]:::cerrado
     VEN2 -- "cliente aprueba" --> OTN["Se genera la OT"]
     OTN --> OPE
     OPE["Operario<br/>en cola → en ejecución<br/>→ terminado"]:::operario --> SIG{"¿Hay fase<br/>siguiente?"}
@@ -50,6 +50,7 @@ flowchart TD
     classDef operario fill:#E2963B,stroke:#A96C1F,color:#1A1200
     classDef calidad fill:#C1502E,stroke:#8C3A20,color:#ffffff
     classDef final fill:#2E7A5C,stroke:#1F5940,color:#ffffff
+    classDef cerrado fill:#5F5E5A,stroke:#3D3D3B,color:#ffffff
 ```
 
 *La aprobación del cliente la registra el Vendedor (no es una aprobación online directa). Si Calidad rechaza, el Jefe de producción decide qué fase o fases puntuales hay que rehacer — no necesariamente todas — y reasigna.*
