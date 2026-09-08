@@ -1,15 +1,15 @@
 [
   {
     "id": 1,
-    "orden_trabajo_id": 4,
-    "ot_numero": "OT-2026-0004",
+    "orden_trabajo_id": 3,
+    "ot_numero": "OT-2026-0003",
     "auditor_id": 4,
     "auditor_nombre": "Valeria Calidad",
     "numero_auditoria": 1,
     "resultado": "CONFORME",
     "observaciones_generales": null,
-    "fecha_veredicto": "2026-09-03T16:00:00Z",
-    "created_at": "2026-09-03T16:00:00Z",
+    "fecha_veredicto": "2026-09-11T16:00:00Z",
+    "created_at": "2026-09-11T16:00:00Z",
     "checklist": [
       {
         "item_numero": 1,
@@ -57,15 +57,15 @@
   },
   {
     "id": 2,
-    "orden_trabajo_id": 3,
-    "ot_numero": "OT-2026-0003",
+    "orden_trabajo_id": 2,
+    "ot_numero": "OT-2026-0002",
     "auditor_id": 4,
     "auditor_nombre": "Valeria Calidad",
     "numero_auditoria": 1,
     "resultado": "NO_CONFORME",
     "observaciones_generales": "Defectos en soldadura MIG, no cumple con especificaciones de penetración",
-    "fecha_veredicto": "2026-09-07T16:00:00Z",
-    "created_at": "2026-09-07T16:00:00Z",
+    "fecha_veredicto": "2026-09-10T16:00:00Z",
+    "created_at": "2026-09-10T16:00:00Z",
     "checklist": [
       {
         "item_numero": 1,
