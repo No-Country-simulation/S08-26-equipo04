@@ -5,20 +5,25 @@ node_modules/
 
 # Builds y salidas de compilación
 dist/
+dist-ssr/
 build/
 out/
 .next/
 coverage/
 
 # Logs de depuración
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+lerna-debug.log*
 
 # Variables de entorno locales (credenciales y claves de API)
 .env
 .env.*
+*.local
 !.env.example
 
 # Archivos del sistema operativo y editores
@@ -28,6 +33,7 @@ Thumbs.db
 
 # Configuración de IDEs
 .vscode/*
+!.vscode/settings.json
 !.vscode/extensions.json
 .idea/
 *.suo
@@ -38,4 +44,3 @@ Thumbs.db
 
 # Archivos temporales de agentes/herramientas de desarrollo
 .gravity/
-*.log
