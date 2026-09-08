@@ -34,34 +34,22 @@ backend/
     │   ├── java/com/qualitytrack/
     │   │   ├── QualityTrackApplication.java
     │   │   ├── config/       # Beans globales, CORS
-    │   │   ├── security/     # Filtro JWT, UserDetailsService, roles
+    │   │   ├── controller/   # endpoints REST
+    │   │   ├── dto/          # objetos de transferencia de datos
+    │   │   ├── enum/         # enumeraciones
     │   │   ├── exception/    # GlobalExceptionHandler (@RestControllerAdvice)
-    │   │   ├── usuario/      # usuarios, fase_operarios_habilitados
-    │   │   ├── cliente/      # clientes
-    │   │   ├── solicitud/    # solicitudes, adjuntos
-    │   │   ├── fase/         # fases_catalogo, fase_operarios_habilitados
-    │   │   ├── cotizacion/   # cotizaciones, cotizacion_fases
-    │   │   ├── orden/        # ordenes_trabajo, v_ot_expediente
-    │   │   ├── otfase/       # ot_fases, ot_fase_reasignaciones, ot_notas
-    │   │   ├── calidad/      # auditorias_calidad, auditoria_checklist_respuestas
-    │   │   └── dashboard/    # consultas agregadas para HU-5.3 y HU-5.4
+    │   │   ├── modelos/      # entidades JPA
+    │   │   ├── repository/   # repositorios Spring Data JPA
+    │   │   ├── security/     # Filtro JWT, UserDetailsService, roles
+    │   │   ├── service/      # lógica de negocio
+    │   │   └── utils/        # clases utilitarias (mappers, validadores, etc.)
     │   └── resources/
     │       ├── application.properties
     │       └── application-dev.properties
     └── test/
 ```
 
-Cada módulo mapea 1:1 con las tablas del [Esquema v2](../datos/QualityTrack-Esquema-Base-Datos-v2.md) que le corresponden, y repite internamente la misma organización:
-
-```text
-<módulo>/
-├── controller/
-├── service/
-├── repository/
-├── entity/
-├── dto/
-└── mapper/
-```
+Cada una de las entidades de las tablas del [Esquema v2](../datos/QualityTrack-Esquema-Base-Datos-v2.md) son mapeadas a clases JPA dentro del paquete `modelos`, y a su vez cuentan con las siguientes clases en las carpetas correspondientes, esperables en una arquitectura Model-View Controller (MVC):
 
 - **Controller:** recibe las solicitudes HTTP y devuelve las respuestas de la API.
 - **Service:** contiene la lógica de negocio y las reglas del proceso.
