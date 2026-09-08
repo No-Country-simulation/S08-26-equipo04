@@ -1,0 +1,49 @@
+{
+  "ots_pendientes_activas": 3,
+  "fases_en_catalogo": 7,
+  "congestion_por_fase": [
+    {
+      "fase_id": 1,
+      "fase_nombre": "Corte",
+      "ots_acumuladas": 2,
+      "operarios_asignados": 1
+    },
+    {
+      "fase_id": 5,
+      "fase_nombre": "Mecanizado",
+      "ots_acumuladas": 1,
+      "operarios_asignados": 1
+    },
+    {
+      "fase_id": 3,
+      "fase_nombre": "Soldadura",
+      "ots_acumuladas": 1,
+      "operarios_asignados": 1
+    },
+    {
+      "fase_id": 2,
+      "fase_nombre": "Plegado",
+      "ots_acumuladas": 1,
+      "operarios_asignados": 1
+    },
+    {
+      "fase_id": 6,
+      "fase_nombre": "Ensamble",
+      "ots_acumuladas": 0,
+      "operarios_asignados": 1
+    },
+    {
+      "fase_id": 4,
+      "fase_nombre": "Fundición",
+      "ots_acumuladas": 0,
+      "operarios_asignados": 0
+    },
+    {
+      "fase_id": 7,
+      "fase_nombre": "Prueba",
+      "ots_acumuladas": 0,
+      "operarios_asignados": 0
+    }
+  ],
+  "ultimas_actualizaciones": "2026-09-09T14:00:00Z"
+}

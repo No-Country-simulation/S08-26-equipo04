@@ -1,0 +1,31 @@
+{
+  "porcentaje_conformidad": 50.0,
+  "total_auditorias": 2,
+  "conformes": 1,
+  "no_conformes": 1,
+  "retrabajos_por_fase": [
+    {
+      "fase_id": 3,
+      "fase_nombre": "Soldadura",
+      "cantidad_retrabajos": 1
+    }
+  ],
+  "tiempo_promedio_calidad_horas": 4.5,
+  "ultimas_auditorias": [
+    {
+      "id": 2,
+      "ot_numero": "OT-2026-0003",
+      "resultado": "NO_CONFORME",
+      "fecha_veredicto": "2026-09-07T16:00:00Z",
+      "auditor_nombre": "Valeria Calidad",
+      "observaciones": "Defectos en soldadura MIG, no cumple con especificaciones de penetración"
+    },
+    {
+      "id": 1,
+      "ot_numero": "OT-2026-0004",
+      "resultado": "CONFORME",
+      "fecha_veredicto": "2026-09-03T16:00:00Z",
+      "auditor_nombre": "Valeria Calidad"
+    }
+  ]
+}

@@ -1,0 +1,114 @@
+[
+  {
+    "id": 1,
+    "orden_trabajo_id": 4,
+    "ot_numero": "OT-2026-0004",
+    "auditor_id": 4,
+    "auditor_nombre": "Valeria Calidad",
+    "numero_auditoria": 1,
+    "resultado": "CONFORME",
+    "observaciones_generales": null,
+    "fecha_veredicto": "2026-09-03T16:00:00Z",
+    "created_at": "2026-09-03T16:00:00Z",
+    "checklist": [
+      {
+        "item_numero": 1,
+        "criterio_nombre": "Conformidad dimensional",
+        "resultado_item": "CUMPLE",
+        "observaciones": null
+      },
+      {
+        "item_numero": 2,
+        "criterio_nombre": "Fases completas",
+        "resultado_item": "CUMPLE",
+        "observaciones": null
+      },
+      {
+        "item_numero": 3,
+        "criterio_nombre": "Terminación/acabado",
+        "resultado_item": "CUMPLE",
+        "observaciones": null
+      },
+      {
+        "item_numero": 4,
+        "criterio_nombre": "Cantidad",
+        "resultado_item": "CUMPLE",
+        "observaciones": null
+      },
+      {
+        "item_numero": 5,
+        "criterio_nombre": "Identificación",
+        "resultado_item": "CUMPLE",
+        "observaciones": null
+      },
+      {
+        "item_numero": 6,
+        "criterio_nombre": "Prueba funcional",
+        "resultado_item": "NO_APLICA",
+        "observaciones": null
+      },
+      {
+        "item_numero": 7,
+        "criterio_nombre": "Documentación de respaldo",
+        "resultado_item": "CUMPLE",
+        "observaciones": null
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "orden_trabajo_id": 3,
+    "ot_numero": "OT-2026-0003",
+    "auditor_id": 4,
+    "auditor_nombre": "Valeria Calidad",
+    "numero_auditoria": 1,
+    "resultado": "NO_CONFORME",
+    "observaciones_generales": "Defectos en soldadura MIG, no cumple con especificaciones de penetración",
+    "fecha_veredicto": "2026-09-07T16:00:00Z",
+    "created_at": "2026-09-07T16:00:00Z",
+    "checklist": [
+      {
+        "item_numero": 1,
+        "criterio_nombre": "Conformidad dimensional",
+        "resultado_item": "CUMPLE",
+        "observaciones": null
+      },
+      {
+        "item_numero": 2,
+        "criterio_nombre": "Fases completas",
+        "resultado_item": "CUMPLE",
+        "observaciones": null
+      },
+      {
+        "item_numero": 3,
+        "criterio_nombre": "Terminación/acabado",
+        "resultado_item": "NO_CUMPLE",
+        "observaciones": "Rebabas en zona de soldadura"
+      },
+      {
+        "item_numero": 4,
+        "criterio_nombre": "Cantidad",
+        "resultado_item": "CUMPLE",
+        "observaciones": null
+      },
+      {
+        "item_numero": 5,
+        "criterio_nombre": "Identificación",
+        "resultado_item": "CUMPLE",
+        "observaciones": null
+      },
+      {
+        "item_numero": 6,
+        "criterio_nombre": "Prueba funcional",
+        "resultado_item": "NO_CUMPLE",
+        "observaciones": "Penetración insuficiente en soldadura"
+      },
+      {
+        "item_numero": 7,
+        "criterio_nombre": "Documentación de respaldo",
+        "resultado_item": "CUMPLE",
+        "observaciones": null
+      }
+    ]
+  }
+]
