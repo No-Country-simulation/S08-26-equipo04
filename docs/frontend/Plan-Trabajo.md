@@ -1,4 +1,4 @@
-# QualityTrack — Plan de Trabajo Frontend — MVP v1.0
+# QualityTrack — Plan de Trabajo Frontend — MVP v2.0
 
 **Proyecto:** QualityTrack
 **Programa:** NO-Country · Semana 1 de 5
@@ -148,8 +148,9 @@ Para minimizar conflictos de merge y avanzar en paralelo, la aplicación se divi
 
 **Tarea 2.6 — Circuito de No Conformidad (HU-2.3)**
 
-- Descripción: Flujo de devolución a Producción cuando una OT tiene veredicto "No Conforme". Permite reasignar fases específicas y notificar al Jefe de Producción.
-- Criterios de éxito: Al confirmar no conformidad, la OT vuelve al estado de producción con las fases afectadas reasignadas.
+- Descripción: Vista del Jefe de Producción para OTs marcadas "No Conforme". Muestra las observaciones de Calidad, permite seleccionar qué fase(s) puntuales rehacer, y para cada una asignar operario y tiempo estimado, con un campo de notas para el operario.
+- Componentes clave: `PhaseSelector` (multi-selección), `OperatorAssignInput`, `NotesField`.
+- Criterios de éxito: Al confirmar, cada fase seleccionada se deriva al operario asignado con sus notas; las fases no seleccionadas mantienen su estado "Terminado" sin cambios.
 
 ---
 
