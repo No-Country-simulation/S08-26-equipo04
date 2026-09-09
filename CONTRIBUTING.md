@@ -82,7 +82,7 @@ Lista de condiciones verificables que deben cumplirse para dar la tarea por fina
 ## 2. Nombrado de Ramas (Branches)
 
 Estructura sugerida:
-`<tipo>/<numero-ticket>-<descripcion-corta>`
+`<tipo>/<area>-<numero-ticket>-<descripcion-corta>`
 
 > Usar `kebab-case` y todo en minúsculas.
 
