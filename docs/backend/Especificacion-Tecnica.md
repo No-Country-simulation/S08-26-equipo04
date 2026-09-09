@@ -127,7 +127,8 @@ Se detalla por cada endpoint: método HTTP, ruta, rol que puede usarlo, qué esp
 - Método HTTP: POST
 - Ruta: `/api/solicitudes`
 - Roles: Vendedor
-- Body: `{ cliente_id, descripcion_pieza, cantidad, fecha_esperada_entrega, notas_comerciales }`
+- Body (cliente registrado): `{ cliente_id, descripcion_pieza, cantidad, fecha_esperada_entrega, notas_comerciales }`
+- Body (cliente nuevo): `{ razon_social, contacto_nombre, telefono, email, direccion, descripcion_pieza, cantidad, fecha_esperada_entrega, notas_comerciales }` — sin `cliente_id`; el backend crea el cliente antes de crear la solicitud.
 - Respuesta exitosa: 201 Created `{ id, numero_solicitud, estado }` (`estado` inicial: `PENDIENTE_COTIZACION`)
 - Respuesta de error: 400 (falta un campo obligatorio del cliente, la pieza o la cantidad)
 
@@ -140,6 +141,14 @@ Se detalla por cada endpoint: método HTTP, ruta, rol que puede usarlo, qué esp
 - Respuesta exitosa: 201 Created `{ id, nombre_original, tipo_archivo, ruta_almacenamiento }`
 - Respuesta de error: 400 (tipo de archivo no permitido o solicitud inexistente)
 
+#### Listar órdenes de trabajo (HU-1.2)
+
+- Método HTTP: GET
+- Ruta: `/api/ordenes-trabajo`
+- Roles: Vendedor
+- Query params: filtro por cliente, o búsqueda por número de OT.
+- Respuesta exitosa: 200 OK — listado con `numero_ot, cliente, estado, fecha`, para que el Vendedor elija qué expediente abrir. Resuelve la búsqueda previa al detalle (antes sin endpoint documentado).
+
 #### Expediente completo de la OT (HU-1.2)
 
 - Método HTTP: GET
@@ -148,7 +157,6 @@ Se detalla por cada endpoint: método HTTP, ruta, rol que puede usarlo, qué esp
 - `{id}` acepta el id interno o el `numero_ot`.
 - Respuesta exitosa: 200 OK — solicitud, cotización (fases, tiempos, precio), historial de operaciones por fase (incluyendo reasignaciones y retrabajos), resultado de Calidad, estado de entrega. Se arma sobre la vista `v_ot_expediente` (Esquema v2 §05) más las tablas de historial (`ot_fase_reasignaciones`, `ot_fases` con `es_rehacer`).
 - Respuesta de error: 404 (no existe la OT)
-- ⚠️ Frontend no documenta un endpoint separado de búsqueda por número/cliente para llegar a este `{id}` — a confirmar con Alicia cómo se resuelve esa búsqueda antes de abrir el expediente.
 
 #### Listar cotizaciones (HU-1.3)
 
