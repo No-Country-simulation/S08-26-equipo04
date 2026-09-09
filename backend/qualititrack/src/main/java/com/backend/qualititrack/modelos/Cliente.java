@@ -55,6 +55,70 @@ public class Cliente {
         fechaCreacion = LocalDateTime.now();
     }
 
+   /* public Cliente(Long id, String nombre, String email, String telefono, LocalDateTime fechaCreacion, List<Solicitud> solicitudes, List<OrdenTrabajo> ordenesTrabajos) {
+        this.id = id;
+        this.nombre = nombre;
+        this.email = email;
+        this.telefono = telefono;
+        this.fechaCreacion = fechaCreacion;
+        this.solicitudes = solicitudes;
+        this.ordenesTrabajos = ordenesTrabajos;
+    }*/
 
 
+    public Long getId() {
+        return id;
     }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getTelefono() {
+        return telefono;
+    }
+
+    public LocalDateTime getFechaCreacion() {
+        return fechaCreacion;
+    }
+
+    public List<Solicitud> getSolicitudes() {
+        return solicitudes;
+    }
+
+    public List<OrdenTrabajo> getOrdenesTrabajos() {
+        return ordenesTrabajos;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setTelefono(String telefono) {
+        this.telefono = telefono;
+    }
+
+    public void setFechaCreacion(LocalDateTime fechaCreacion) {
+        this.fechaCreacion = fechaCreacion;
+    }
+
+    public void setOrdenesTrabajos(List<OrdenTrabajo> ordenesTrabajos) {
+        this.ordenesTrabajos = ordenesTrabajos;
+    }
+
+    public void setSolicitudes(List<Solicitud> solicitudes) {
+        this.solicitudes = solicitudes;
+    }
+}
