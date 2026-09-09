@@ -10,7 +10,7 @@
     "cantidad": 10,
     "fecha_esperada_entrega": "2026-09-30",
     "notas_comerciales": "Pieza urgente, necesita certificado de materia prima",
-    "estado": "PENDIENTE_COTIZACION",
+    "estado": "COTIZADA",
     "created_at": "2026-09-05T14:30:00Z",
     "updated_at": "2026-09-05T14:30:00Z"
   },

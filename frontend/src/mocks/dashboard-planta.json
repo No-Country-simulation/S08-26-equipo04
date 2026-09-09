@@ -1,5 +1,5 @@
 {
-  "ots_pendientes_activas": 1,
+  "ots_pendientes_activas": 2,
   "fases_en_catalogo": 7,
   "congestion_por_fase": [
     {
@@ -18,7 +18,7 @@
       "fase_id": 3,
       "fase_nombre": "Soldadura",
       "ots_acumuladas": 0,
-      "operarios_asignados": 0
+      "operarios_asignados": 1
     },
     {
       "fase_id": 4,
@@ -36,7 +36,7 @@
       "fase_id": 6,
       "fase_nombre": "Ensamble",
       "ots_acumuladas": 0,
-      "operarios_asignados": 0
+      "operarios_asignados": 1
     },
     {
       "fase_id": 7,

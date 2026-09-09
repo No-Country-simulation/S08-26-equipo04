@@ -3,14 +3,8 @@
   "total_auditorias": 2,
   "conformes": 1,
   "no_conformes": 1,
-  "retrabajos_por_fase": [
-    {
-      "fase_id": 3,
-      "fase_nombre": "Soldadura",
-      "cantidad_retrabajos": 1
-    }
-  ],
-  "tiempo_promedio_calidad_horas": 4.5,
+  "retrabajos_por_fase": [],
+  "tiempo_promedio_calidad_horas": 1.0,
   "ultimas_auditorias": [
     {
       "id": 1,
