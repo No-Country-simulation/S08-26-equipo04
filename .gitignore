@@ -37,3 +37,49 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw?
+# Dependencias (aplica a la raíz y a subcarpetas como frontend/ o backend/)
+node_modules/
+.pnpm-store/
+.pnpm-debug.log*
+
+# Builds y salidas de compilación
+dist/
+dist-ssr/
+build/
+out/
+.next/
+coverage/
+
+# Logs de depuración
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Variables de entorno locales (credenciales y claves de API)
+.env
+.env.*
+*.local
+!.env.example
+
+# Archivos del sistema operativo y editores
+.DS_Store
+Thumbs.db
+*.pem
+
+# Configuración de IDEs
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Archivos temporales de agentes/herramientas de desarrollo
+.gravity/

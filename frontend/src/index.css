@@ -1,0 +1,97 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-canvas text-ink font-sans;
+  }
+
+  h1 {
+    @apply text-h1;
+  }
+
+  h2 {
+    @apply text-h2;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-white px-4 py-2 rounded-lg font-label hover:opacity-90 transition-opacity;
+  }
+
+  .btn-secondary {
+    @apply border border-border text-ink px-4 py-2 rounded-lg font-label hover:bg-canvas transition-colors;
+  }
+
+  .btn-discrete {
+    @apply text-primary px-4 py-2 font-label hover:underline transition-all;
+  }
+
+  .btn-destructive {
+    @apply bg-error text-white px-4 py-2 rounded-lg font-label hover:opacity-90 transition-opacity;
+  }
+
+  .input {
+    @apply w-full border border-border rounded-lg px-3 py-2 font-body placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50;
+  }
+
+  .select {
+    @apply w-full border border-border rounded-lg px-3 py-2 font-body bg-surface focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50;
+  }
+
+  .card {
+    @apply bg-surface border border-border rounded-xl p-6 shadow-card;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label font-medium;
+  }
+
+  .badge-pending {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label font-medium bg-warning-light text-warning;
+  }
+
+  .badge-quoted {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label font-medium bg-info-light text-info;
+  }
+
+  .badge-approved {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label font-medium bg-success-light text-success;
+  }
+
+  .badge-production {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label font-medium bg-info-light text-info;
+  }
+
+  .badge-quality {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label font-medium bg-warning-light text-warning;
+  }
+
+  .badge-completed {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label font-medium bg-success-light text-success;
+  }
+
+  .badge-queue {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label font-medium bg-gray-100 text-text-muted;
+  }
+
+  .table {
+    @apply w-full border-collapse;
+  }
+
+  .table th {
+    @apply text-left text-label text-text-secondary font-medium pb-3 border-b border-border;
+  }
+
+  .table td {
+    @apply py-3 border-b border-border font-body;
+  }
+
+  .table tr:hover {
+    @apply bg-canvas;
+  }
+}
