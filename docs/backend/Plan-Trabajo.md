@@ -69,7 +69,7 @@ Otros detalles a tener en cuenta:
 #### Tarea 1.4. [BE] feat: generar endpoints de clientes (HU-1.1 Levantar pedido)
 
 - **Asignado:** Lisandro
-- **Objetivo / Contexto:** Crear un conjunto de endpoints para la gestión de clientes, permitiendo operaciones de creación, lectura, actualización y eliminación (CRUD) en el sistema. Estos endpoints son necesarios para que el Vendedor pueda levantar pedidos, ya que justamente necesita registrar la información del cliente para poder generar una solicitud. Si bien el plan de trabajo de frontend no indica el acceso específico a endpoint de clientes (ya que se interactúa con ellos a través de la creación de solicitudes), se deja abierto ante la posibilidad de un cambio en el diseño. En caso que no sean utilizados, su funcionalidad igual debe ser implementada en el sistema para actuar ante la carga de solicitudes.
+- **Objetivo / Contexto:** Crear un conjunto de endpoints para la gestión de clientes, permitiendo operaciones de creación, lectura, actualización y eliminación (CRUD) en el sistema. Estos endpoints son necesarios para que el Vendedor pueda levantar pedidos, ya que justamente necesita registrar la información del cliente para poder generar una solicitud.
 - **Criterios de aceptación:**
   - [ ] Modelar la entidad Cliente con sus atributos y relaciones necesarias en "Cliente", acorde a la documentación y siguiendo el modelo de una típica entidad MVC.
   - [ ] Establecer un DTO para la entidad cliente, para permitir transportar los datos con el servidor sin exponer la estructura interna de la base de datos.
@@ -85,10 +85,11 @@ Otros detalles a tener en cuenta:
 - **Criterios de aceptación:**
   - [ ] Modelar la entidad Solicitud con sus atributos y relaciones necesarias en "Cliente", acorde a la documentación y siguiendo el modelo de una típica entidad MVC.
   - [ ] Crear endpoint `POST /api/solicitudes` para crear una nueva solicitud.
-  - [ ] El cuerpo del request debe contar con: `{cliente_id, descripcion_pieza, cantidad, fecha_esperada_entrega, notas_comerciales}`.
+  - [ ] El body del request de un cliente registrado debe contar con: `{cliente_id, descripcion_pieza, cantidad, fecha_esperada_entrega, notas_comerciales}`.
+  - [ ] El body del request con un cliente nuevo cuenta con los datos crudos del cliente en lugar de con cliente_id. Así, entonces, debe contar con: `{razon_social, contacto_nombre, telefono, email, direccion, descripcion_pieza, cantidad, fecha_esperada_entrega, notas_comerciales}`.
+  - [ ] En el caso de un cliente nuevo, el backend crea el cliente antes de crear la solicitud.
   - [ ] La respuesta exitosa debe incluir en el cuerpo el siguiente formato: `{"id"=x, "numero_solicitud"=SOL-XXXX, "estado"=PENDIENTE_COTIZACION}`, para que se tenga referencia a la solicitud creada y su estado inicial.
   - [ ] Verificar que el endpoint de creación de solicitudes valide que todos los campos obligatorios estén presentes y sean correctos, devolviendo un error en caso contrario.
-  - [ ] Dado que todos los campos obligatorios están presentes, verificar que exista un cliente asociado a dichos datos en la base de datos. De haber coincidencia, asociar la solicitud al cliente existente; de no haber coincidencia, crear un nuevo cliente y asociarlo a la solicitud.
   - [ ] Verificar que solo usuarios del rol Vendedor puedan crear nuevas solicitudes, devolver un error de autorización en caso contrario.
   - [ ] Crear endpoint `GET /api/solicitudes` para obtener la lista de solicitudes pendientes.
   - [ ] Verificar que el endpoint de obtención de solicitudes solo sea accesible por usuarios con rol Vendedor y Jefe de producción, devolviendo un error de autorización en caso contrario. (Nota: plan de frontend no menciona acceso a rol Vendedor, pero puede ser útil para que controle cuáles solicitudes siguen a la espera de cotizar)
@@ -119,7 +120,7 @@ Otros detalles a tener en cuenta:
   - [ ] Verificar que solo usuarios del rol Gerente puedan crear nuevas fases, devolviendo un error de autorización en caso contrario.
   - [ ] Verificar que los usuarios habilitados sean existentes en la base de datos y que tengan rol Operario, devolviendo un error en caso contrario.
   - [ ] Crear endpoint `GET /api/fases` para obtener la lista de fases.
-  - [ ] Verificar que la lista de fases solo sea accesible por usuarios con rol Gerente y Jefe de producción, devolviendo un error de autorización en caso contrario.
+  - [ ] Verificar que la lista de fases solo sea accesible por usuarios con rol=`GERENTE` o rol=`JEFE_PRODUCCION` Jefe de Producción, devolviendo un error de autorización en caso contrario.
   - [ ] Crear endpoint `PUT /api/fases/{id}` para actualizar los campos de una fase existente.
   - [ ] Verificar que solo usuarios del rol Gerente puedan modificar las fases, devolviendo un error de autorización en caso contrario.
   - [ ] Verificar que los usuarios con rol Gerente pueden borrar fases (recordemos que es un borrado lógico mediante activo=false, por lo que el endpoint PUT debería permitirlo).
@@ -280,6 +281,9 @@ Otros detalles a tener en cuenta:
 - **Asignado:** Lisandro
 - **Objetivo / Contexto:** Implementar un endpoint `GET /api/ordenes-trabajo/{id}/expediente` que devuelva datos acerca de la solicitud, cotización, historial de operaciones por fase, resultado de Calidad y estado de entrega. En otras palabras, lo generado actúa como un reporte completo de la trazabilidad de una orden de trabajo.
 - **Criterios de aceptación:**
+  - [ ] El endpoint `GET /api/ordenes-trabajo` debe devolver un listado de OTs para que el vendedor pueda elegir el expediente que desea consultar.
+  - [ ] Este endpoint debe devolver los campos `(numero_ot, cliente, estado, fecha)`
+  - [ ] El endpoint debe permitir filtrar por cliente o buscar por número de OT.
   - [ ] El endpoint `GET /api/ordenes-trabajo/{id}/expediente` debe aceptar como parámetro el número de OT.
   - [ ] El endpoint debe ser accesible por usuarios con rol Vendedor, Jefe de Producción, Gerente y Calidad, omitiendo así las consultas de parte de operarios.
   - [ ] El sistema debe devolver un objeto JSON con la información completa de la OT.
