@@ -4,3 +4,4 @@ export { Button } from './Button';
 export { Field } from './Field';
 export { Modal } from './Modal';
 export { DateInput } from './DateInput';
+export { Toggle } from './Toggle';
