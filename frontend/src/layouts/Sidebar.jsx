@@ -4,7 +4,7 @@ import { ClipboardList, LayoutDashboard, Menu, PanelLeftClose, Settings, X } fro
 const items = [
   { label: 'Inicio', to: '/', icon: LayoutDashboard, roles: [] },
   { label: 'Solicitudes', to: '/solicitudes', icon: ClipboardList, roles: ['VENDEDOR', 'GERENTE'] },
-  { label: 'Configuracion', to: '/configuracion', icon: Settings, roles: ['GERENTE'] },
+  { label: 'Configuracion', to: '/config/fases', icon: Settings, roles: ['GERENTE'] },
 ];
 
 export const Sidebar = ({ collapsed, mobileOpen, onToggle, onClose, role }) => {
@@ -23,7 +23,7 @@ export const Sidebar = ({ collapsed, mobileOpen, onToggle, onClose, role }) => {
         </div>
         <nav className="flex-1 space-y-1 p-3" aria-label="Navegacion principal">
           {visibleItems.map(({ label, to, icon: Icon }) => (
-            <NavLink key={to} to={to} onClick={onClose} className={({ isActive }) => `flex items-center gap-3 rounded-lg px-3 py-2.5 text-label transition-colors ${isActive ? 'bg-primary-tint text-primary' : 'text-text-secondary hover:bg-canvas'}`}>
+            <NavLink key={to} to={to} end={to !== '/'} onClick={onClose} className={({ isActive }) => `flex items-center gap-3 rounded-lg px-3 py-2.5 text-label transition-colors ${isActive ? 'bg-primary-tint text-primary' : 'text-text-secondary hover:bg-canvas'}`}>
               <Icon className="h-5 w-5 shrink-0" />
               {!collapsed && <span>{label}</span>}
             </NavLink>
