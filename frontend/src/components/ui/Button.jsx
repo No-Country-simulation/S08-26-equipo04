@@ -5,6 +5,7 @@ const variantClasses = {
   secondary: 'btn-secondary',
   discrete: 'btn-discrete',
   destructive: 'btn-destructive',
+  ghost: 'rounded-lg px-2 py-2 text-text-muted hover:bg-canvas transition-colors',
 };
 
 const sizeClasses = {
@@ -25,7 +26,7 @@ export const Button = ({
 }) => (
   <button
     type={type}
-    className={`${variantClasses[variant] || variantClasses.primary} ${sizeClasses[size] || ''} ${className}`}
+    className={`inline-flex items-center justify-center gap-1.5 ${variantClasses[variant] || variantClasses.primary} ${sizeClasses[size] || ''} ${className}`}
     disabled={disabled || loading}
     aria-busy={loading}
     {...props}
