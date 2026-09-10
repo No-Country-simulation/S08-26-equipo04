@@ -4,6 +4,15 @@
 @tailwind components;
 @tailwind utilities;
 
+* {
+  box-sizing: border-box;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 @layer base {
   body {
     @apply bg-canvas text-ink font-sans;
@@ -20,27 +29,27 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-primary text-white px-4 py-2 rounded-lg font-label hover:opacity-90 transition-opacity;
+    @apply bg-primary text-white px-4 py-2 rounded-lg text-label hover:opacity-90 transition-opacity;
   }
 
   .btn-secondary {
-    @apply border border-border text-ink px-4 py-2 rounded-lg font-label hover:bg-canvas transition-colors;
+    @apply border border-border text-ink px-4 py-2 rounded-lg text-label hover:bg-canvas transition-colors;
   }
 
   .btn-discrete {
-    @apply text-primary px-4 py-2 font-label hover:underline transition-all;
+    @apply text-primary px-4 py-2 text-label hover:underline transition-all;
   }
 
   .btn-destructive {
-    @apply bg-error text-white px-4 py-2 rounded-lg font-label hover:opacity-90 transition-opacity;
+    @apply bg-error text-white px-4 py-2 rounded-lg text-label hover:opacity-90 transition-opacity;
   }
 
   .input {
-    @apply w-full border border-border rounded-lg px-3 py-2 font-body placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50;
+    @apply w-full border border-border rounded-lg px-3 py-2 text-body placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50;
   }
 
   .select {
-    @apply w-full border border-border rounded-lg px-3 py-2 font-body bg-surface focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50;
+    @apply w-full border border-border rounded-lg px-3 py-2 text-body bg-surface focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50;
   }
 
   .card {
@@ -88,7 +97,7 @@
   }
 
   .table td {
-    @apply py-3 border-b border-border font-body;
+    @apply py-3 border-b border-border text-body;
   }
 
   .table tr:hover {
