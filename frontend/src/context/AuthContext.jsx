@@ -15,8 +15,7 @@ const readSession = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(readSession);
 
-  const login = () => {
-    const session = mocks.auth;
+  const login = (session = mocks.auth[0]) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
     setUser(session);
     return session;
