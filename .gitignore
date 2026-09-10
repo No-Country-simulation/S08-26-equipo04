@@ -42,5 +42,8 @@ Thumbs.db
 *.sln
 *.sw?
 
+# Vercel
+.vercel/
+
 # Archivos temporales de agentes/herramientas de desarrollo
 .gravity/
