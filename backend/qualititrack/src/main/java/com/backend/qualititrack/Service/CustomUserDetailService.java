@@ -1,6 +1,7 @@
 package com.backend.qualititrack.Service;
-import com.backend.qualititrack.modelos.Usuario;
-import com.backend.qualititrack.repository.UsuarioRepository;
+import java.util.ArrayList;
+import java.util.Collection;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -10,8 +11,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import com.backend.qualititrack.modelos.Usuario;
+import com.backend.qualititrack.repository.UsuarioRepository;
 
 @Service
 public class CustomUserDetailService implements UserDetailsService {
@@ -34,7 +35,7 @@ public class CustomUserDetailService implements UserDetailsService {
 
         return new User(
                 usuario.getEmail(),
-                usuario.getPassword(),  // password_hash de BD
+                usuario.getPasswordHash(),  // password_hash de BD
                 usuario.getActivo(),     // enabled
                 true,                     // accountNonExpired
                 true,                     // credentialsNonExpired

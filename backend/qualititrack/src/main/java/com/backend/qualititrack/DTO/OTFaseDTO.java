@@ -1,18 +1,20 @@
 package com.backend.qualititrack.DTO;
 
+import java.time.LocalDateTime;
+
 import com.backend.qualititrack.Enum.EstadoOtFase;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+// Revisar para que coincida con base (ver entidad en "modelos")
 public class OTFaseDTO {
     private Long id;
 

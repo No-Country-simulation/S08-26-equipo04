@@ -44,16 +44,16 @@ public class UsuarioController {
      *   "fechaCreacion": "2024-09-03T10:30:00"
      * }
      */
-    @PostMapping
-    @PreAuthorize("hasAnyRole('GERENTE', 'JEFE_PRODUCCION')")
-    public ResponseEntity<UsuarioDTO> crear(@RequestBody @Valid UsuarioDTO dto) {
-        log.info("POST /api/usuarios - Creando usuario: {}", dto.getEmail());
+    // @PostMapping
+    // @PreAuthorize("hasAnyRole('GERENTE', 'JEFE_PRODUCCION')")
+    // public ResponseEntity<UsuarioDTO> crear(@RequestBody @Valid UsuarioDTO dto) {
+    //     log.info("POST /api/usuarios - Creando usuario: {}", dto.getEmail());
 
-        UsuarioDTO creado = usuarioService.crear(dto);
+    //     UsuarioDTO creado = usuarioService.crear(dto);
 
-        // HTTP 201 Created (recurso creado exitosamente)
-        return ResponseEntity.status(HttpStatus.CREATED).body(creado);
-    }
+    //     // HTTP 201 Created (recurso creado exitosamente)
+    //     return ResponseEntity.status(HttpStatus.CREATED).body(creado);
+    // }
 
     // ================== READ ==================
 
@@ -172,18 +172,18 @@ public class UsuarioController {
      *   ...
      * }
      */
-    @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('GERENTE', 'JEFE_PRODUCCION')")
-    public ResponseEntity<UsuarioDTO> actualizar(
-            @PathVariable Long id,
-            @RequestBody @Valid UsuarioDTO dto) {
-        log.info("PUT /api/usuarios/{} - Actualizando usuario", id);
+    // @PutMapping("/{id}")
+    // @PreAuthorize("hasAnyRole('GERENTE', 'JEFE_PRODUCCION')")
+    // public ResponseEntity<UsuarioDTO> actualizar(
+    //         @PathVariable Long id,
+    //         @RequestBody @Valid UsuarioDTO dto) {
+    //     log.info("PUT /api/usuarios/{} - Actualizando usuario", id);
 
-        UsuarioDTO actualizado = usuarioService.actualizar(id, dto);
+    //     UsuarioDTO actualizado = usuarioService.actualizar(id, dto);
 
-        // HTTP 200 OK
-        return ResponseEntity.ok(actualizado);
-    }
+    //     // HTTP 200 OK
+    //     return ResponseEntity.ok(actualizado);
+    // }
 
     /**
      * PUT /api/usuarios/{id}/password
@@ -199,19 +199,19 @@ public class UsuarioController {
      *
      * Response: 200 OK (sin body)
      */
-    @PutMapping("/{id}/password")
-    @PreAuthorize("hasAnyRole('GERENTE', 'JEFE_PRODUCCION')")
-    public ResponseEntity<Void> cambiarPassword(
-            @PathVariable Long id,
-            @RequestParam String passwordActual,
-            @RequestParam String passwordNueva) {
-        log.info("PUT /api/usuarios/{}/password - Cambiando password", id);
+    // @PutMapping("/{id}/password")
+    // @PreAuthorize("hasAnyRole('GERENTE', 'JEFE_PRODUCCION')")
+    // public ResponseEntity<Void> cambiarPassword(
+    //         @PathVariable Long id,
+    //         @RequestParam String passwordActual,
+    //         @RequestParam String passwordNueva) {
+    //     log.info("PUT /api/usuarios/{}/password - Cambiando password", id);
 
-        usuarioService.cambiarPassword(id, passwordActual, passwordNueva);
+    //     usuarioService.cambiarPassword(id, passwordActual, passwordNueva);
 
-        // HTTP 200 OK (sin contenido)
-        return ResponseEntity.ok().build();
-    }
+    //     // HTTP 200 OK (sin contenido)
+    //     return ResponseEntity.ok().build();
+    // }
 
     // ================== DELETE ==================
 
@@ -226,16 +226,16 @@ public class UsuarioController {
      * Si no existe:
      * Response: 404 Not Found
      */
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('GERENTE', 'JEFE_PRODUCCION')")
-    public ResponseEntity<Void> desactivar(@PathVariable Long id) {
-        log.info("DELETE /api/usuarios/{} - Desactivando usuario", id);
+    // @DeleteMapping("/{id}")
+    // @PreAuthorize("hasAnyRole('GERENTE', 'JEFE_PRODUCCION')")
+    // public ResponseEntity<Void> desactivar(@PathVariable Long id) {
+    //     log.info("DELETE /api/usuarios/{} - Desactivando usuario", id);
 
-        usuarioService.desactivar(id);
+    //     usuarioService.desactivar(id);
 
-        // HTTP 204 No Content (éxito, sin body)
-        return ResponseEntity.noContent().build();
-    }
+    //     // HTTP 204 No Content (éxito, sin body)
+    //     return ResponseEntity.noContent().build();
+    // }
 
     // ================== LÓGICA DE NEGOCIO ==================
 

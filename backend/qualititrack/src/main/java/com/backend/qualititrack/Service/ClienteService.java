@@ -1,14 +1,16 @@
 package com.backend.qualititrack.Service;
 
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.backend.qualititrack.DTO.ClienteDTO;
 import com.backend.qualititrack.modelos.Cliente;
 import com.backend.qualititrack.repository.ClienteRepository;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 
 @Service
@@ -24,7 +26,7 @@ public class ClienteService {
             throw new IllegalArgumentException("El email" + clienteDTO.getEmail() + "ya esta registrado");
 
         }
-        if (clienteDTO.getNombre() == null || clienteDTO.getNombre().isBlank()) {
+        if (clienteDTO.getContactoNombre() == null || clienteDTO.getContactoNombre().isBlank()) {
             throw new IllegalArgumentException("El nombre del cliente no puede estar vacío");
         }
 
@@ -32,10 +34,10 @@ public class ClienteService {
             throw new IllegalArgumentException("El teléfono del cliente no puede estar vacío");
         }
         Cliente cliente = new Cliente();
-        cliente.setNombre(clienteDTO.getNombre());
+        cliente.setContactoNombre(clienteDTO.getContactoNombre());
         cliente.setEmail(clienteDTO.getEmail());
         cliente.setTelefono(clienteDTO.getTelefono());
-        cliente.setFechaCreacion(LocalDateTime.now());
+        cliente.setCreatedAt(OffsetDateTime.now());
 
         Cliente clienteGuardado = clienteRepository.save(cliente);
 
@@ -74,8 +76,8 @@ public class ClienteService {
             }
 
             // Actualizar los datos
-            if (clienteDTO.getNombre() != null && !clienteDTO.getNombre().isBlank()) {
-                cliente.setNombre(clienteDTO.getNombre());
+            if (clienteDTO.getContactoNombre() != null && !clienteDTO.getContactoNombre().isBlank()) {
+                cliente.setContactoNombre(clienteDTO.getContactoNombre());
             }
 
             if (clienteDTO.getEmail() != null && !clienteDTO.getEmail().isBlank()) {
@@ -102,10 +104,14 @@ public class ClienteService {
 
     private ClienteDTO convertirADTO(Cliente cliente) {
         ClienteDTO dto = new ClienteDTO();
-        dto.setNombre(cliente.getNombre());
+        dto.setContactoNombre(cliente.getContactoNombre());
         dto.setEmail(cliente.getEmail());
         dto.setTelefono(cliente.getTelefono());
-        dto.setFechaCreacion(cliente.getFechaCreacion());
+        dto.setCreatedAt(cliente.getCreatedAt());
+        dto.setUpdatedAt(cliente.getUpdatedAt());
+        dto.setRazonSocial(cliente.getRazonSocial());
+        dto.setDireccion(cliente.getDireccion());
+        dto.setActivo(cliente.getActivo());
         return dto;
     }
     }
