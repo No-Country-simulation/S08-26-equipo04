@@ -19,8 +19,10 @@ export const AppRoutes = () => {
         <Route element={<AppLayout />}>
           <Route index element={<DashboardPage />} />
           <Route path="solicitudes" element={<PlaceholderPage title="Solicitudes" description="Gestiona las solicitudes comerciales del equipo." />} />
-          <Route element={<ProtectedRoute roles={['JEFE_PRODUCCION', 'VENDEDOR', 'GERENTE']} />}>
+          <Route element={<ProtectedRoute roles={['JEFE_PRODUCCION', 'VENDEDOR']} />}>
             <Route path="cotizaciones" element={<CotizacionesPage />} />
+          </Route>
+          <Route element={<ProtectedRoute roles={['JEFE_PRODUCCION']} />}>
             <Route path="cotizaciones/nueva" element={<CotizacionFormPage />} />
             <Route path="cotizaciones/:id/editar" element={<CotizacionFormPage />} />
           </Route>

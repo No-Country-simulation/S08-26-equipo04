@@ -4,7 +4,7 @@ import { ClipboardList, FileText, LayoutDashboard, Menu, PanelLeftClose, Setting
 const items = [
   { label: 'Inicio', to: '/', icon: LayoutDashboard, roles: [] },
   { label: 'Solicitudes', to: '/solicitudes', icon: ClipboardList, roles: ['VENDEDOR', 'GERENTE'] },
-  { label: 'Cotizaciones', to: '/cotizaciones', icon: FileText, roles: ['JEFE_PRODUCCION', 'VENDEDOR', 'GERENTE'] },
+  { label: 'Cotizaciones', to: '/cotizaciones', icon: FileText, roles: ['JEFE_PRODUCCION', 'VENDEDOR'] },
   { label: 'Configuracion', to: '/config/fases', icon: Settings, roles: ['GERENTE'] },
 ];
 

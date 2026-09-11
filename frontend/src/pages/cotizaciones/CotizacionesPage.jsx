@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Plus, Pencil } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import { useCotizaciones } from '../../hooks/useCotizaciones';
 import { Button, Card, CardHeader, CardTitle, Badge } from '../../components/ui';
 
@@ -12,7 +13,9 @@ const estadoBadge = {
 
 export const CotizacionesPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { cotizaciones } = useCotizaciones();
+  const puedeCrear = user?.rol === 'JEFE_PRODUCCION';
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -24,10 +27,12 @@ export const CotizacionesPage = () => {
             Gestiona las cotizaciones y define la secuencia de fases de produccion.
           </p>
         </div>
-        <Button onClick={() => navigate('/cotizaciones/nueva')}>
-          <Plus className="h-4 w-4" />
-          Nueva cotizacion
-        </Button>
+        {puedeCrear && (
+          <Button onClick={() => navigate('/cotizaciones/nueva')}>
+            <Plus className="h-4 w-4" />
+            Nueva cotizacion
+          </Button>
+        )}
       </div>
 
       <Card>
@@ -68,18 +73,20 @@ export const CotizacionesPage = () => {
                     </Badge>
                   </td>
                   <td>
-                    <div className="flex items-center justify-center">
-                      <Button
-                        variant="ghost"
-                        onClick={() =>
-                          navigate(`/cotizaciones/${cot.id}/editar`)
-                        }
-                        className="hover:text-ink"
-                        aria-label={`Editar ${cot.numero_cotizacion}`}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    {puedeCrear && (
+                      <div className="flex items-center justify-center">
+                        <Button
+                          variant="ghost"
+                          onClick={() =>
+                            navigate(`/cotizaciones/${cot.id}/editar`)
+                          }
+                          className="hover:text-ink"
+                          aria-label={`Editar ${cot.numero_cotizacion}`}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}
