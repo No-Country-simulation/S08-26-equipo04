@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
-import { ClipboardList, FileText, LayoutDashboard, Menu, PanelLeftClose, Settings, X } from 'lucide-react';
+import { ClipboardList, FileText, LayoutDashboard, LogOut, Menu, PanelLeftClose, Settings, X } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const items = [
   { label: 'Inicio', to: '/', icon: LayoutDashboard, roles: [] },
@@ -9,7 +10,9 @@ const items = [
 ];
 
 export const Sidebar = ({ collapsed, mobileOpen, onToggle, onClose, role }) => {
+  const { user, logout } = useAuth();
   const visibleItems = items.filter(({ roles }) => roles.length === 0 || roles.includes(role));
+  const initials = user?.nombre?.split(' ').map((part) => part[0]).slice(0, 2).join('') || 'QT';
 
   return (
     <>
@@ -30,6 +33,20 @@ export const Sidebar = ({ collapsed, mobileOpen, onToggle, onClose, role }) => {
             </NavLink>
           ))}
         </nav>
+        <div className="border-t border-border p-3">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-tint text-label text-primary">{initials}</span>
+            {!collapsed && (
+              <>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-label text-ink">{user?.nombre || 'Usuario'}</p>
+                  <p className="truncate text-metadata text-text-muted">{user?.rol || 'Invitado'}</p>
+                </div>
+                <button type="button" onClick={logout} className="shrink-0 rounded-lg p-2 text-text-muted hover:bg-canvas" aria-label="Cerrar sesion"><LogOut className="h-5 w-5" /></button>
+              </>
+            )}
+          </div>
+        </div>
       </aside>
     </>
   );
