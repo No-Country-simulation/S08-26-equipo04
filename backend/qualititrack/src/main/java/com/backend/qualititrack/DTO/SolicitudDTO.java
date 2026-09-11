@@ -19,14 +19,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SolicitudDTO {
 
+    // Campos de identificacion y estado
     private Long id;
-
-    // no es obligatorio, ya que cuando se crea hay que generarlo
     private String numeroSolicitud;
+    private EstadoSolicitud estado;
+    private OffsetDateTime createdAt;
+    private OffsetDateTime updatedAt;
 
-    @NotNull(message = "La fecha no puede ser nula")
-    private LocalDate fechaEsperadaEntrega;
-
+    // Obligatorio
     @NotBlank(message = "La descripción de la pieza no puede estar vacía")
     private String descripcionPieza;
 
@@ -34,23 +34,17 @@ public class SolicitudDTO {
     @Min(value = 1, message = "Debe pedirse al menos una unidad de la pieza")
     private Integer cantidad;
 
+    // Opcional
+    private LocalDate fechaEsperadaEntrega;
     private String notasComerciales;
 
-    private EstadoSolicitud estado;
-
-    private OffsetDateTime createdAt;
-    private OffsetDateTime updatedAt;
-
-    // OPCIÓN A: Cliente ya registrado
+    // Para cliente registrado
     private Long clienteId;
 
-    // OPCIÓN B: Cliente nuevo (Datos crudos)
+    // Para cliente nuevo (Datos crudos)
     private String razonSocial;
     private String contactoNombre;
     private String telefono;
     private String direccion;
     private String email;
-
-    @NotNull(message = "El vendedor es obligatorio")
-    private Long vendedorId;
 }

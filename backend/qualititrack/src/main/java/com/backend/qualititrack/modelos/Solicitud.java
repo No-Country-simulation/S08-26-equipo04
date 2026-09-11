@@ -76,6 +76,8 @@ public class Solicitud {
         if (estado == null) {
             estado = EstadoSolicitud.PENDIENTE_COTIZACION;
         }
+        createdAt = OffsetDateTime.now();
+        updatedAt = OffsetDateTime.now();
     }
 
 }
