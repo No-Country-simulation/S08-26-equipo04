@@ -94,6 +94,7 @@ public class UsuarioService {
 
 
     // ================== LÓGICA DE NEGOCIO ==================
+    // NOTA: ESTOS METODOS NO SON NECESARIOS, SE RESOLVERIAN CON PREAUTHORIZE!!!!!!!!!!!
 
     /**
      * Verifica si un usuario tiene permiso para crear fases.
@@ -108,6 +109,7 @@ public class UsuarioService {
     /**
      * Verifica si un usuario tiene permiso para ejecutar fases.
      * Solo OPERARIO puede ejecutar fases.
+     * ESTE MÉTODO NO ES CORRECTO
      */
     public boolean puedeEjecutarFase(Long id) {
         Usuario usuario = usuarioRepository.findById(id)
