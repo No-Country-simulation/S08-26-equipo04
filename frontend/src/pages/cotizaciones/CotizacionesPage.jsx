@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Plus, Pencil } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCotizaciones } from '../../hooks/useCotizaciones';
 import { Button, Card, CardHeader, CardTitle, Badge } from '../../components/ui';
@@ -21,11 +21,7 @@ export const CotizacionesPage = () => {
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-label text-primary">Cotizaciones</p>
-          <h1 className="mt-1 text-h1 text-ink">Listado de cotizaciones</h1>
-          <p className="mt-2 text-body text-text-secondary">
-            Gestiona las cotizaciones y define la secuencia de fases de produccion.
-          </p>
+          <h1 className="text-h1 text-ink">Cotizaciones</h1>
         </div>
         {puedeCrear && (
           <Button onClick={() => navigate('/cotizaciones/nueva')}>
@@ -40,7 +36,7 @@ export const CotizacionesPage = () => {
           <CardTitle>Cotizaciones registradas</CardTitle>
         </CardHeader>
 
-        <div className="overflow-x-auto">
+        <div className="table-container">
           <table className="table">
             <thead>
               <tr>
@@ -50,16 +46,20 @@ export const CotizacionesPage = () => {
                 <th>Precio</th>
                 <th>Fases</th>
                 <th>Estado</th>
-                <th className="!text-center">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {cotizaciones.map((cot) => (
                 <tr key={cot.id}>
                   <td>
-                    <span className="font-medium text-ink">
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/cotizaciones/${cot.id}/editar`)}
+                      className="font-medium text-primary hover:underline"
+                      aria-label={`Editar ${cot.numero_cotizacion}`}
+                    >
                       {cot.numero_cotizacion}
-                    </span>
+                    </button>
                   </td>
                   <td>{cot.solicitud_numero}</td>
                   <td>{cot.cliente_razon_social}</td>
@@ -68,30 +68,17 @@ export const CotizacionesPage = () => {
                   </td>
                   <td>{cot.fases.length}</td>
                   <td>
-                    <Badge variant={estadoBadge[cot.estado] || 'pending'}>
+                    <Badge variant={estadoBadge[cot.estado] || 'pending'} type="inline">
                       {cot.estado.replace(/_/g, ' ')}
                     </Badge>
-                  </td>
-                  <td>
-                    {puedeCrear && (
-                      <div className="flex items-center justify-center">
-                        <Button
-                          variant="ghost"
-                          onClick={() =>
-                            navigate(`/cotizaciones/${cot.id}/editar`)
-                          }
-                          className="hover:text-ink"
-                          aria-label={`Editar ${cot.numero_cotizacion}`}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          <div className="table-footer">
+            {cotizaciones.length} cotizacion{cotizaciones.length !== 1 ? 'es' : ''}
+          </div>
         </div>
       </Card>
     </div>

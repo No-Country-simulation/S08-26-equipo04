@@ -72,14 +72,9 @@ export const OperariosFasePage = () => {
             <ArrowLeft className="h-4 w-4" />
             Volver al catalogo
           </Button>
-          <p className="text-label text-primary">Configuracion</p>
-          <h1 className="mt-1 text-h1 text-ink">
-            Operarios habilitados
+          <h1 className="text-h1 text-ink">
+            Operarios — {fase.nombre}
           </h1>
-          <p className="mt-2 text-body text-text-secondary">
-            <span className="font-medium text-ink">{fase.nombre}</span> ({fase.codigo})
-            {' — '}Selecciona que operarios pueden ejecutar esta fase.
-          </p>
         </div>
       </div>
 
@@ -88,7 +83,7 @@ export const OperariosFasePage = () => {
           <CardTitle>Operarios del sistema</CardTitle>
         </CardHeader>
 
-        <div className="overflow-x-auto">
+        <div className="table-container">
           <table className="table">
             <thead>
               <tr>
