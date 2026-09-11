@@ -3,6 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { AppLayout } from '../layouts';
 import { CatalogoFasesPage } from '../pages/config/CatalogoFasesPage';
 import { OperariosFasePage } from '../pages/config/OperariosFasePage';
+import { CotizacionesPage } from '../pages/cotizaciones/CotizacionesPage';
+import { CotizacionFormPage } from '../pages/cotizaciones/CotizacionFormPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { LoginPage } from '../pages/LoginPage';
 import { PlaceholderPage } from '../pages/PlaceholderPage';
@@ -17,6 +19,13 @@ export const AppRoutes = () => {
         <Route element={<AppLayout />}>
           <Route index element={<DashboardPage />} />
           <Route path="solicitudes" element={<PlaceholderPage title="Solicitudes" description="Gestiona las solicitudes comerciales del equipo." />} />
+          <Route element={<ProtectedRoute roles={['JEFE_PRODUCCION', 'VENDEDOR']} />}>
+            <Route path="cotizaciones" element={<CotizacionesPage />} />
+          </Route>
+          <Route element={<ProtectedRoute roles={['JEFE_PRODUCCION']} />}>
+            <Route path="cotizaciones/nueva" element={<CotizacionFormPage />} />
+            <Route path="cotizaciones/:id/editar" element={<CotizacionFormPage />} />
+          </Route>
           <Route element={<ProtectedRoute roles={['GERENTE']} />}>
             <Route path="configuracion" element={<Navigate to="/config/fases" replace />} />
             <Route path="config/fases" element={<CatalogoFasesPage />} />

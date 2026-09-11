@@ -1,9 +1,10 @@
 import { NavLink } from 'react-router-dom';
-import { ClipboardList, LayoutDashboard, Menu, PanelLeftClose, Settings, X } from 'lucide-react';
+import { ClipboardList, FileText, LayoutDashboard, Menu, PanelLeftClose, Settings, X } from 'lucide-react';
 
 const items = [
   { label: 'Inicio', to: '/', icon: LayoutDashboard, roles: [] },
   { label: 'Solicitudes', to: '/solicitudes', icon: ClipboardList, roles: ['VENDEDOR', 'GERENTE'] },
+  { label: 'Cotizaciones', to: '/cotizaciones', icon: FileText, roles: ['JEFE_PRODUCCION', 'VENDEDOR'] },
   { label: 'Configuracion', to: '/config/fases', icon: Settings, roles: ['GERENTE'] },
 ];
 

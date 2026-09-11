@@ -88,5 +88,35 @@
     "estado": "COTIZADA",
     "created_at": "2026-09-07T10:00:00Z",
     "updated_at": "2026-09-08T11:00:00Z"
+  },
+  {
+    "id": 7,
+    "numero_solicitud": "SOL-2026-0007",
+    "cliente_id": 1,
+    "cliente_razon_social": "Metalúrgica del Centro S.A.",
+    "vendedor_id": 3,
+    "vendedor_nombre": "Carlos Vendedor",
+    "descripcion_pieza": "Carcasa para compresor industrial",
+    "cantidad": 4,
+    "fecha_esperada_entrega": "2026-10-10",
+    "notas_comerciales": "Corte laser y soldadura TIG, acabado pulido",
+    "estado": "PENDIENTE_COTIZACION",
+    "created_at": "2026-09-09T08:00:00Z",
+    "updated_at": "2026-09-09T08:00:00Z"
+  },
+  {
+    "id": 8,
+    "numero_solicitud": "SOL-2026-0008",
+    "cliente_id": 2,
+    "cliente_razon_social": "Industria Automotriz del Sur",
+    "vendedor_id": 3,
+    "vendedor_nombre": "Carlos Vendedor",
+    "descripcion_pieza": "Soporte hidraulico para prensa",
+    "cantidad": 2,
+    "fecha_esperada_entrega": "2026-10-25",
+    "notas_comerciales": "Mecanizado CNC, tolerancia h7, ensamble final",
+    "estado": "PENDIENTE_COTIZACION",
+    "created_at": "2026-09-09T10:30:00Z",
+    "updated_at": "2026-09-09T10:30:00Z"
   }
 ]
