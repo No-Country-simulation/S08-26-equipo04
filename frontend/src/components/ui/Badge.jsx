@@ -1,8 +1,10 @@
 
-export const Badge = ({ variant = 'pending', children, className = '', ...props }) => {
-  // Variantes esperadas: pending, quoted, approved, production, quality, completed, queue
+export const Badge = ({ variant = 'pending', type = 'badge', children, className = '', ...props }) => {
+  // type: 'badge' (fondo coloreado) o 'inline' (punto sin fondo, para tablas)
+  // Variantes: pending, quoted, approved, production, quality, completed, queue
+  const baseClass = type === 'inline' ? 'badge-inline' : 'badge';
   return (
-    <span className={`badge badge-${variant} ${className}`} {...props}>
+    <span className={`${baseClass} badge-${variant} ${className}`} {...props}>
       {children}
     </span>
   );
