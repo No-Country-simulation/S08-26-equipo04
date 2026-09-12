@@ -28,6 +28,8 @@ button:disabled {
 }
 
 @layer components {
+
+  /* Botones (Acciones) */
   .btn-primary {
     @apply bg-primary text-white px-4 py-2 rounded-lg text-label hover:opacity-90 transition-opacity;
   }
@@ -44,6 +46,7 @@ button:disabled {
     @apply bg-error text-white px-4 py-2 rounded-lg text-label hover:opacity-90 transition-opacity;
   }
 
+  /* Campos / Formulario */
   .input {
     @apply w-full border border-border rounded-lg px-3 py-2 text-body placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50;
   }
@@ -56,36 +59,81 @@ button:disabled {
     @apply bg-surface border border-border rounded-xl p-6 shadow-card;
   }
 
+  /* Badges */
   .badge {
     @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label font-medium;
   }
 
+  /* Badges inline para tablas (punto sin fondo) */
+  .badge-inline {
+    @apply inline-flex items-center gap-1.5 text-label;
+  }
+
+  .badge-inline::before {
+    content: '';
+    @apply h-2 w-2 rounded-full;
+  }
+
+  .badge-inline.badge-pending::before {
+    @apply bg-warning;
+  }
+
+  .badge-inline.badge-quoted::before {
+    @apply bg-info;
+  }
+
+  .badge-inline.badge-approved::before {
+    @apply bg-success;
+  }
+
+  .badge-inline.badge-production::before {
+    @apply bg-info;
+  }
+
+  .badge-inline.badge-quality::before {
+    @apply bg-warning;
+  }
+
+  .badge-inline.badge-completed::before {
+    @apply bg-success;
+  }
+
+  .badge-inline.badge-queue::before {
+    @apply bg-text-muted;
+  }
+
+  /* Badges con fondo para encabezados de detalle */
   .badge-pending {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label font-medium bg-warning-light text-warning;
+    @apply bg-warning-light text-warning;
   }
 
   .badge-quoted {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label font-medium bg-info-light text-info;
+    @apply bg-info-light text-info;
   }
 
   .badge-approved {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label font-medium bg-success-light text-success;
+    @apply bg-success-light text-success;
   }
 
   .badge-production {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label font-medium bg-info-light text-info;
+    @apply bg-info-light text-info;
   }
 
   .badge-quality {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label font-medium bg-warning-light text-warning;
+    @apply bg-warning-light text-warning;
   }
 
   .badge-completed {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label font-medium bg-success-light text-success;
+    @apply bg-success-light text-success;
   }
 
   .badge-queue {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label font-medium bg-gray-100 text-text-muted;
+    @apply bg-[#EAEAEA] text-text-secondary;
+  }
+
+  /* Tablas y Listas */
+  .table-container {
+    @apply border border-border rounded-xl overflow-hidden;
   }
 
   .table {
@@ -93,14 +141,18 @@ button:disabled {
   }
 
   .table th {
-    @apply text-left text-label text-text-secondary font-medium pb-3 border-b border-border;
+    @apply text-left text-label text-text-secondary font-medium px-4 py-3 bg-[#F0F4F2];
   }
 
   .table td {
-    @apply py-3 border-b border-border text-body;
+    @apply px-4 py-3 border-b border-border text-body;
   }
 
-  .table tr:hover {
+  .table tbody tr:hover {
     @apply bg-canvas;
+  }
+
+  .table-footer {
+    @apply px-4 py-3 bg-surface text-metadata text-text-muted border-t border-border;
   }
 }

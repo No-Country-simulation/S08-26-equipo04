@@ -66,11 +66,7 @@ export const CatalogoFasesPage = () => {
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-label text-primary">Configuracion</p>
-          <h1 className="mt-1 text-h1 text-ink">Catalogo de fases</h1>
-          <p className="mt-2 text-body text-text-secondary">
-            Gestiona las fases disponibles en el sistema y asigna operarios habilitados.
-          </p>
+          <h1 className="text-h1 text-ink">Catalogo de fases</h1>
         </div>
         <Button onClick={handleCreate}>
           <Plus className="h-4 w-4" />
@@ -88,7 +84,7 @@ export const CatalogoFasesPage = () => {
             No hay fases configuradas
           </p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="table-container">
             <table className="table">
               <thead>
                 <tr>
