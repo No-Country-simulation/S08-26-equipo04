@@ -5,3 +5,4 @@ export { Field } from './Field';
 export { Modal } from './Modal';
 export { DateInput } from './DateInput';
 export { Toggle } from './Toggle';
+export { Title } from './Title';

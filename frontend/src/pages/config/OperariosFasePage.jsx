@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { mocks } from '../../mocks';
-import { Button, Card, CardHeader, CardTitle, Toggle } from '../../components/ui';
+import { Button, Card, CardHeader, CardTitle, Toggle, Title } from '../../components/ui';
 import { toast } from 'sonner';
 
 export const OperariosFasePage = () => {
@@ -46,7 +46,8 @@ export const OperariosFasePage = () => {
 
   if (!fase) {
     return (
-      <div className="mx-auto max-w-7xl space-y-6">
+    <div className="mx-auto max-w-7xl space-y-6">
+      <Title>Operarios</Title>
         <Button variant="discrete" onClick={() => navigate('/config/fases')}>
           <ArrowLeft className="h-4 w-4" />
           Volver al catalogo
