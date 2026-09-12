@@ -1,6 +1,8 @@
 import { NavLink } from 'react-router-dom';
 import { ClipboardList, FileText, LayoutDashboard, LogOut, Menu, PanelLeftClose, Settings, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import logoFull from '../assets/qualitytrack-logo.png';
+import logoIcon from '../assets/qualitytrack-icon.png';
 
 const items = [
   { label: 'Inicio', to: '/', icon: LayoutDashboard, roles: [] },
@@ -17,9 +19,13 @@ export const Sidebar = ({ collapsed, mobileOpen, onToggle, onClose, role }) => {
   return (
     <>
       {mobileOpen && <button aria-label="Cerrar menu" className="fixed inset-0 z-30 bg-ink/30 lg:hidden" onClick={onClose} />}
-      <aside className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border bg-surface transition-transform lg:static lg:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} ${collapsed ? 'lg:w-20' : ''}`}>
+      <aside className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border bg-surface transition-transform lg:static lg:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} ${collapsed ? 'lg:w-24' : ''}`}>
         <div className="flex h-16 items-center justify-between border-b border-border px-4">
-          {!collapsed && <span className="text-lg font-semibold text-primary">QualityTrack</span>}
+          {!collapsed ? (
+            <img src={logoFull} alt="QualityTrack" className="h-8 w-auto" />
+          ) : (
+            <img src={logoIcon} alt="QT" className="mx-auto h-7 w-7" />
+          )}
           <button type="button" onClick={onClose} className="rounded-lg p-2 text-text-muted hover:bg-canvas lg:hidden" aria-label="Cerrar menu"><X className="h-5 w-5" /></button>
           <button type="button" onClick={onToggle} className="hidden rounded-lg p-2 text-text-muted hover:bg-canvas lg:block" aria-label={collapsed ? 'Expandir menu' : 'Contraer menu'}>
             {collapsed ? <Menu className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
