@@ -7,7 +7,8 @@ import { CotizacionesPage } from '../pages/cotizaciones/CotizacionesPage';
 import { CotizacionFormPage } from '../pages/cotizaciones/CotizacionFormPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { LoginPage } from '../pages/LoginPage';
-import { PlaceholderPage } from '../pages/PlaceholderPage';
+import { SolicitudFormPage } from '../pages/solicitudes/SolicitudFormPage';
+import { SolicitudesPage } from '../pages/solicitudes/SolicitudesPage';
 import { ProtectedRoute } from './ProtectedRoute';
 
 export const AppRoutes = () => {
@@ -18,7 +19,12 @@ export const AppRoutes = () => {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route index element={<DashboardPage />} />
-          <Route path="solicitudes" element={<PlaceholderPage title="Solicitudes" description="Gestiona las solicitudes comerciales del equipo." />} />
+          <Route element={<ProtectedRoute roles={['VENDEDOR', 'GERENTE']} />}>
+            <Route path="solicitudes" element={<SolicitudesPage />} />
+          </Route>
+          <Route element={<ProtectedRoute roles={['VENDEDOR']} />}>
+            <Route path="solicitudes/nueva" element={<SolicitudFormPage />} />
+          </Route>
           <Route element={<ProtectedRoute roles={['JEFE_PRODUCCION', 'VENDEDOR']} />}>
             <Route path="cotizaciones" element={<CotizacionesPage />} />
           </Route>
