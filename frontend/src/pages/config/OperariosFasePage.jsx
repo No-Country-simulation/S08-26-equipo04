@@ -63,6 +63,7 @@ export const OperariosFasePage = () => {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
+      <Title>Operarios — {fase.nombre}</Title>
       <div className="flex items-start justify-between">
         <div>
           <Button
