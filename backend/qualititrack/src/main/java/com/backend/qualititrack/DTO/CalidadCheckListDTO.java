@@ -1,6 +1,9 @@
 package com.backend.qualititrack.DTO;
 
+import java.time.LocalDateTime;
+
 import com.backend.qualititrack.Enum.ResultadoCalidad;
+
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -8,12 +11,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+// Revisar para que coincida con base (ver entidad en "modelos")
 public class CalidadCheckListDTO {
     private Long id;
 
