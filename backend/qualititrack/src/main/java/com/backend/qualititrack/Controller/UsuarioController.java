@@ -1,6 +1,7 @@
 package com.backend.qualititrack.Controller;
 
 import com.backend.qualititrack.DTO.UsuarioDTO;
+import com.backend.qualititrack.Enum.NivelRol;
 import com.backend.qualititrack.Service.UsuarioService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -67,7 +68,7 @@ public class UsuarioController {
      *   { "id": 2, "nombre": "María", "email": "maria@example.com", ... }
      * ]
      */
-    @GetMapping
+    /*@GetMapping
     @PreAuthorize("hasAnyRole('GERENTE', 'JEFE_PRODUCCION')")
     public ResponseEntity<List<UsuarioDTO>> listarTodos() {
         log.info("GET /api/usuarios - Listando todos los usuarios");
@@ -76,6 +77,16 @@ public class UsuarioController {
 
         // HTTP 200 OK
         return ResponseEntity.ok(usuarios);
+    }*/
+    @GetMapping
+    @PreAuthorize("hasRole('GERENTE')")
+    public ResponseEntity<List<UsuarioDTO>> listarOperarios() {
+        log.info("GET /api/usuarios - Listando exclusivamente operarios");
+
+        List<UsuarioDTO> operarios = usuarioService.obtenerPorRol(NivelRol.OPERARIO);
+
+        // HTTP 200 OK
+        return ResponseEntity.ok(operarios);
     }
 
     /**

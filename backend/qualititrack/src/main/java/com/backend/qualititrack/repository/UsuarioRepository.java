@@ -42,5 +42,10 @@ public interface UsuarioRepository extends JpaRepository<Usuario,Long> {
      * Contar usuarios totales activos.
      */
     Long countByActivo(Boolean activo);
+
+    /**
+     * Contar usuarios por Nivel de rol.
+     */
+    List<Usuario> findByNivelRol(NivelRol nivelRol);
 }
 
