@@ -5,6 +5,7 @@ import { CatalogoFasesPage } from '../pages/config/CatalogoFasesPage';
 import { OperariosFasePage } from '../pages/config/OperariosFasePage';
 import { CotizacionesPage } from '../pages/cotizaciones/CotizacionesPage';
 import { CotizacionFormPage } from '../pages/cotizaciones/CotizacionFormPage';
+import { CotizacionDetailPage } from '../pages/cotizaciones/CotizacionDetailPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { LoginPage } from '../pages/LoginPage';
 import { SolicitudFormPage } from '../pages/solicitudes/SolicitudFormPage';
@@ -27,6 +28,7 @@ export const AppRoutes = () => {
           </Route>
           <Route element={<ProtectedRoute roles={['JEFE_PRODUCCION', 'VENDEDOR']} />}>
             <Route path="cotizaciones" element={<CotizacionesPage />} />
+            <Route path="cotizaciones/:id" element={<CotizacionDetailPage />} />
           </Route>
           <Route element={<ProtectedRoute roles={['JEFE_PRODUCCION']} />}>
             <Route path="cotizaciones/nueva" element={<CotizacionFormPage />} />

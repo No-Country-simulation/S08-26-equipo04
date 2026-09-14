@@ -55,9 +55,9 @@ export const CotizacionesPage = () => {
                   <td>
                     <button
                       type="button"
-                      onClick={() => navigate(`/cotizaciones/${cot.id}/editar`)}
+                      onClick={() => navigate(cot.estado === 'LISTA_PARA_ENVIAR' ? `/cotizaciones/${cot.id}/editar` : `/cotizaciones/${cot.id}`)}
                       className="font-medium text-primary hover:underline"
-                      aria-label={`Editar ${cot.numero_cotizacion}`}
+                      aria-label={`${cot.estado === 'LISTA_PARA_ENVIAR' ? 'Editar' : 'Ver'} ${cot.numero_cotizacion}`}
                     >
                       {cot.numero_cotizacion}
                     </button>
