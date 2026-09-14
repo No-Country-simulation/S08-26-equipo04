@@ -2,6 +2,8 @@ package com.backend.qualititrack.modelos;
 
 import java.time.OffsetDateTime;
 
+import com.backend.qualititrack.Enum.EstadoOtFase;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -21,7 +23,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 
-// 10. OT Fases[cite: 1]
+// OT Fases
 @Entity
 @Table(name = "ot_fases", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"orden_trabajo_id", "numero_secuencia", "ciclo_iteracion"})
@@ -61,7 +63,7 @@ public class OtFase {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     @Builder.Default
-    private EstadoFase estado = EstadoFase.EN_COLA;
+    private EstadoOtFase estado = EstadoOtFase.EN_COLA;
 
     @Column(name = "fecha_inicio_real")
     private OffsetDateTime fechaInicioReal;
@@ -85,8 +87,4 @@ public class OtFase {
 
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
-
-    public enum EstadoFase {
-        EN_COLA, EN_EJECUCION, TERMINADO
-    }
 }
