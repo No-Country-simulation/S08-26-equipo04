@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { ClipboardList, FileText, LayoutDashboard, LogOut, Menu, PanelLeftClose, Settings, X } from 'lucide-react';
+import { ClipboardList, FileText, LayoutDashboard, LogOut, Menu, PanelLeftClose, Settings, Wrench, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import logoFull from '../assets/qualitytrack-logo.png';
 import logoIcon from '../assets/qualitytrack-icon.png';
@@ -10,6 +10,7 @@ const items = [
   { label: 'Cotizaciones', to: '/cotizaciones', icon: FileText, roles: ['JEFE_PRODUCCION', 'VENDEDOR'] },
   { label: 'Planta', to: '/planta', icon: ClipboardList, roles: ['JEFE_PRODUCCION'] },
   { label: 'Configuracion', to: '/config/fases', icon: Settings, roles: ['GERENTE'] },
+  { label: 'Mis tareas', to: '/operario', icon: Wrench, roles: ['OPERARIO'] },
 ];
 
 export const Sidebar = ({ collapsed, mobileOpen, onToggle, onClose, role }) => {
