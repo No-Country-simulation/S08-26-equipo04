@@ -14,6 +14,6 @@ import lombok.NoArgsConstructor;
 public class SolicitudResponseDTO {
 
     private Long id;
-    private String numero_solicitud;
+    private String numeroSolicitud;
     private EstadoSolicitud estado;
 }

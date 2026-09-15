@@ -106,7 +106,7 @@ public class SolicitudService {
     private SolicitudResponseDTO convertirAResponseDTO(Solicitud solicitud) {
         SolicitudResponseDTO dto = new SolicitudResponseDTO();
         dto.setId(solicitud.getId());
-        dto.setNumero_solicitud(solicitud.getNumeroSolicitud());
+        dto.setNumeroSolicitud(solicitud.getNumeroSolicitud());
         dto.setEstado(solicitud.getEstado());
         return dto;
     }

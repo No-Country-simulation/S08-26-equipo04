@@ -2,6 +2,8 @@ package com.backend.qualititrack.modelos;
 
 import java.time.OffsetDateTime;
 
+import com.backend.qualititrack.Enum.EstadoOT;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -70,8 +72,4 @@ public class OrdenTrabajo {
 
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
-
-    public enum EstadoOT {
-        EN_PRODUCCION, EN_CALIDAD, NO_CONFORME, DESPACHO, ENTREGADA
-    }
 }
