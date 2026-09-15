@@ -1,22 +1,29 @@
 package com.backend.qualititrack.Controller;
-import com.backend.qualititrack.DTO.CotizacionDTO;
-import com.backend.qualititrack.Enum.EstadoCotizacion;
-import com.backend.qualititrack.Service.CotizacionService;
-import com.backend.qualititrack.modelos.Usuario;
-import com.backend.qualititrack.repository.UsuarioRepository;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
-import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.backend.qualititrack.DTO.CotizacionDTO;
+import com.backend.qualititrack.Service.CotizacionService;
+import com.backend.qualititrack.modelos.Usuario;
+import com.backend.qualititrack.repository.UsuarioRepository;
 
 
 @RestController
 @RequestMapping("/api/cotizaciones")
-public class CotizacionControlador {
+public class CotizacionController {
     @Autowired
     private CotizacionService cotizacionService;
     @Autowired
