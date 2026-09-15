@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Pencil, Users } from 'lucide-react';
 import { mocks } from '../../mocks';
-import { Button, Card, CardHeader, CardTitle, Toggle, Title } from '../../components/ui';
+import { Button, Card, CardHeader, CardTitle, DataTable, Toggle, Title } from '../../components/ui';
 import { FaseFormModal } from '../../components/FaseFormModal';
 import { toast } from 'sonner';
 
@@ -62,6 +62,67 @@ export const CatalogoFasesPage = () => {
     toast.success(fase.activo ? 'Fase desactivada' : 'Fase activada');
   };
 
+  const columns = useMemo(() => [
+    {
+      accessorKey: 'codigo',
+      header: 'Codigo',
+      cell: ({ getValue }) => <span className="font-medium text-ink">{getValue()}</span>,
+    },
+    { accessorKey: 'nombre', header: 'Nombre' },
+    {
+      accessorKey: 'descripcion',
+      header: 'Descripcion',
+      cell: ({ getValue }) => (
+        <span className="max-w-xs truncate text-text-secondary">
+          {getValue() || '\u2014'}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'activo',
+      header: 'Estado',
+      enableSorting: false,
+      cell: ({ row }) => (
+        <Toggle
+          checked={row.original.activo}
+          onChange={() => handleToggleActivo(row.original)}
+          label={row.original.activo ? 'Activa' : 'Inactiva'}
+        />
+      ),
+    },
+    {
+      id: 'acciones',
+      header: 'Acciones',
+      enableSorting: false,
+      cell: ({ row }) => (
+        <div className="flex items-center justify-center gap-6">
+          <Button
+            variant="ghost"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEdit(row.original);
+            }}
+            className="hover:text-ink"
+            aria-label={`Editar ${row.original.nombre}`}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/config/fases/${row.original.id}/operarios`);
+            }}
+            className="hover:text-primary"
+            aria-label={`Operarios de ${row.original.nombre}`}
+          >
+            <Users className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ], [navigate]);
+
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <Title>Catálogo de fases</Title>
@@ -79,65 +140,18 @@ export const CatalogoFasesPage = () => {
         <CardHeader>
           <CardTitle>Fases registradas</CardTitle>
         </CardHeader>
-
         {fases.length === 0 ? (
           <p className="py-8 text-center text-body text-text-muted">
             No hay fases configuradas
           </p>
         ) : (
-          <div className="table-container">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Codigo</th>
-                  <th>Nombre</th>
-                  <th>Descripcion</th>
-                  <th>Estado</th>
-                  <th className="!text-center">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {fases.map((fase) => (
-                  <tr key={fase.id}>
-                    <td>
-                      <span className="font-medium text-ink">{fase.codigo}</span>
-                    </td>
-                    <td>{fase.nombre}</td>
-                    <td className="max-w-xs truncate text-text-secondary">
-                      {fase.descripcion || '—'}
-                    </td>
-                    <td>
-                      <Toggle
-                        checked={fase.activo}
-                        onChange={() => handleToggleActivo(fase)}
-                        label={fase.activo ? 'Activa' : 'Inactiva'}
-                      />
-                    </td>
-                    <td>
-                      <div className="flex items-center justify-center gap-6">
-                        <Button
-                          variant="ghost"
-                          onClick={() => handleEdit(fase)}
-                          className="hover:text-ink"
-                          aria-label={`Editar ${fase.nombre}`}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          onClick={() => navigate(`/config/fases/${fase.id}/operarios`)}
-                          className="hover:text-primary"
-                          aria-label={`Operarios de ${fase.nombre}`}
-                        >
-                          <Users className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            columns={columns}
+            data={fases}
+            searchable
+            searchPlaceholder="Buscar por codigo o nombre..."
+            footer={`${fases.length} fase${fases.length !== 1 ? 's' : ''}`}
+          />
         )}
       </Card>
 
