@@ -1,15 +1,31 @@
 package com.backend.qualititrack.modelos;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 import com.backend.qualititrack.Enum.EstadoOT;
-import jakarta.persistence.*;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Table(name = "orden_trabajo")
@@ -70,7 +86,7 @@ public class OrdenTrabajo {
             orphanRemoval = true,
             fetch = FetchType.LAZY
     )
-    private List<OT_Fase> fases;
+    private List<OtFase> fases;
 
     @OneToMany(
             mappedBy = "ordenTrabajo",
@@ -78,7 +94,7 @@ public class OrdenTrabajo {
             orphanRemoval = true,
             fetch = FetchType.LAZY
     )
-    private List<Documento> documentos;
+    private List<Adjunto> documentos;
 
 
     @OneToOne(
@@ -87,13 +103,13 @@ public class OrdenTrabajo {
             orphanRemoval = true,
             fetch = FetchType.LAZY
     )
-    private Calidad_Checklist calidadChecklist;
+    private AuditoriaCalidad calidadChecklist;
 
     @PrePersist
     protected void onCreate() {
         fechaCreacion = LocalDateTime.now();
         if (estado == null) {
-            estado = EstadoOT.CREADA;
+            estado = EstadoOT.EN_PRODUCCION;
         }
     }
 
@@ -182,27 +198,27 @@ public class OrdenTrabajo {
         this.cotizacion = cotizacion;
     }
 
-    public List<OT_Fase> getFases() {
+    public List<OtFase> getFases() {
         return fases;
     }
 
-    public void setFases(List<OT_Fase> fases) {
+    public void setFases(List<OtFase> fases) {
         this.fases = fases;
     }
 
-    public Calidad_Checklist getCalidadChecklist() {
+    public AuditoriaCalidad getCalidadChecklist() {
         return calidadChecklist;
     }
 
-    public void setCalidadChecklist(Calidad_Checklist calidadChecklist) {
+    public void setCalidadChecklist(AuditoriaCalidad calidadChecklist) {
         this.calidadChecklist = calidadChecklist;
     }
 
-    public List<Documento> getDocumentos() {
+    public List<Adjunto> getDocumentos() {
         return documentos;
     }
 
-    public void setDocumentos(List<Documento> documentos) {
+    public void setDocumentos(List<Adjunto> documentos) {
         this.documentos = documentos;
     }
 }
