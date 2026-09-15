@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ArrowLeft, Check, Pencil, X } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import { useCotizaciones } from '../../hooks/useCotizaciones';
 import { mocks } from '../../mocks';
 import { Button, Card, CardHeader, CardTitle, Badge, Modal, Title } from '../../components/ui';
@@ -24,6 +25,7 @@ export const CotizacionDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { cotizaciones, aprobarCotizacion, rechazarCotizacion } = useCotizaciones();
+  const { user } = useAuth();
   const [modal, setModal] = useState(null);
   const [motivo, setMotivo] = useState('');
 
