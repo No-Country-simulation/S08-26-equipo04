@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,6 +12,8 @@ import { SelectorFases } from '../../components/SelectorFases';
 import { SecuenciaFaseRow } from '../../components/SecuenciaFaseRow';
 import { cotizacionSchema, cotizacionDefaults } from '../../utils/cotizacionSchema';
 
+const ESTADOS_SOLO_LECTURA = ['ENVIADA_A_CLIENTE', 'APROBADA', 'NO_APROBADA'];
+
 export const CotizacionFormPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -21,6 +23,12 @@ export const CotizacionFormPage = () => {
   const cotizacionExistente = esEdicion
     ? cotizaciones.find((c) => c.id === Number(id))
     : null;
+
+  useEffect(() => {
+    if (cotizacionExistente && ESTADOS_SOLO_LECTURA.includes(cotizacionExistente.estado)) {
+      navigate(`/cotizaciones/${cotizacionExistente.id}`, { replace: true });
+    }
+  }, [cotizacionExistente, navigate]);
 
   const solicitudesDisponibles = useMemo(
     () => mocks.solicitudes.filter(

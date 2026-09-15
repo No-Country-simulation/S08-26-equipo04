@@ -8,6 +8,7 @@ export const SecuenciaFaseRow = ({
   onActualizar,
   onEliminar,
   errors,
+  disabled = false,
 }) => {
   const handleChange = (campo, valor) => {
     onActualizar(index, { ...fase, [campo]: valor });
@@ -26,8 +27,9 @@ export const SecuenciaFaseRow = ({
           <button
             type="button"
             {...provided.dragHandleProps}
-            className="shrink-0 text-text-muted hover:text-ink"
+            className={`shrink-0 ${disabled ? 'cursor-not-allowed text-text-muted/40' : 'text-text-muted hover:text-ink'}`}
             aria-label="Arrastrar para reordenar"
+            disabled={disabled}
           >
             <GripVertical className="h-5 w-5" />
           </button>
@@ -52,6 +54,7 @@ export const SecuenciaFaseRow = ({
                 }
                 error={errors?.tiempo_estimado_minutos?.message}
                 className="w-24"
+                disabled={disabled}
               />
 
               <Field
@@ -64,19 +67,22 @@ export const SecuenciaFaseRow = ({
                 }
                 placeholder="Instrucciones para esta fase..."
                 className="flex-1"
+                disabled={disabled}
               />
             </div>
           </div>
 
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => onEliminar(index)}
-            className="shrink-0 text-text-muted hover:text-error"
-            aria-label={`Eliminar ${fase.fase_nombre}`}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {!disabled && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => onEliminar(index)}
+              className="shrink-0 text-text-muted hover:text-error"
+              aria-label={`Eliminar ${fase.fase_nombre}`}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       )}
     </Draggable>
