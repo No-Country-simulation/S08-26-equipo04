@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { mocks } from '../../mocks';
-import { Button, Card, CardHeader, CardTitle, Toggle, Title } from '../../components/ui';
+import { Button, Card, CardHeader, CardTitle, DataTable, Toggle, Title } from '../../components/ui';
 import { toast } from 'sonner';
 
 export const OperariosFasePage = () => {
@@ -44,10 +44,44 @@ export const OperariosFasePage = () => {
     );
   };
 
+  const columns = useMemo(() => [
+    {
+      accessorKey: 'nombre',
+      header: 'Operario',
+      cell: ({ getValue }) => <span className="font-medium text-ink">{getValue()}</span>,
+    },
+    {
+      accessorKey: 'email',
+      header: 'Email',
+      cell: ({ getValue }) => <span className="text-text-secondary">{getValue()}</span>,
+    },
+    {
+      accessorKey: 'tipo_tarea',
+      header: 'Especialidad',
+      cell: ({ getValue }) => <span className="text-text-secondary">{getValue() || '\u2014'}</span>,
+    },
+    {
+      id: 'habilitado',
+      header: 'Habilitado',
+      enableSorting: false,
+      cell: ({ row }) => {
+        const operario = row.original;
+        const isHabilitado = asignaciones[operario.id] === true;
+        return (
+          <Toggle
+            checked={isHabilitado}
+            onChange={() => handleToggle(operario.id)}
+            label={isHabilitado ? 'Habilitado' : 'No habilitado'}
+          />
+        );
+      },
+    },
+  ], [asignaciones, operarios]);
+
   if (!fase) {
     return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      <Title>Operarios</Title>
+      <div className="mx-auto max-w-7xl space-y-6">
+        <Title>Operarios</Title>
         <Button variant="discrete" onClick={() => navigate('/config/fases')}>
           <ArrowLeft className="h-4 w-4" />
           Volver al catalogo
@@ -84,42 +118,13 @@ export const OperariosFasePage = () => {
         <CardHeader>
           <CardTitle>Operarios del sistema</CardTitle>
         </CardHeader>
-
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Operario</th>
-                <th>Email</th>
-                <th>Especialidad</th>
-                <th>Habilitado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {operarios.map((operario) => {
-                const isHabilitado = asignaciones[operario.id] === true;
-                return (
-                  <tr key={operario.id}>
-                    <td>
-                      <span className="font-medium text-ink">{operario.nombre}</span>
-                    </td>
-                    <td className="text-text-secondary">{operario.email}</td>
-                    <td className="text-text-secondary">
-                      {operario.tipo_tarea || '—'}
-                    </td>
-                    <td>
-                      <Toggle
-                        checked={isHabilitado}
-                        onChange={() => handleToggle(operario.id)}
-                        label={isHabilitado ? 'Habilitado' : 'No habilitado'}
-                      />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          columns={columns}
+          data={operarios}
+          searchable
+          searchPlaceholder="Buscar por nombre o email..."
+          footer={`${operarios.length} operario${operarios.length !== 1 ? 's' : ''}`}
+        />
       </Card>
     </div>
   );

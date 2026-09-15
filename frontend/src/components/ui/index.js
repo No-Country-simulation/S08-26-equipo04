@@ -1,6 +1,7 @@
 export { Badge } from './Badge';
 export { Card, CardHeader, CardTitle } from './Card';
 export { Button } from './Button';
+export { DataTable } from './DataTable';
 export { Field } from './Field';
 export { Modal } from './Modal';
 export { DateInput } from './DateInput';
