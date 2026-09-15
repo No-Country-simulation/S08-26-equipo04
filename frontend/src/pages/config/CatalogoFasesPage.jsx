@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Pencil, Users } from 'lucide-react';
 import { mocks } from '../../mocks';
-import { Button, Card, CardHeader, CardTitle, Toggle } from '../../components/ui';
+import { Button, Card, CardHeader, CardTitle, Toggle, Title } from '../../components/ui';
 import { FaseFormModal } from '../../components/FaseFormModal';
 import { toast } from 'sonner';
 
@@ -64,6 +64,7 @@ export const CatalogoFasesPage = () => {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
+      <Title>Catálogo de fases</Title>
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-h1 text-ink">Catalogo de fases</h1>

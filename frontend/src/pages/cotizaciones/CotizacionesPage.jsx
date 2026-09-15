@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCotizaciones } from '../../hooks/useCotizaciones';
-import { Button, Card, CardHeader, CardTitle, Badge } from '../../components/ui';
+import { Button, Card, CardHeader, CardTitle, Badge, Title } from '../../components/ui';
 
 const estadoBadge = {
   LISTA_PARA_ENVIAR: 'pending',
@@ -19,6 +19,7 @@ export const CotizacionesPage = () => {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
+      <Title>Cotizaciones</Title>
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-h1 text-ink">Cotizaciones</h1>

@@ -1,5 +1,5 @@
 import { ClipboardList, Clock3, ShieldCheck } from "lucide-react";
-import { Badge, Card, CardHeader, CardTitle } from "../components/ui";
+import { Badge, Card, CardHeader, CardTitle, Title } from "../components/ui";
 
 const metrics = [
   { label: "Solicitudes activas", value: "12", icon: ClipboardList },
@@ -9,6 +9,7 @@ const metrics = [
 
 export const DashboardPage = () => (
   <div className="mx-auto max-w-7xl space-y-6">
+    <Title>Panel general</Title>
     <div>
       <p className="text-label text-primary">Panel general</p>
       <h1 className="mt-1 text-h1 text-ink">Resumen operativo</h1>

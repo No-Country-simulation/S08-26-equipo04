@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { ArrowLeft, Save } from 'lucide-react';
 import { mocks } from '../../mocks';
 import { useCotizaciones } from '../../hooks/useCotizaciones';
-import { Button, Card, CardHeader, CardTitle, Field } from '../../components/ui';
+import { Button, Card, CardHeader, CardTitle, Field, Title } from '../../components/ui';
 import { SelectorFases } from '../../components/SelectorFases';
 import { SecuenciaFaseRow } from '../../components/SecuenciaFaseRow';
 import { cotizacionSchema, cotizacionDefaults } from '../../utils/cotizacionSchema';
@@ -128,6 +128,7 @@ export const CotizacionFormPage = () => {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
+      <Title>{esEdicion ? 'Editar cotización' : 'Nueva cotización'}</Title>
       <div className="flex items-start gap-4">
         <Button
           variant="ghost"

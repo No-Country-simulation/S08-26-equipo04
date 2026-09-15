@@ -7,7 +7,7 @@ import { ArrowLeft, FileUp, Paperclip, X } from 'lucide-react';
 import { mocks } from '../../mocks';
 import { useAuth } from '../../context/AuthContext';
 import { useSolicitudes } from '../../hooks/useSolicitudes';
-import { Button, Card, CardTitle, Field } from '../../components/ui';
+import { Button, Card, CardTitle, Field, Title } from '../../components/ui';
 import { solicitudDefaults, solicitudSchema } from '../../utils/solicitudSchema';
 
 const formatBytes = (bytes) => `${(bytes / 1024 / 1024).toFixed(2)} MB`;
@@ -73,6 +73,7 @@ export const SolicitudFormPage = () => {
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
+      <Title>Nueva solicitud</Title>
       <div>
         <button type="button" onClick={() => navigate('/solicitudes')} className="inline-flex items-center gap-1 text-label font-medium text-primary hover:underline">
           <ArrowLeft className="h-3.5 w-3.5" />Volver a Solicitudes

@@ -1,26 +1,27 @@
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useAuth } from '../context/AuthContext';
-import { mocks } from '../mocks';
-import { Button, Field } from '../components/ui';
-import { loginSchema, loginDefaults } from '../utils/loginSchema';
-import logoIcon from '../assets/qualitytrack-icon.png';
-import logoFull from '../assets/qualitytrack-logo.png';
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuth } from "../context/AuthContext";
+import { mocks } from "../mocks";
+import { Button, Field, Title } from "../components/ui";
+import { loginSchema, loginDefaults } from "../utils/loginSchema";
+import logoIcon from "../assets/qualitytrack-icon.png";
 
 const PasswordField = ({ id, label, placeholder, error, ...props }) => {
   const [visible, setVisible] = useState(false);
   return (
     <div className="space-y-1.5">
-      <label htmlFor={id} className="block text-label text-ink">{label}</label>
+      <label htmlFor={id} className="block text-label text-ink">
+        {label}
+      </label>
       <div className="relative">
         <input
           id={id}
-          type={visible ? 'text' : 'password'}
+          type={visible ? "text" : "password"}
           placeholder={placeholder}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? `${id}-error` : undefined}
-          className={`input pr-16 ${error ? 'border-error focus:ring-error' : ''}`}
+          className={`input pr-16 ${error ? "border-error focus:ring-error" : ""}`}
           {...props}
         />
         <button
@@ -29,10 +30,14 @@ const PasswordField = ({ id, label, placeholder, error, ...props }) => {
           className="absolute right-3 top-1/2 -translate-y-1/2 text-label text-primary hover:underline"
           tabIndex={-1}
         >
-          {visible ? 'Ocultar' : 'Mostrar'}
+          {visible ? "Ocultar" : "Mostrar"}
         </button>
       </div>
-      {error && <p id={`${id}-error`} className="text-metadata text-error">{error}</p>}
+      {error && (
+        <p id={`${id}-error`} className="text-metadata text-error">
+          {error}
+        </p>
+      )}
     </div>
   );
 };
@@ -50,9 +55,14 @@ export const LoginPage = () => {
   });
 
   const onSubmit = ({ email, password }) => {
-    const account = mocks.auth.find((a) => a.email === email && a.password === password);
+    const account = mocks.auth.find(
+      (a) => a.email === email && a.password === password,
+    );
     if (!account) {
-      setError('root', { type: 'manual', message: 'Credenciales incorrectas. Revisa el correo y la contrasena.' });
+      setError("root", {
+        type: "manual",
+        message: "Credenciales incorrectas. Revisa el correo y la contrasena.",
+      });
       return;
     }
     login(account);
@@ -60,6 +70,7 @@ export const LoginPage = () => {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-canvas p-4">
+      <Title>Iniciar sesión</Title>
       <div className="flex w-full max-w-5xl flex-col items-stretch overflow-hidden rounded-2xl bg-surface shadow-card lg:flex-row">
         {/* Lado izquierdo - Logo */}
         <div className="flex items-center justify-center bg-surface px-8 py-12 lg:w-1/2 lg:py-0">
@@ -79,7 +90,11 @@ export const LoginPage = () => {
         <div className="flex items-center justify-center px-8 py-10 lg:w-1/2 lg:py-12">
           <div className="w-full max-w-sm">
             <h1 className="mb-8 text-h1 text-ink">Iniciar sesión</h1>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              className="space-y-5"
+              noValidate
+            >
               <Field
                 id="email"
                 label="Correo electrónico"
@@ -87,7 +102,7 @@ export const LoginPage = () => {
                 placeholder="vendedor@qualitytrack.com"
                 autoComplete="username"
                 error={errors.email?.message}
-                {...register('email')}
+                {...register("email")}
               />
               <PasswordField
                 id="password"
@@ -95,10 +110,13 @@ export const LoginPage = () => {
                 placeholder="••••••••"
                 autoComplete="current-password"
                 error={errors.password?.message}
-                {...register('password')}
+                {...register("password")}
               />
               {errors.root && (
-                <p role="alert" className="rounded-lg bg-error-light p-3 text-label text-error">
+                <p
+                  role="alert"
+                  className="rounded-lg bg-error-light p-3 text-label text-error"
+                >
                   {errors.root.message}
                 </p>
               )}
