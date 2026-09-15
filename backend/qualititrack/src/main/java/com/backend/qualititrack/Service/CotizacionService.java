@@ -1,34 +1,35 @@
 package com.backend.qualititrack.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.backend.qualititrack.DTO.CotizacionDTO;
 import com.backend.qualititrack.Enum.EstadoCotizacion;
 import com.backend.qualititrack.modelos.Cotizacion;
 import com.backend.qualititrack.modelos.Solicitud;
 import com.backend.qualititrack.modelos.Usuario;
-import com.backend.qualititrack.repository.CotizacionRepositorio;
-import com.backend.qualititrack.repository.SolicitudRepositorio;
+import com.backend.qualititrack.repository.CotizacionRepository;
+import com.backend.qualititrack.repository.SolicitudRepository;
 import com.backend.qualititrack.repository.UsuarioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class CotizacionService {
 
     @Autowired
-    private CotizacionRepositorio cotizacionRepositorio;
+    private CotizacionRepository cotizacionRepository;
 
     @Autowired
-    private SolicitudRepositorio solicitudRepositorio;
+    private SolicitudRepository solicitudRepository;
 
     @Autowired
-    private UsuarioRepository usuarioRepositorio;
+    private UsuarioRepository usuarioRepository;
 
     @Autowired
     private OrdenTrabajoService ordenTrabajoService;
@@ -41,11 +42,11 @@ public class CotizacionService {
     public CotizacionDTO crear(CotizacionDTO dto, Long jefeId) {
 
         // Validar solicitud existe
-        Solicitud solicitud = solicitudRepositorio.findById(dto.getSolicitudId())
+        Solicitud solicitud = solicitudRepository.findById(dto.getSolicitudId())
                 .orElseThrow(() -> new IllegalArgumentException("Solicitud no encontrada"));
 
         // Validar que no exista cotización previa (una sola por solicitud)
-        if (cotizacionRepositorio.findBySolicitudId(dto.getSolicitudId()).isPresent()) {
+        if (cotizacionRepository.findBySolicitudId(dto.getSolicitudId()).isPresent()) {
             throw new IllegalArgumentException("Ya existe cotización para esta solicitud");
         }
 
@@ -55,7 +56,7 @@ public class CotizacionService {
         }
 
         // Validar que el usuario es JEFE_PRODUCCION
-        Usuario jefe = usuarioRepositorio.findById(jefeId)
+        Usuario jefe = usuarioRepository.findById(jefeId)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
 
         if (!jefe.getRol().toString().equals("JEFE_PRODUCCION")) {
@@ -76,7 +77,7 @@ public class CotizacionService {
 
         cotizacion.setFechaCreacion(LocalDateTime.now());
         cotizacion.setFechaActualizacion(LocalDateTime.now());
-        Cotizacion guardada = cotizacionRepositorio.save(cotizacion);
+        Cotizacion guardada = cotizacionRepository.save(cotizacion);
         return convertirADTO(guardada);
     }
 
@@ -87,7 +88,7 @@ public class CotizacionService {
      */
     @Transactional(readOnly = true)
     public CotizacionDTO obtenerPorId(Long id) {
-        Cotizacion cot = cotizacionRepositorio.findById(id)
+        Cotizacion cot = cotizacionRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Cotización no encontrada"));
         return convertirADTO(cot);
     }
@@ -97,7 +98,7 @@ public class CotizacionService {
      */
     @Transactional(readOnly = true)
     public CotizacionDTO obtenerPorSolicitud(Long solicitudId) {
-        Cotizacion cot = cotizacionRepositorio.findBySolicitudId(solicitudId)
+        Cotizacion cot = cotizacionRepository.findBySolicitudId(solicitudId)
                 .orElseThrow(() -> new IllegalArgumentException("No existe cotización para esta solicitud"));
         return convertirADTO(cot);
     }
@@ -108,7 +109,7 @@ public class CotizacionService {
      */
     @Transactional(readOnly = true)
     public List<CotizacionDTO> listarPendientes() {
-        return cotizacionRepositorio.findByEstado(EstadoCotizacion.LISTA_PARA_ENVIAR.toString()).stream()
+        return cotizacionRepository.findByEstado(EstadoCotizacion.LISTA_PARA_ENVIAR.toString()).stream()
                 .map(this::convertirADTO)
                 .collect(Collectors.toList());
     }
@@ -120,10 +121,10 @@ public class CotizacionService {
     @Transactional
     public CotizacionDTO enviarAlCliente(Long cotizacionId, Long vendedorId) {
 
-        Cotizacion cot = cotizacionRepositorio.findById(cotizacionId)
+        Cotizacion cot = cotizacionRepository.findById(cotizacionId)
                 .orElseThrow(() -> new IllegalArgumentException("Cotización no encontrada"));
 
-        Usuario vendedor = usuarioRepositorio.findById(vendedorId)
+        Usuario vendedor = usuarioRepository.findById(vendedorId)
                 .orElseThrow(() -> new IllegalArgumentException("Vendedor no encontrado"));
 
         if (!vendedor.getRol().toString().equals("VENDEDOR")) {
@@ -137,7 +138,7 @@ public class CotizacionService {
         cot.setEstado(EstadoCotizacion.ENVIADA_A_CLIENTE);
         cot.setFechaEnvioCliente(LocalDateTime.now());
 
-        Cotizacion actualizada = cotizacionRepositorio.save(cot);
+        Cotizacion actualizada = cotizacionRepository.save(cot);
         return convertirADTO(actualizada);
     }
 
@@ -149,10 +150,10 @@ public class CotizacionService {
     @Transactional
     public CotizacionDTO aprobarCotizacion(Long cotizacionId, Long vendedorId) {
 
-        Cotizacion cot = cotizacionRepositorio.findById(cotizacionId)
+        Cotizacion cot = cotizacionRepository.findById(cotizacionId)
                 .orElseThrow(() -> new IllegalArgumentException("Cotización no encontrada"));
 
-        Usuario vendedor = usuarioRepositorio.findById(vendedorId)
+        Usuario vendedor = usuarioRepository.findById(vendedorId)
                 .orElseThrow(() -> new IllegalArgumentException("Vendedor no encontrado"));
 
         if (!vendedor.getRol().toString().equals("VENDEDOR")) {
@@ -166,7 +167,7 @@ public class CotizacionService {
         cot.setEstado(EstadoCotizacion.APROBADA);
         cot.setFechaRespuestaCliente(LocalDateTime.now());
 
-        Cotizacion actualizada = cotizacionRepositorio.save(cot);
+        Cotizacion actualizada = cotizacionRepository.save(cot);
 
         // ⚡ TRIGGER: Generar OrdenTrabajo automáticamente
         try {
@@ -185,10 +186,10 @@ public class CotizacionService {
     @Transactional
     public CotizacionDTO rechazarCotizacion(Long cotizacionId, String motivo, Long vendedorId) {
 
-        Cotizacion cot = cotizacionRepositorio.findById(cotizacionId)
+        Cotizacion cot = cotizacionRepository.findById(cotizacionId)
                 .orElseThrow(() -> new IllegalArgumentException("Cotización no encontrada"));
 
-        Usuario vendedor = usuarioRepositorio.findById(vendedorId)
+        Usuario vendedor = usuarioRepository.findById(vendedorId)
                 .orElseThrow(() -> new IllegalArgumentException("Vendedor no encontrado"));
 
         if (!vendedor.getRol().toString().equals("VENDEDOR")) {
@@ -207,7 +208,7 @@ public class CotizacionService {
         cot.setFechaRespuestaCliente(LocalDateTime.now());
         cot.setMotivoRechazo(motivo);
 
-        Cotizacion actualizada = cotizacionRepositorio.save(cot);
+        Cotizacion actualizada = cotizacionRepository.save(cot);
         return convertirADTO(actualizada);
 
 

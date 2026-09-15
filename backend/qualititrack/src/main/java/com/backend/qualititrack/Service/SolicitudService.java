@@ -1,32 +1,33 @@
 package com.backend.qualititrack.Service;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.backend.qualititrack.DTO.SolicitudDTO;
 import com.backend.qualititrack.Enum.EstadoSolicitud;
 import com.backend.qualititrack.modelos.Cliente;
 import com.backend.qualititrack.modelos.Solicitud;
 import com.backend.qualititrack.modelos.Usuario;
 import com.backend.qualititrack.repository.ClienteRepository;
-import com.backend.qualititrack.repository.SolicitudRepositorio;
+import com.backend.qualititrack.repository.SolicitudRepository;
 import com.backend.qualititrack.repository.UsuarioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class SolicitudService {
     // Inyección de dependencias a través del constructor
     @Autowired
-    private SolicitudRepositorio solicitudRepositorio;
+    private SolicitudRepository solicitudRepository;
     @Autowired
-    private ClienteRepository clienteRepositorio;
+    private ClienteRepository clienteRepository;
     @Autowired
-    private UsuarioRepository usuarioRepositorio;
+    private UsuarioRepository usuarioRepository;
 
-    public SolicitudService(SolicitudRepositorio solicitudRepositorio, ClienteRepository clienteRepositorio, UsuarioRepository usuarioRepositorio) {
-        this.solicitudRepositorio = solicitudRepositorio;
-        this.clienteRepositorio = clienteRepositorio;
-        this.usuarioRepositorio = usuarioRepositorio;
+    public SolicitudService(SolicitudRepository solicitudRepository, ClienteRepository clienteRepository, UsuarioRepository usuarioRepository) {
+        this.solicitudRepository = solicitudRepository;
+        this.clienteRepository = clienteRepository;
+        this.usuarioRepository = usuarioRepository;
     }
 
     private String generarNumeroSolicitud() {
@@ -38,12 +39,12 @@ public class SolicitudService {
     public SolicitudDTO crear(SolicitudDTO dto, Long vendedorId) {
 
         // 1. Validar y obtener el Cliente desde la BD
-        Cliente cliente = clienteRepositorio.findById(dto.getClienteId())
+        Cliente cliente = clienteRepository.findById(dto.getClienteId())
                 .orElseThrow(() -> new IllegalArgumentException(
                         "El cliente con ID " + dto.getClienteId() + " no existe"));
 
         // 2. Validar y obtener el Vendedor desde la BD
-        Usuario vendedor = usuarioRepositorio.findById(vendedorId)
+        Usuario vendedor = usuarioRepository.findById(vendedorId)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "El vendedor con ID " + vendedorId + " no existe"));
 
@@ -59,7 +60,7 @@ public class SolicitudService {
         solicitud.setEstado(EstadoSolicitud.PENDIENTE_COTIZACION); // Estado inicial
 
         // Guardar en BD
-        Solicitud guardada = solicitudRepositorio.save(solicitud);
+        Solicitud guardada = solicitudRepository.save(solicitud);
 
         // Retornar nueva solicitud en forma de dto
         return convertirADTO(guardada);

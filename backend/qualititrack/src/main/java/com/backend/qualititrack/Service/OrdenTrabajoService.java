@@ -1,39 +1,41 @@
 package com.backend.qualititrack.Service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.backend.qualititrack.DTO.OrdenTrabajoDTO;
 import com.backend.qualititrack.Enum.EstadoOT;
 import com.backend.qualititrack.modelos.Cotizacion;
 import com.backend.qualititrack.modelos.OrdenTrabajo;
-import com.backend.qualititrack.repository.CotizacionRepositorio;
+import com.backend.qualititrack.repository.CotizacionRepository;
 import com.backend.qualititrack.repository.OrdenTrabajoRepository;
-import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
+import jakarta.transaction.Transactional;
 
 @Service
 @Transactional
 public class OrdenTrabajoService {
     @Autowired
-    private OrdenTrabajoRepository ordenTrabajoRepositorio;
+    private OrdenTrabajoRepository ordenTrabajoRepository;
 
     @Autowired
-    private CotizacionRepositorio cotizacionRepositorio;
+    private CotizacionRepository cotizacionRepository;
 
     /**
      * GENERAR DESDE COTIZACIÓN (Auto-trigger cuando se aprueba cotización)
      */
     public OrdenTrabajoDTO generarDesdeCotzacion(Long cotizacionId) {
         // Validar que la cotización existe
-        Cotizacion cotizacion = cotizacionRepositorio.findById(cotizacionId)
+        Cotizacion cotizacion = cotizacionRepository.findById(cotizacionId)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "La cotización con ID " + cotizacionId + " no existe"));
 
         // Validar que no exista una orden de trabajo para esta cotización
-        if (ordenTrabajoRepositorio.findByCotizacionId(cotizacionId).isPresent()) {
+        if (ordenTrabajoRepository.findByCotizacionId(cotizacionId).isPresent()) {
             throw new IllegalArgumentException(
                     "Ya existe una orden de trabajo para esta cotización");
         }
@@ -48,7 +50,7 @@ public class OrdenTrabajoService {
         ordenTrabajo.setFechaVencimiento(cotizacion.getFechaVencimiento());  // Copiar desde cotización
         ordenTrabajo.setCliente(cotizacion.getSolicitud().getCliente());    //obtenemos el cliente
 
-        OrdenTrabajo guardada = ordenTrabajoRepositorio.save(ordenTrabajo);
+        OrdenTrabajo guardada = ordenTrabajoRepository.save(ordenTrabajo);
         return convertirADTO(guardada);
     }
 
@@ -57,7 +59,7 @@ public class OrdenTrabajoService {
      */
     @Transactional()
     public OrdenTrabajoDTO obtenerPorId(Long id) {
-        OrdenTrabajo ordenTrabajo = ordenTrabajoRepositorio.findById(id)
+        OrdenTrabajo ordenTrabajo = ordenTrabajoRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "La orden de trabajo con ID " + id + " no existe"));
         return convertirADTO(ordenTrabajo);
@@ -68,7 +70,7 @@ public class OrdenTrabajoService {
      */
     @Transactional()
     public OrdenTrabajoDTO obtenerPorCotizacion(Long cotizacionId) {
-        OrdenTrabajo ordenTrabajo = ordenTrabajoRepositorio.findByCotizacionId(cotizacionId)
+        OrdenTrabajo ordenTrabajo = ordenTrabajoRepository.findByCotizacionId(cotizacionId)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "No existe orden de trabajo para la cotización con ID " + cotizacionId));
         return convertirADTO(ordenTrabajo);
@@ -79,7 +81,7 @@ public class OrdenTrabajoService {
      */
     @Transactional()
     public List<OrdenTrabajoDTO> listarPorEstado(EstadoOT estado) {
-        return ordenTrabajoRepositorio.findAll().stream()
+        return ordenTrabajoRepository.findAll().stream()
                 .filter(ot -> ot.getEstado() == estado)
                 .map(this::convertirADTO)
                 .collect(Collectors.toList());
@@ -90,7 +92,7 @@ public class OrdenTrabajoService {
      */
     @Transactional
     public OrdenTrabajoDTO actualizarEstado(Long id, EstadoOT nuevoEstado) {
-        OrdenTrabajo ordenTrabajo = ordenTrabajoRepositorio.findById(id)
+        OrdenTrabajo ordenTrabajo = ordenTrabajoRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "La orden de trabajo con ID " + id + " no existe"));
 
@@ -101,7 +103,7 @@ public class OrdenTrabajoService {
             ordenTrabajo.setFechaTerminacion(LocalDateTime.now());
         }
 
-        OrdenTrabajo actualizada = ordenTrabajoRepositorio.save(ordenTrabajo);
+        OrdenTrabajo actualizada = ordenTrabajoRepository.save(ordenTrabajo);
         return convertirADTO(actualizada);
     }
 
@@ -110,14 +112,14 @@ public class OrdenTrabajoService {
      */
     @Transactional
     public OrdenTrabajoDTO cancelar(Long id, String motivo) {
-        OrdenTrabajo ordenTrabajo = ordenTrabajoRepositorio.findById(id)
+        OrdenTrabajo ordenTrabajo = ordenTrabajoRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "La orden de trabajo con ID " + id + " no existe"));
 
         ordenTrabajo.setEstado(EstadoOT.CANCELADA);
         ordenTrabajo.setNotas("Cancelada: " + motivo);
 
-        OrdenTrabajo actualizada = ordenTrabajoRepositorio.save(ordenTrabajo);
+        OrdenTrabajo actualizada = ordenTrabajoRepository.save(ordenTrabajo);
         return convertirADTO(actualizada);
     }
 
