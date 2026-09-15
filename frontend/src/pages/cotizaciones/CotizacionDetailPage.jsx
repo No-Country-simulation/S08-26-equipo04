@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ArrowLeft, Check, Pencil, X } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import { useCotizaciones } from '../../hooks/useCotizaciones';
 import { mocks } from '../../mocks';
 import { Button, Card, CardHeader, CardTitle, Badge, Modal, Title } from '../../components/ui';
@@ -24,6 +25,7 @@ export const CotizacionDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { cotizaciones, aprobarCotizacion, rechazarCotizacion } = useCotizaciones();
+  const { user } = useAuth();
   const [modal, setModal] = useState(null);
   const [motivo, setMotivo] = useState('');
 
@@ -87,7 +89,7 @@ export const CotizacionDetailPage = () => {
           </div>
         </div>
       </div>
-        {cotizacion.estado === 'ENVIADA_A_CLIENTE' && (
+        {cotizacion.estado === 'ENVIADA_A_CLIENTE' && user?.rol === 'VENDEDOR' && (
           <Button onClick={() => setModal('aprobar')}>Registrar respuesta</Button>
         )}
       </div>
@@ -155,7 +157,7 @@ export const CotizacionDetailPage = () => {
         >
           Volver
         </Button>
-        {cotizacion.estado === 'LISTA_PARA_ENVIAR' && (
+        {cotizacion.estado === 'LISTA_PARA_ENVIAR' && user?.rol === 'JEFE_PRODUCCION' && (
           <Button
             onClick={() => navigate(`/cotizaciones/${cotizacion.id}/editar`)}
           >
