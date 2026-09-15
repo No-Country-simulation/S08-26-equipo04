@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Pencil } from 'lucide-react';
 import { useCotizaciones } from '../../hooks/useCotizaciones';
-import { Button, Card, CardHeader, CardTitle, Badge } from '../../components/ui';
+import { Button, Card, CardHeader, CardTitle, Badge, Title } from '../../components/ui';
 
 const estadoBadge = {
   LISTA_PARA_ENVIAR: 'pending',
@@ -31,6 +31,7 @@ export const CotizacionDetailPage = () => {
   if (!cotizacion) {
     return (
       <div className="mx-auto max-w-4xl space-y-6">
+        <Title>Cotización no encontrada</Title>
         <Button variant="ghost" onClick={() => navigate('/cotizaciones')}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
@@ -45,6 +46,7 @@ export const CotizacionDetailPage = () => {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
+      <Title>Detalle de cotización</Title>
       <div className="flex items-start gap-4">
         <Button
           variant="ghost"
