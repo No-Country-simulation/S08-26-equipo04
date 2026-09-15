@@ -87,7 +87,7 @@ export const CotizacionDetailPage = () => {
           </div>
         </div>
       </div>
-        {cotizacion.estado === 'ENVIADA_A_CLIENTE' && (
+        {cotizacion.estado === 'ENVIADA_A_CLIENTE' && user?.rol === 'VENDEDOR' && (
           <Button onClick={() => setModal('aprobar')}>Registrar respuesta</Button>
         )}
       </div>
@@ -155,7 +155,7 @@ export const CotizacionDetailPage = () => {
         >
           Volver
         </Button>
-        {cotizacion.estado === 'LISTA_PARA_ENVIAR' && (
+        {cotizacion.estado === 'LISTA_PARA_ENVIAR' && user?.rol === 'JEFE_PRODUCCION' && (
           <Button
             onClick={() => navigate(`/cotizaciones/${cotizacion.id}/editar`)}
           >
