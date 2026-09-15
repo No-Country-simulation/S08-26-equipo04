@@ -26,6 +26,7 @@ public class UsuarioDTO {
     @NotNull(message = "El rol no puede ser nulo")
     private NivelRol rol;
 
+
     private Boolean activo;
 
     private LocalDateTime fechaCreacion;

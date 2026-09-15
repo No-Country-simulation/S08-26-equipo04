@@ -8,5 +8,6 @@ public enum EstadoSolicitud {
     CALIDAD,         // Pasó a inspección de calidad
     COMPLETADA,      // OT completada y conforme
     RECHAZADA,       // Cliente rechazó la cotización
-    CANCELADA        // Solicitud cancelada
+    CANCELADA,        // Solicitud cancelada
+    PENDIENTE_COTIZACION
 }

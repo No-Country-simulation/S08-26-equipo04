@@ -16,27 +16,125 @@ import java.time.LocalDateTime;
 @Builder
 public class CotizacionDTO {
     private Long id;
+    private String numeroCotizacion;
 
-    @NotNull(message = "El ID de solicitud no puede ser nulo")
+
+    @NotNull(message = "Solicitud requerida")
     private Long solicitudId;
+    //public Long getSolicitudId(){
+    //    return getSolicitudId();
+    //}
 
-    private String numeroSolicitud;
+    @NotNull(message = "Jefe de Producción requerido")
+    private Long jefeProduccionId;
 
-    @NotNull(message = "El precio total no puede ser nulo")
-    @DecimalMin(value = "0.01", message = "El precio debe ser mayor a 0.01")
+    public Long getJefeProduccionId() {
+        return jefeProduccionId;
+    }
+
+    public void setJefeProduccionId(Long jefeProduccionId) {
+        this.jefeProduccionId = jefeProduccionId;
+    }
+    public Long getSolicitudId() {
+        return solicitudId;
+    }
+
+    public void setSolicitudId(Long solicitudId) {
+        this.solicitudId = solicitudId;
+    }
+
+    @NotNull(message = "Precio requerido")
+    @DecimalMin(value = "0.01")
     private BigDecimal precioTotal;
 
-    @NotNull
-    private BigDecimal margenGanancia;
+    public BigDecimal getPrecioTotal() {
+        return precioTotal;
+    }
 
-    @NotNull
-    private BigDecimal descuentoPorcentaje;
+    public void setPrecioTotal(BigDecimal precioTotal) {
+        this.precioTotal = precioTotal;
+    }
+
+    private String estado;  // o Enum EstadoCotizacion
 
     private String observaciones;
 
     private LocalDateTime fechaVencimiento;
-
-    private LocalDateTime fechaAceptacion;
+    private LocalDateTime fechaEnvioCliente;
+    private LocalDateTime fechaRespuestaCliente;
+    private String motivoRechazo;
 
     private LocalDateTime fechaCreacion;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getNumeroCotizacion() {
+        return numeroCotizacion;
+    }
+
+    public void setNumeroCotizacion(String numeroCotizacion) {
+        this.numeroCotizacion = numeroCotizacion;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
+    }
+
+    public String getObservaciones() {
+        return observaciones;
+    }
+
+    public void setObservaciones(String observaciones) {
+        this.observaciones = observaciones;
+    }
+
+    public String getMotivoRechazo() {
+        return motivoRechazo;
+    }
+
+    public void setMotivoRechazo(String motivoRechazo) {
+        this.motivoRechazo = motivoRechazo;
+    }
+
+    public LocalDateTime getFechaVencimiento() {
+        return fechaVencimiento;
+    }
+
+    public void setFechaVencimiento(LocalDateTime fechaVencimiento) {
+        this.fechaVencimiento = fechaVencimiento;
+    }
+
+    public LocalDateTime getFechaEnvioCliente() {
+        return fechaEnvioCliente;
+    }
+
+    public void setFechaEnvioCliente(LocalDateTime fechaEnvioCliente) {
+        this.fechaEnvioCliente = fechaEnvioCliente;
+    }
+
+    public LocalDateTime getFechaRespuestaCliente() {
+        return fechaRespuestaCliente;
+    }
+
+    public void setFechaRespuestaCliente(LocalDateTime fechaRespuestaCliente) {
+        this.fechaRespuestaCliente = fechaRespuestaCliente;
+    }
+
+    public LocalDateTime getFechaCreacion() {
+        return fechaCreacion;
+    }
+
+    public void setFechaCreacion(LocalDateTime fechaCreacion) {
+        this.fechaCreacion = fechaCreacion;
+    }
 }
