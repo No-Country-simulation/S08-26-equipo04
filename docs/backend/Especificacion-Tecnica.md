@@ -4,6 +4,16 @@
 
 Se utiliza una arquitectura cliente-servidor, donde el frontend se comunica con el backend a través de una REST API, organizada de manera modular para los diferentes tipos de acceso (Vendedor, Jefe de producción, Operario, Calidad, Gerente), que a su vez gestiona una base de datos PostgreSQL.
 
+```mermaid
+flowchart LR
+    FE["Frontend<br/>React"] -- "HTTP / JSON" --> BE["Backend<br/>Spring Boot"]
+    BE --> JPA["Spring Data JPA"]
+    BE --> SEC["Spring Security"]
+    BE --> VAL["Bean Validation"]
+    JPA --> DB[("PostgreSQL")]
+    SEC --> DB
+```
+
 ## Stack tecnológico
 
 ### Desarrollo
@@ -11,6 +21,42 @@ Se utiliza una arquitectura cliente-servidor, donde el frontend se comunica con 
 - **Backend:** *Java + Spring Boot*, por su robustez y facilidad para crear REST APIs e implementar servicios de seguridad y autenticación a través de Spring Security, así como también diversos otros servicios que cubran todos los requerimientos del proyecto.
 - **Frontend:** *React*, por su popularidad y eficiencia en la creación de interfaces de usuario dinámicas.
 - **Base de datos:** *PostgreSQL*, por su fiabilidad y soporte para relaciones complejas entre datos. Además, una de las opciones más recomendadas para el despliegue gratuito de bases de datos (Neon) solo acepta PostgreSQL.
+
+## Estructura del proyecto
+
+```text
+backend/
+├── pom.xml
+├── README.md
+├── .env.example
+└── src/
+    ├── main/
+    │   ├── java/com/qualitytrack/
+    │   │   ├── QualityTrackApplication.java
+    │   │   ├── config/       # Beans globales, CORS
+    │   │   ├── controller/   # endpoints REST
+    │   │   ├── dto/          # objetos de transferencia de datos
+    │   │   ├── enum/         # enumeraciones
+    │   │   ├── exception/    # GlobalExceptionHandler (@RestControllerAdvice)
+    │   │   ├── modelos/      # entidades JPA
+    │   │   ├── repository/   # repositorios Spring Data JPA
+    │   │   ├── security/     # Filtro JWT, UserDetailsService, roles
+    │   │   ├── service/      # lógica de negocio
+    │   │   └── utils/        # clases utilitarias (mappers, validadores, etc.)
+    │   └── resources/
+    │       ├── application.properties
+    │       └── application-dev.properties
+    └── test/
+```
+
+Cada una de las entidades de las tablas del [Esquema v2](../datos/QualityTrack-Esquema-Base-Datos-v2.md) son mapeadas a clases JPA dentro del paquete `modelos`, y a su vez cuentan con las siguientes clases en las carpetas correspondientes, esperables en una arquitectura Model-View Controller (MVC):
+
+- **Controller:** recibe las solicitudes HTTP y devuelve las respuestas de la API.
+- **Service:** contiene la lógica de negocio y las reglas del proceso.
+- **Repository:** gestiona el acceso a PostgreSQL mediante Spring Data JPA.
+- **Entity:** representa las entidades persistidas en la base de datos.
+- **DTO:** define los objetos utilizados para entrada y salida de la API.
+- **Mapper:** realiza la conversión entre Entity y DTO.
 
 ## Autenticación y autorización
 
@@ -28,250 +74,317 @@ Para la identificación de usuarios, se utilizarán JWT (JSON Web Tokens). Cuand
 
 ## Manejo de errores y validaciones
 
-Para validaciones, se hará uso de Jakarta en los DTO de entrada para asegurar que los datos obligatorios estén presentes y cumplan con los formatos esperados antes de procesar la solicitud.
+Para validaciones de entrada, se usa Jakarta Bean Validation en los DTO (`@NotNull`, `@NotBlank`, `@Positive`, etc.), de forma que los datos obligatorios y sus formatos se chequean antes de llegar a la capa de servicio. Las reglas de negocio (las que dependen de datos ya persistidos, no solo del formato del body) se validan en la capa Service — no alcanza con las validaciones del Frontend.
+
+Para el resto de los errores, se centraliza el manejo con un `@RestControllerAdvice` global, que traduce cada excepción de negocio al código HTTP correspondiente. Los códigos coinciden con los que ya espera el Frontend — ver [Especificación Técnica Frontend §8](../frontend/Especificacion-Tecnica.md):
+
+| Excepción                                   | Código HTTP | Cuándo se lanza                                                                                                                  |
+| -------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `MethodArgumentNotValidException` (Jakarta) | 400         | El body no cumple las validaciones del DTO                                                                                       |
+| `AuthenticationException`                   | 401         | Token ausente, inválido o expirado                                                                                              |
+| `AccessDeniedException`                     | 403         | El rol del usuario no tiene permiso para el endpoint                                                                            |
+| `EntityNotFoundException` (custom)          | 404         | El recurso solicitado (solicitud, cotización, OT, fase, etc.) no existe                                                        |
+| `InvalidStateException` (custom)            | 409         | La operación pedida no es válida para el estado actual del recurso (ej. aprobar una cotización que no está `ENVIADA_A_CLIENTE`) |
+| Cualquier otra excepción no controlada      | 500         | Error interno — se loguea completo, se devuelve un mensaje genérico                                                             |
+
+Todas las respuestas de error devuelven un body consistente: `{ "mensaje": "...", "detalles": [...] }` (`detalles` solo se completa en 400, con un item por campo inválido).
 
 ## Contratos de API
 
-Se desarrollan los endpoints a utilizar en el sistema. Para mejor organización, tienen como prefijos a las épicas que les corresponden.
+Se desarrollan los endpoints a utilizar en el sistema, agrupados por módulo — el mismo agrupamiento que ya usa la [Especificación Técnica de Frontend §6](../frontend/Especificacion-Tecnica.md), para que ambos documentos se lean en paralelo sin traducir nombres.
 
-Se detalla por cada endpoint:
+Se detalla por cada endpoint: método HTTP, ruta, rol que puede usarlo, qué espera recibir y qué devuelve.
 
-- Método HTTP
-- Ruta
-- Qué rol puede usarlo
-- Qué datos espera recibir
-- Qué devuelve en caso de éxito o error, con sus códigos de estado
+**Los valores de estado (`estado`, `rol`, `resultado`, `resultado_item`, `tipo_archivo`, etc.) no se redefinen en este documento.** Son exactamente los que fija el [Esquema v2](../datos/QualityTrack-Esquema-Base-Datos-v2.md) — cualquier body o respuesta que use un valor de estado referencia esa fuente, nunca uno propio.
 
-### Solicitudes
+### Autenticación
 
-#### Alta de solicitud (HU-1.1)
+#### Login
 
 - Método HTTP: POST
-- Ruta: /api/requests
-- Roles: Vendedor
-- Body: Datos de cliente como JSON, Archivos de documentación, Notas
-- Respuesta exitosa: 201 - Created { --datos JSON-- }
-- Respuesta de error: 400 Bad Request (faltan datos)
+- Ruta: `/api/auth/login`
+- Roles: cualquiera (público, sin JWT previo)
+- Body: `{ "email": "...", "password": "..." }`
+- Respuesta exitosa: 200 OK `{ "token": "...", "rol": "VENDEDOR", "nombre": "..." }`
+- Respuesta de error: 401 (credenciales inválidas)
 
-#### Obtener solicitudes (HU-2.1A)
+### Módulo Vendedor
+
+#### Crear solicitud (HU-1.1)
+
+- Método HTTP: POST
+- Ruta: `/api/solicitudes`
+- Roles: Vendedor
+- Body (cliente registrado): `{ cliente_id, descripcion_pieza, cantidad, fecha_esperada_entrega, notas_comerciales }`
+- Body (cliente nuevo): `{ razon_social, contacto_nombre, telefono, email, direccion, descripcion_pieza, cantidad, fecha_esperada_entrega, notas_comerciales }` — sin `cliente_id`; el backend crea el cliente antes de crear la solicitud.
+- Respuesta exitosa: 201 Created `{ id, numero_solicitud, estado }` (`estado` inicial: `PENDIENTE_COTIZACION`)
+- Respuesta de error: 400 (falta un campo obligatorio del cliente, la pieza o la cantidad)
+
+#### Subir documento adjunto (HU-1.1)
+
+- Método HTTP: POST
+- Ruta: `/api/documentos`
+- Roles: Vendedor
+- Body: multipart — `solicitud_id`, `archivo`, `tipo_archivo` (`PLANO`, `CERTIFICADO`, `ESPECIFICACION`, `OTRO`)
+- Respuesta exitosa: 201 Created `{ id, nombre_original, tipo_archivo, ruta_almacenamiento }`
+- Respuesta de error: 400 (tipo de archivo no permitido o solicitud inexistente)
+
+#### Listar órdenes de trabajo (HU-1.2)
 
 - Método HTTP: GET
-- Ruta: /api/requests
-- Roles: Vendedor, Jefe de producción
-- Respuesta exitosa: 200 - OK { para cada solicitud: --datos de cliente como JSON, archivos de documentación, notas-- }
-- Respuesta de error: 404 Not Found (solicitud no encontrada)
+- Ruta: `/api/ordenes-trabajo`
+- Roles: Vendedor
+- Query params: filtro por cliente, o búsqueda por número de OT.
+- Respuesta exitosa: 200 OK — listado con `numero_ot, cliente, estado, fecha`, para que el Vendedor elija qué expediente abrir. Resuelve la búsqueda previa al detalle (antes sin endpoint documentado).
 
-### Cotizaciones
+#### Expediente completo de la OT (HU-1.2)
 
-#### Alta de cotización (HU-2.1B)
+- Método HTTP: GET
+- Ruta: `/api/ordenes-trabajo/{id}/expediente`
+- Roles: Vendedor
+- `{id}` acepta el id interno o el `numero_ot`.
+- Respuesta exitosa: 200 OK — solicitud, cotización (fases, tiempos, precio), historial de operaciones por fase (incluyendo reasignaciones y retrabajos), resultado de Calidad, estado de entrega. Se arma sobre la vista `v_ot_expediente` (Esquema v2 §05) más las tablas de historial (`ot_fase_reasignaciones`, `ot_fases` con `es_rehacer`).
+- Respuesta de error: 404 (no existe la OT)
+
+#### Listar cotizaciones (HU-1.3)
+
+- Método HTTP: GET
+- Ruta: `/api/cotizaciones`
+- Roles: Vendedor
+- Respuesta exitosa: 200 OK — cotizaciones derivadas para el vendedor, con fases, tiempos y precio final.
+
+#### Registrar respuesta del cliente (HU-1.3)
+
+- Método HTTP: PUT
+- Ruta: `/api/cotizaciones/{id}`
+- Roles: Vendedor
+- Uso: marcar `fecha_envio_cliente` cuando el Vendedor le envía la cotización al cliente. El registro de aprobado/rechazado va por los dos endpoints siguientes, no por este PUT.
+- Respuesta exitosa: 200 OK `{ id, estado, fecha_envio_cliente }`
+
+#### Aprobar cotización (HU-1.3)
 
 - Método HTTP: POST
-- Ruta: /api/quotations
+- Ruta: `/api/cotizaciones/{id}/aprobar`
+- Roles: Vendedor
+- Respuesta exitosa: 200 OK `{ id, estado: "APROBADA" }` — dispara la generación automática de la OT (`ordenes_trabajo`) y deriva la primera fase a la cola de su operario.
+- Respuesta de error: 409 (la cotización no está `ENVIADA_A_CLIENTE`)
+
+#### Rechazar cotización (HU-1.3)
+
+- Método HTTP: POST
+- Ruta: `/api/cotizaciones/{id}/rechazar`
+- Roles: Vendedor
+- Body: `{ motivo_rechazo_cliente }`
+- Respuesta exitosa: 200 OK `{ id, estado: "NO_APROBADA" }` — **no genera ninguna OT y no vuelve al Jefe de producción.** La cotización queda cerrada; si hace falta recotizar, se carga una solicitud nueva (D7 del Esquema v2 — este MVP no versiona cotizaciones rechazadas).
+- Respuesta de error: 409 (la cotización no está `ENVIADA_A_CLIENTE`)
+
+#### Registrar entrega (HU-1.4)
+
+- Método HTTP: POST
+- Ruta: `/api/ordenes-trabajo/{id}/entrega`
+- Roles: Vendedor
+- Body: `{ receptor_nombre }`
+- Respuesta exitosa: 200 OK `{ id, estado: "ENTREGADA", fecha_entrega, receptor_nombre }`
+- Respuesta de error: 409 (la OT no está en estado `DESPACHO`)
+
+### Módulo Jefe de producción
+
+#### Listar solicitudes pendientes (HU-2.1)
+
+- Método HTTP: GET
+- Ruta: `/api/solicitudes`
 - Roles: Jefe de producción
-- Body: {
-    phases: [
-        {
-            phase: "nombre de fase",
-            estimatedTime: "tiempo estimado",
-        }
-        ...
+- Respuesta exitosa: 200 OK — solicitudes en estado `PENDIENTE_COTIZACION`, con la documentación adjunta, la descripción de la pieza y la cantidad.
+
+#### Crear cotización con fases (HU-2.1)
+
+- Método HTTP: POST
+- Ruta: `/api/cotizaciones`
+- Roles: Jefe de producción
+- Body:
+  ```json
+  {
+    "solicitud_id": 1,
+    "precio_final": 15000.00,
+    "fases": [
+      {
+        "fase_catalogo_id": 1,
+        "numero_secuencia": 1,
+        "tiempo_estimado_minutos": 120,
+        "instrucciones_fase": "Corte por láser según plano"
+      }
     ]
-    price: 0 <- double
-}
-- Respuesta exitosa: 201 - Created { --datos JSON de la cotización creada-- }
-- Respuesta de error: 400 Bad Request (faltan datos o estado inválido)
+  }
+  ```
+  Una misma `fase_catalogo_id` puede repetirse con distinto `numero_secuencia` (D6 del Esquema v2).
+- Respuesta exitosa: 201 Created `{ id, numero_cotizacion, estado: "LISTA_PARA_ENVIAR" }`
+- Respuesta de error: 400 (faltan datos, o `numero_secuencia` repetido dentro de la misma cotización)
 
-#### Obtener cotizaciones (HU-1.3A)
-
-- Método HTTP: GET
-- Ruta: /api/quotations
-- Roles: Vendedor
-- Respuesta exitosa: 200 - OK { --JSON con info de cotizaciones derivadas: fases, tiempos, precio-- }
-- Respuesta de error: 404 Not Found (no existen cotizaciones derivadas)
-
-#### Aprobar cotización (HU-1.3B)
-
-- Método HTTP: PATCH
-- Ruta: /api/quotations/{quotationId}/approval
-- Roles: Vendedor
-- Respuesta exitosa: 200 - OK { --JSON con info de la cotización actualizada-- }
-- Respuesta de error: 400 Bad Request (cotización no encontrada o estado inválido)
-
-#### Rechazar cotización (HU-1.3C)
-
-- Método HTTP: PATCH
-- Ruta: /api/quotations/{quotationId}/rejection
-- Roles: Vendedor
-- Respuesta exitosa: 200 - OK { --JSON con info de la cotización actualizada-- }
-- Respuesta de error: 400 Bad Request (cotización no encontrada o estado inválido)
-
-### OTs
-
-#### Obtener lista de OTs dado un criterio de búsqueda (HU-1.2)
+#### Consultar fases asignadas / gestión de planta (HU-2.2)
 
 - Método HTTP: GET
-- Ruta: /api/ot?{queryParameters}
-- Query parameters: número de OT, cliente, etc. (/api/ot?ot_id=0&cliente=nombre)
-- Roles: Vendedor
-- Respuesta exitosa: 200 - OK { --JSON con info de OTs que cumplan con los criterios de búsqueda-- }
-- Respuesta de error: 404 Not Found (no existe la OT)
+- Ruta: `/api/ot-fases`
+- Roles: Jefe de producción, Operario
+- Query params: `operario_id`, `estado` — el Jefe consulta sin filtrar por operario para ver la carga de todos; el Operario recibe solo lo suyo (ver también Módulo Operario).
+- Respuesta exitosa: 200 OK — lista de `ot_fases` con OT, fase, operario, `tiempo_estimado_minutos`, `fecha_vencimiento`, `estado`.
 
-#### Obtener OTs en desarrollo (HU-2.2A)
-
-- Método HTTP: GET
-- Ruta: /api/ot/assigned
-- Roles: Jefe de producción
-- Respuesta exitosa: 200 - OK { --JSON con info de las OTs asignadas a cada operario [operario, ot]-- }
-- Respuesta de error: 404 Not Found (no existen OTs asignadas)
-
-#### Obtener documentación de una OT (HU-3.2)
-
-- Método HTTP: GET
-- Ruta: /api/ot/{otId}/attachments
-- Roles: Operario
-- Respuesta exitosa: 200 - OK { --JSON con info de los enlaces a los adjuntos de la OT-- }
-- Respuesta de error: 404 Not Found (no encuentra referencia de adjuntos para la OT)
-
-#### Reasignar OT a otro operario (HU-2.2B)
-
-- Método HTTP: PATCH
-- Ruta: /api/ot/{otId}/reassignment/{operatorId}
-- Roles: Jefe de producción
-- Respuesta exitosa: 200 - OK { --JSON con info de la OT actualizada-- }
-- Respuesta de error: 400 Bad Request (OT no encontrada o estado inválido)
-
-#### Marcar OT como entregada (HU-1.4)
-
-- Método HTTP: PATCH
-- Ruta: /api/ot/{otId}/delivery
-- Roles: Vendedor
-- Respuesta exitosa: 200 - OK { --JSON con info de la OT actualizada-- }
-- Respuesta de error: 400 Bad Request (OT no encontrada o estado inválido)
-
-### Control de calidad
-
-#### Enviar a rehacer fases de OT no conforme (HU-2.3A)
-
-- Método HTTP: PATCH
-- Ruta: /api/ot/{otId}/redo
-- Roles: Jefe de producción
-- Body: {por cada fase a rehacer, nombre de fase, operario asignado, tiempo estimado, notas de jefe de producción}
-- Respuesta exitosa: 200 - OK { --JSON con info de la OT actualizada-- }
-- Respuesta de error: 400 Bad Request (OT no encontrada o estado inválido)
-
-#### Obtener OTs a rehacer (HU-2.3B)
-
-- Método HTTP: GET
-- Ruta: /api/ot/redo
-- Roles: Jefe de producción
-- Respuesta exitosa: 200 - OK {---JSON con info de OTs a rehacer---}
-- Respuesta de error: 400 Bad Request (falla en conexión)
-
----
-
-### Fases
-
-#### Ver fases (HU-3.1A)
-
-- Método HTTP: GET
-- Ruta: /api/ot/tasks
-- Roles: Operario
-- Respuesta exitosa: 200 - OK { --JSON con info de las fases pendientes y en ejecución del operario en cuestión -- }
-- Respuesta de error: 404 Not Found (no encuentra fases)
-
-#### Avanzar fase (HU-3.1B)
-
-- Método HTTP: PATCH
-- Ruta: /api/ot/tasks/{taskId}/advance
-- Roles: Operario
-- Respuesta exitosa: 200 - OK { --JSON con próxima fase si hay, o se remarca que pasa a Calidad si no hay-- }
-- Respuesta de error: 400 Bad Request (fase no encontrada o estado inválido)
-
-#### Ver vencimiento de fase (HU-3.3)
-
-- Método HTTP: GET
-- Ruta: /api/ot/tasks/{taskId}/deadline
-- Roles: Operario
-- Respuesta exitosa: 200 - OK { --JSON con info del tiempo de vencimiento de la fase-- }
-- Respuesta de error: 404 Not Found (fase no encontrada)
-
-#### Obtener notas discriminadas por origen (HU-3.4)
-
-- Método HTTP: GET
-- Ruta: /api/ot/tasks/{taskId}/notes
-- Roles: Operario
-- Respuesta exitosa: 200 - OK { --JSON con info de las notas de la fase, separadas por origen-- }
-- Respuesta de error: 404 Not Found (fase no encontrada)
-
-#### Obtener órdenes terminadas por operarios (HU-4.1)
-
-- Método HTTP: GET
-- Ruta: /api/ot/completed
-- Roles: Calidad
-- Respuesta exitosa: 200 - OK { --JSON con info de las OTs terminadas-- }
-- Respuesta de error: 404 Not Found (no existen OTs terminadas)
-
-#### Obtener checklist de OT terminada (HU-4.2A)
-
-- Método HTTP: GET
-- Ruta: /api/ot/checklist
-- Roles: Calidad
-- Respuesta exitosa: 200 - OK { --JSON con info de los 8 puntos del checklist-- }
-- Respuesta de error: 404 Not Found (no encuentra checklist)
-
-#### Marcar OT terminada como conforme (HU-4.2B)
-
-- Método HTTP: PATCH
-- Ruta: /api/ot/checklist/{otId}/verdict
-- Roles: Calidad
-- Body: { conforme = true }
-- Respuesta exitosa: 200 - OK { --JSON con info de la OT actualizada-- }
-- Respuesta de error: 404 Not Found (OT no encontrada o estado inválido)
-
-#### Marcar OT terminada como no conforme (HU-4.2C)
-
-- Método HTTP: PATCH
-- Ruta: /api/ot/checklist/{otId}/verdict
-- Roles: Calidad
-- Body: {resultados en cada check + observaciones en texto}
-- Respuesta exitosa: 200 - OK { --JSON con info de la OT actualizada-- }
-- Respuesta de error: 404 Not Found (OT no encontrada o estado inválido)
-
----
-
-#### Alta de fase (HU-5.1)
+#### Reasignar fase (HU-2.2)
 
 - Método HTTP: POST
-- Ruta: /api/phases
-- Roles: Gerente
-- Body: {nombre de fase, [tipos de tarea]}
-- Respuesta exitosa: 201 - Created { --JSON con info de la fase creada-- }
-- Respuesta de error: 400 Bad Request (faltan datos o estado inválido)
+- Ruta: `/api/ot-fases/{id}/reasignar`
+- Roles: Jefe de producción
+- Body: `{ operario_nuevo_id, motivo }` (`operario_anterior_id` y `reasignado_por_id` se resuelven server-side)
+- Respuesta exitosa: 200 OK `{ id, operario_id }` — además crea la fila en `ot_fase_reasignaciones` (D12), visible después en el expediente (HU-1.2).
+- Respuesta de error: 409 (el operario nuevo no está habilitado para la fase — R3)
 
-#### Alta de operarios (HU-5.2)
+#### Crear fase de retrabajo (HU-2.3)
 
 - Método HTTP: POST
-- Ruta: /api/operators
-- Roles: Gerente
-- Body: {nombre de operario, tipo de tarea}
-- Respuesta exitosa: 201 - Created { --JSON con info del operario creado-- }
-- Respuesta de error: 400 Bad Request (faltan datos o estado inválido)
+- Ruta: `/api/ot-fases`
+- Roles: Jefe de producción
+- Body: `{ orden_trabajo_id, fase_catalogo_id, operario_id, tiempo_estimado_minutos, nota }`
+- El backend calcula server-side `es_rehacer = TRUE` y `ciclo_iteracion + 1` (R8) — no se reciben del cliente. También crea la `ot_notas` correspondiente con `origen = JEFE_PRODUCCION`.
+- Respuesta exitosa: 201 Created `{ id, numero_secuencia, ciclo_iteracion, es_rehacer: true }`
 
-#### Obtener vista global de planta (HU-5.3)
+### Módulo Operario
 
-- Método HTTP: GET
-- Ruta: /api/plant/overview
-- Roles: Gerente
-- Respuesta exitosa: 200 - OK { --JSON con la vista global de planta: cantidad de OTs pendientes/activas, fases y cuellos de botella-- }
-- Respuesta de error: 404 Not Found (no encuentra endpoint)
-
-#### Obtener vista global de Calidad (HU-5.4)
+#### Tareas asignadas (HU-3.1)
 
 - Método HTTP: GET
-- Ruta: /api/quality/overview
+- Ruta: `/api/ot-fases` (mismo endpoint que usa el Jefe de producción para gestión de planta — ver arriba)
+- Roles: Operario
+- Respuesta exitosa: 200 OK — tareas del operario autenticado, en cola y en ejecución, con `fecha_vencimiento` ya calculada.
+
+#### Iniciar fase (HU-3.1)
+
+- Método HTTP: POST
+- Ruta: `/api/ot-fases/{id}/iniciar`
+- Roles: Operario
+- Respuesta exitosa: 200 OK `{ id, estado: "EN_EJECUCION", fecha_inicio_real }`
+- Respuesta de error: 409 (la fase no está `EN_COLA`)
+
+#### Finalizar fase (HU-3.1)
+
+- Método HTTP: POST
+- Ruta: `/api/ot-fases/{id}/finalizar`
+- Roles: Operario
+- Respuesta exitosa: 200 OK `{ id, estado: "TERMINADO", fecha_fin_real, duracion_real_minutos }`. Si existe fase siguiente en la secuencia, la deriva a la cola de su operario; si no, pasa la OT a `EN_CALIDAD` y sella `ordenes_trabajo.fecha_pase_calidad` (R12 — es la marca que después mide el tiempo promedio en Calidad de HU-5.4).
+- Respuesta de error: 409 (la fase no está `EN_EJECUCION`)
+
+#### Adjuntos de la solicitud (HU-3.2)
+
+- Método HTTP: GET
+- Ruta: `/api/solicitudes/{id}/documentos`
+- Roles: Operario
+- El `{id}` es de `solicitudes`, no de la OT — los adjuntos cuelgan de la solicitud (Esquema v2 §2.6); el Operario llega navegando desde su fase.
+- Respuesta exitosa: 200 OK — lista de adjuntos con nombre y enlace de descarga.
+
+#### Notas de la fase (HU-3.4)
+
+- Método HTTP: GET
+- Ruta: `/api/ot-fases/{id}/notas`
+- Roles: Operario
+- Respuesta exitosa: 200 OK — notas separadas por `origen` (`CALIDAD`, `JEFE_PRODUCCION`), nunca mezcladas en una misma lista (R7).
+
+### Módulo Calidad
+
+#### Órdenes pendientes de auditoría (HU-4.1)
+
+- Método HTTP: GET
+- Ruta: `/api/calidad`
+- Roles: Calidad
+- Respuesta exitosa: 200 OK — OTs en estado `EN_CALIDAD`, ordenadas por `fecha_pase_calidad` ascendente (antigüedad en la cola).
+
+#### Guardar checklist (HU-4.2)
+
+- Método HTTP: POST
+- Ruta: `/api/calidad/{id}/checklist`
+- Roles: Calidad
+- Body:
+  ```json
+  {
+    "respuestas": [
+      { "item_numero": 1, "resultado_item": "CUMPLE", "observaciones": null }
+    ],
+    "resultado": "NO_CONFORME",
+    "observaciones_generales": "Fallo en prueba funcional punto 6"
+  }
+  ```
+  Guarda las 7 respuestas del checklist (Esquema v2 §2.14; R10 exige las 7 completas antes del veredicto). Pensado para usarse mientras se completa el formulario, antes de confirmar.
+- Respuesta exitosa: 200 OK `{ id, respuestas_completas: 7 }`
+- Respuesta de error: 400 (`observaciones_generales` vacío con `resultado = NO_CONFORME` — R9)
+
+#### Marcar conforme (HU-4.3)
+
+- Método HTTP: POST
+- Ruta: `/api/calidad/{id}/conforme`
+- Roles: Calidad
+- Body: misma forma que `/checklist` (`respuestas` + `resultado: "CONFORME"`) — **incluye siempre las 7 respuestas, no un booleano suelto.** Confirma el veredicto y pasa la OT a `DESPACHO`, sellando `fecha_pase_despacho`.
+- Respuesta exitosa: 200 OK `{ id, estado: "DESPACHO" }`
+- Respuesta de error: 409 (checklist incompleto — trigger `trg_chk_checklist_completo`)
+
+#### Marcar no conforme (HU-4.3)
+
+- Método HTTP: POST
+- Ruta: `/api/calidad/{id}/no-conforme`
+- Roles: Calidad
+- Body: misma forma que `/checklist` (`respuestas` + `resultado: "NO_CONFORME"` + `observaciones_generales` obligatorio)
+- Respuesta exitosa: 200 OK `{ id, estado: "NO_CONFORME" }` — deriva la OT y las observaciones al Jefe de producción. El veredicto describe el defecto observado; no atribuye una fase (D4) — esa determinación la hace el Jefe en HU-2.3.
+- Respuesta de error: 400 (`observaciones_generales` vacío — R9), 409 (checklist incompleto)
+
+### Módulo Gerente
+
+#### Catálogo de fases (HU-5.1)
+
+- Método HTTP: GET
+- Ruta: `/api/fases`
 - Roles: Gerente
-- Respuesta exitosa: 200 - OK { --JSON con la vista global de Calidad: porcentaje de conformes vs. no conformes, no conformidades por fase, listado de auditorías con resultado y tiempo-- }
-- Respuesta de error: 404 Not Found (no encuentra endpoint)
+- Respuesta exitosa: 200 OK — catálogo global (`fases_catalogo`).
+- ⚠️ El Jefe de producción también necesita leer este catálogo para armar una cotización (HU-2.1), pero Frontend no lo lista bajo su módulo — a confirmar con Alicia si reusa este mismo endpoint habilitando el rol Jefe de producción.
+
+#### Crear fase (HU-5.1)
+
+- Método HTTP: POST
+- Ruta: `/api/fases`
+- Roles: Gerente
+- Body: `{ codigo, nombre, descripcion }` (columnas de `fases_catalogo`, Esquema v2 §2.3 — no lleva tipo de tarea: eso es `usuarios.tipo_tarea`, un concepto distinto de la fase en sí)
+- Respuesta exitosa: 201 Created `{ id, codigo, nombre }`
+
+#### Editar fase (HU-5.1)
+
+- Método HTTP: PUT
+- Ruta: `/api/fases/{id}`
+- Roles: Gerente
+
+#### Listar operarios (HU-5.1)
+
+- Método HTTP: GET
+- Ruta: `/api/usuarios`
+- Roles: Gerente
+- Respuesta exitosa: 200 OK — operarios ya cargados en el sistema. El Gerente los consulta, no los crea — los usuarios se cargan directo en la base por el equipo de desarrollo (D9; HU-5.2 fue eliminada).
+
+#### Habilitar operario para fase (HU-5.1)
+
+- Método HTTP: POST
+- Ruta: `/api/fases/{id}/habilitar`
+- Roles: Gerente
+- Body: `{ operario_id }`
+- La habilitación es individual por operario, nunca por tipo de tarea general (D11).
+- Respuesta exitosa: 201 Created `{ fase_catalogo_id, operario_id, habilitado: true }`
+
+#### Vista global de planta (HU-5.3)
+
+- Método HTTP: GET
+- Ruta: `/api/dashboard/planta`
+- Roles: Gerente
+- Respuesta exitosa: 200 OK — cantidad de OTs pendientes/activas y congestión por fase. **Nunca** desempeño individual de operarios — eso es del Jefe de producción.
+
+#### Vista global de Calidad (HU-5.4)
+
+- Método HTTP: GET
+- Ruta: `/api/dashboard/calidad`
+- Roles: Gerente
+- Respuesta exitosa: 200 OK — % conformes vs. no conformes, **retrabajos por fase** (cuenta filas `ot_fases.es_rehacer = TRUE` agrupadas por `fase_catalogo_id`, R8 — no es lo mismo que "no conformidades por fase", porque Calidad no atribuye fase, D4), tiempo promedio en Calidad (`fecha_veredicto − fecha_pase_calidad`, R12), últimas auditorías con resultado.
 
 ## Despliegue
 

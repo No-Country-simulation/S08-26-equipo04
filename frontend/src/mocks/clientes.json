@@ -1,0 +1,35 @@
+[
+  {
+    "id": 1,
+    "razon_social": "Metalúrgica del Centro S.A.",
+    "contacto_nombre": "Roberto Fontana",
+    "telefono": "+54 351 425-8899",
+    "direccion": "Av. Vélez Sarsfield 1420, Córdoba",
+    "email": "compras@metalcentro.com.ar",
+    "activo": true,
+    "created_at": "2026-09-01T10:00:00Z",
+    "updated_at": "2026-09-01T10:00:00Z"
+  },
+  {
+    "id": 2,
+    "razon_social": "Industria Automotriz del Sur",
+    "contacto_nombre": "María López",
+    "telefono": "+54 11 4567-8901",
+    "direccion": "Calle Industrial 500, Buenos Aires",
+    "email": "compras@industria-sur.com.ar",
+    "activo": true,
+    "created_at": "2026-09-01T10:00:00Z",
+    "updated_at": "2026-09-01T10:00:00Z"
+  },
+  {
+    "id": 3,
+    "razon_social": "Constructora Patagónica",
+    "contacto_nombre": "Juan Pérez",
+    "telefono": "+54 299 123-4567",
+    "direccion": "Av. Argentina 800, Neuquén",
+    "email": "compras@constructora-patagonia.com.ar",
+    "activo": true,
+    "created_at": "2026-09-01T10:00:00Z",
+    "updated_at": "2026-09-01T10:00:00Z"
+  }
+]

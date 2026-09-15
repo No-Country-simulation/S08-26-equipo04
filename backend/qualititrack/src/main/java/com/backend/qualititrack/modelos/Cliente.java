@@ -1,16 +1,26 @@
 package com.backend.qualititrack.modelos;
 
-import jakarta.persistence.*;
+import java.time.OffsetDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.*;
-
-import java.time.LocalDateTime;
-import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
-@Table(name = "cliente")
-@Data
+@Table(name = "clientes")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Cliente {
@@ -18,107 +28,47 @@ public class Cliente {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank
+    @Column(name = "razon_social", nullable = false, length = 150)
+    private String razonSocial;
+
     @NotBlank(message = "El nombre no puede estar vacio")
-    @Column(nullable = false)
-    private String nombre;
-
-    @Email(message = "Email invalido")
-    @NotBlank
-    @Column(nullable = false, unique = true)
-    private String email;
+    @Column(name = "contacto_nombre", nullable = false, length = 120)
+    private String contactoNombre;
 
     @NotBlank
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     private String telefono;
 
-    @Column(name = "fecha_creacion", nullable = false, updatable = false)
-    private LocalDateTime fechaCreacion;
+    @NotBlank
+    @Column(nullable = false, length = 255)
+    private String direccion;
 
-    @OneToMany(
-            mappedBy = "cliente",
-            cascade = CascadeType.REMOVE,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY
-    )
-    private List<Solicitud> solicitudes;
 
-    @OneToMany(
-            mappedBy = "cliente",
-            cascade = CascadeType.REMOVE,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY
-    )
-    private List<OrdenTrabajo> ordenesTrabajos;
+    @Email(message = "Email invalido")
+    @Column(length = 150)
+    private String email;
+
+    @Column(nullable = false)
+    private Boolean activo = true;
+
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private OffsetDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {
-        fechaCreacion = LocalDateTime.now();
+        createdAt = OffsetDateTime.now();
+        updatedAt = OffsetDateTime.now();
     }
 
-   /* public Cliente(Long id, String nombre, String email, String telefono, LocalDateTime fechaCreacion, List<Solicitud> solicitudes, List<OrdenTrabajo> ordenesTrabajos) {
-        this.id = id;
-        this.nombre = nombre;
-        this.email = email;
-        this.telefono = telefono;
-        this.fechaCreacion = fechaCreacion;
-        this.solicitudes = solicitudes;
-        this.ordenesTrabajos = ordenesTrabajos;
-    }*/
-
-
-    public Long getId() {
-        return id;
+    // Se actualiza la fecha de modificación al hacer un UPDATE desde Java
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = OffsetDateTime.now();
     }
 
-    public String getNombre() {
-        return nombre;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getTelefono() {
-        return telefono;
-    }
-
-    public LocalDateTime getFechaCreacion() {
-        return fechaCreacion;
-    }
-
-    public List<Solicitud> getSolicitudes() {
-        return solicitudes;
-    }
-
-    public List<OrdenTrabajo> getOrdenesTrabajos() {
-        return ordenesTrabajos;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public void setTelefono(String telefono) {
-        this.telefono = telefono;
-    }
-
-    public void setFechaCreacion(LocalDateTime fechaCreacion) {
-        this.fechaCreacion = fechaCreacion;
-    }
-
-    public void setOrdenesTrabajos(List<OrdenTrabajo> ordenesTrabajos) {
-        this.ordenesTrabajos = ordenesTrabajos;
-    }
-
-    public void setSolicitudes(List<Solicitud> solicitudes) {
-        this.solicitudes = solicitudes;
-    }
 }

@@ -1,12 +1,13 @@
 package com.backend.qualititrack.repository;
 
-import com.backend.qualititrack.Enum.NivelRol;
-import com.backend.qualititrack.modelos.Usuario;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
+import com.backend.qualititrack.Enum.NivelRol;
+import com.backend.qualititrack.modelos.Usuario;
 
 @Repository
 public interface UsuarioRepository extends JpaRepository<Usuario,Long> {
@@ -42,5 +43,10 @@ public interface UsuarioRepository extends JpaRepository<Usuario,Long> {
      * Contar usuarios totales activos.
      */
     Long countByActivo(Boolean activo);
+
+    /**
+     * Contar usuarios por Nivel de rol.
+     */
+    List<Usuario> findByRol(NivelRol rol);
 }
 
