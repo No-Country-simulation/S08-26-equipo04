@@ -130,6 +130,15 @@ export const CotizacionDetailPage = () => {
       <Card className="h-fit"><p className="text-label text-text-secondary">Precio final</p><p className="mt-4 text-2xl font-bold text-ink">${cotizacion.precio_final.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</p></Card>
       </div>
 
+      {cotizacion.estado === 'NO_APROBADA' && cotizacion.motivo_rechazo_cliente && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Motivo de rechazo del cliente</CardTitle>
+          </CardHeader>
+          <p className="text-body text-text-secondary">{cotizacion.motivo_rechazo_cliente}</p>
+        </Card>
+      )}
+
       {cotizacion.observaciones && (
         <Card>
           <CardHeader>
