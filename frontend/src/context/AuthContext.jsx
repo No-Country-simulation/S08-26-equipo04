@@ -2,9 +2,9 @@ import { createContext, useContext, useMemo, useState } from 'react';
 import { mocks } from '../mocks';
 
 const AuthContext = createContext(null);
-const STORAGE_KEY = 'qualitytrack-auth';
+export const STORAGE_KEY = 'qualitytrack-auth';
 
-const readSession = () => {
+export const readSession = () => {
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY)) || null;
   } catch {
