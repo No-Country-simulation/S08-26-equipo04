@@ -88,15 +88,6 @@ public class OrdenTrabajo {
     )
     private List<OtFase> fases;
 
-    @OneToMany(
-            mappedBy = "ordenTrabajo",
-            cascade = CascadeType.REMOVE,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY
-    )
-    private List<Adjunto> documentos;
-
-
     @OneToOne(
             mappedBy = "ordenTrabajo",
             cascade = CascadeType.REMOVE,
@@ -214,11 +205,4 @@ public class OrdenTrabajo {
         this.calidadChecklist = calidadChecklist;
     }
 
-    public List<Adjunto> getDocumentos() {
-        return documentos;
-    }
-
-    public void setDocumentos(List<Adjunto> documentos) {
-        this.documentos = documentos;
-    }
 }
