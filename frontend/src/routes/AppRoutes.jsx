@@ -1,49 +1,80 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { AppLayout } from '../layouts';
-import { CatalogoFasesPage } from '../pages/config/CatalogoFasesPage';
-import { OperariosFasePage } from '../pages/config/OperariosFasePage';
-import { CotizacionesPage } from '../pages/cotizaciones/CotizacionesPage';
-import { CotizacionFormPage } from '../pages/cotizaciones/CotizacionFormPage';
-import { CotizacionDetailPage } from '../pages/cotizaciones/CotizacionDetailPage';
-import { DashboardPage } from '../pages/DashboardPage';
-import { LoginPage } from '../pages/LoginPage';
-import { GestionPlantaPage } from '../pages/planta/GestionPlantaPage';
-import { SolicitudFormPage } from '../pages/solicitudes/SolicitudFormPage';
-import { SolicitudesPage } from '../pages/solicitudes/SolicitudesPage';
-import { ProtectedRoute } from './ProtectedRoute';
+import { Navigate, Route, Routes } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { AppLayout, OperarioLayout } from "../layouts";
+import { CatalogoFasesPage } from "../pages/config/CatalogoFasesPage";
+import { OperariosFasePage } from "../pages/config/OperariosFasePage";
+import { CotizacionesPage } from "../pages/cotizaciones/CotizacionesPage";
+import { CotizacionFormPage } from "../pages/cotizaciones/CotizacionFormPage";
+import { CotizacionDetailPage } from "../pages/cotizaciones/CotizacionDetailPage";
+import { DashboardPage } from "../pages/DashboardPage";
+import { LoginPage } from "../pages/LoginPage";
+import { GestionPlantaPage } from "../pages/planta/GestionPlantaPage";
+import { SolicitudFormPage } from "../pages/solicitudes/SolicitudFormPage";
+import { SolicitudesPage } from "../pages/solicitudes/SolicitudesPage";
+import { ProtectedRoute } from "./ProtectedRoute";
+import { OperarioPage } from "../pages/operario/OperarioPage";
 
 export const AppRoutes = () => {
   const { user } = useAuth();
+  // El operario no tiene vista de Inicio: entra directo a Mis tareas.
+  const home = user?.rol === "OPERARIO" ? "/operario" : "/";
   return (
     <Routes>
-      <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
+      <Route
+        path="/login"
+        element={user ? <Navigate to={home} replace /> : <LoginPage />}
+      />
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
-          <Route index element={<DashboardPage />} />
-          <Route element={<ProtectedRoute roles={['VENDEDOR', 'GERENTE']} />}>
+          <Route
+            index
+            element={
+              user?.rol === "OPERARIO" ? (
+                <Navigate to="/operario" replace />
+              ) : (
+                <DashboardPage />
+              )
+            }
+          />
+          <Route element={<ProtectedRoute roles={["VENDEDOR", "GERENTE"]} />}>
             <Route path="solicitudes" element={<SolicitudesPage />} />
           </Route>
-          <Route element={<ProtectedRoute roles={['VENDEDOR']} />}>
+          <Route element={<ProtectedRoute roles={["VENDEDOR"]} />}>
             <Route path="solicitudes/nueva" element={<SolicitudFormPage />} />
           </Route>
-          <Route element={<ProtectedRoute roles={['JEFE_PRODUCCION', 'VENDEDOR']} />}>
+          <Route
+            element={<ProtectedRoute roles={["JEFE_PRODUCCION", "VENDEDOR"]} />}
+          >
             <Route path="cotizaciones" element={<CotizacionesPage />} />
             <Route path="cotizaciones/:id" element={<CotizacionDetailPage />} />
           </Route>
-          <Route element={<ProtectedRoute roles={['JEFE_PRODUCCION']} />}>
+          <Route element={<ProtectedRoute roles={["JEFE_PRODUCCION"]} />}>
             <Route path="cotizaciones/nueva" element={<CotizacionFormPage />} />
-            <Route path="cotizaciones/:id/editar" element={<CotizacionFormPage />} />
+            <Route
+              path="cotizaciones/:id/editar"
+              element={<CotizacionFormPage />}
+            />
             <Route path="planta" element={<GestionPlantaPage />} />
           </Route>
-          <Route element={<ProtectedRoute roles={['GERENTE']} />}>
-            <Route path="configuracion" element={<Navigate to="/config/fases" replace />} />
+          <Route element={<ProtectedRoute roles={["GERENTE"]} />}>
+            <Route
+              path="configuracion"
+              element={<Navigate to="/config/fases" replace />}
+            />
             <Route path="config/fases" element={<CatalogoFasesPage />} />
-            <Route path="config/fases/:faseId/operarios" element={<OperariosFasePage />} />
+            <Route
+              path="config/fases/:faseId/operarios"
+              element={<OperariosFasePage />}
+            />
+          </Route>
+        </Route>
+        <Route element={<ProtectedRoute roles={["OPERARIO"]} />}>
+          <Route element={<OperarioLayout />}>
+            <Route path="operario" element={<OperarioPage />} />
           </Route>
         </Route>
       </Route>
-      <Route path="*" element={<Navigate to={user ? '/' : '/login'} replace />} />
+      <Route path="*" element={<Navigate to={user ? home : "/login"} replace />} />
     </Routes>
   );
 };
