@@ -1,6 +1,7 @@
 package com.backend.qualititrack.Controller;
 
 import com.backend.qualititrack.modelos.Fase;
+import com.backend.qualititrack.modelos.FaseCatalogo;
 import com.backend.qualititrack.Service.FaseService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +24,8 @@ public class FaseController {
      */
     @GetMapping
     @PreAuthorize("hasAnyRole('GERENTE', 'JEFE_PRODUCCION')")
-    public ResponseEntity<List<Fase>> listarFases() {
-        List<Fase> fases = faseService.listarFases();
+    public ResponseEntity<List<FaseCatalogo>> listarFases() {
+        List<FaseCatalogo> fases = faseService.listarFases();
         return ResponseEntity.ok(fases);
     }
 
@@ -34,8 +35,8 @@ public class FaseController {
      */
     @PostMapping
     @PreAuthorize("hasRole('GERENTE')")
-    public ResponseEntity<Fase> crearFase(@RequestBody @Valid Fase fase) {
-        Fase nuevaFase = faseService.crearFase(fase);
+    public ResponseEntity<FaseCatalogo> crearFase(@RequestBody @Valid FaseCatalogo fase) {
+        FaseCatalogo nuevaFase = faseService.crearFase(fase);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevaFase);
     }
 
@@ -46,11 +47,11 @@ public class FaseController {
      */
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('GERENTE')")
-    public ResponseEntity<Fase> actualizarFase(
+    public ResponseEntity<FaseCatalogo> actualizarFase(
             @PathVariable Long id,
-            @RequestBody Fase detallesFase) {
+            @RequestBody FaseCatalogo detallesFase) {
 
-        Fase faseActualizada = faseService.actualizarFase(id, detallesFase);
+        FaseCatalogo faseActualizada = faseService.actualizarFase(id, detallesFase);
         return ResponseEntity.ok(faseActualizada);
     }
 
@@ -61,11 +62,11 @@ public class FaseController {
      */
     @PostMapping("/{id}/habilitar")
     @PreAuthorize("hasRole('GERENTE')")
-    public ResponseEntity<Fase> habilitarOperarioEnFase(
+    public ResponseEntity<FaseCatalogo> habilitarOperarioEnFase(
             @PathVariable Long id,
             @RequestBody HabilitarOperarioDTO dto) {
 
-        Fase faseModificada = faseService.gestionarHabilitacionOperario(id, dto.getOperarioId(), dto.isHabilitado());
+        FaseCatalogo faseModificada = faseService.gestionarHabilitacionOperario(id, dto.getOperarioId(), dto.isHabilitado());
         return ResponseEntity.ok(faseModificada);
     }
 
