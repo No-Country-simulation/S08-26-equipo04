@@ -31,5 +31,16 @@
     "ruta_almacenamiento": "/uploads/solicitudes/2/plano-chasis-robot.dwg",
     "subido_por_id": 3,
     "created_at": "2026-09-06T09:15:00Z"
+  },
+  {
+    "id": 4,
+    "solicitud_id": 3,
+    "nombre_original": "plano-bracket-soporte.pdf",
+    "tipo_archivo": "PLANO",
+    "mime_type": "application/pdf",
+    "tamanio_bytes": 310000,
+    "ruta_almacenamiento": "/uploads/solicitudes/3/plano-bracket-soporte.pdf",
+    "subido_por_id": 3,
+    "created_at": "2026-09-07T10:00:00Z"
   }
 ]
