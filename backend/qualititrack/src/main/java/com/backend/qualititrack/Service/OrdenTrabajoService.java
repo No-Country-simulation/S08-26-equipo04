@@ -44,7 +44,7 @@ public class OrdenTrabajoService {
         OrdenTrabajo ordenTrabajo = new OrdenTrabajo();
         ordenTrabajo.setNumeroOt(generarNumeroOrden());
         ordenTrabajo.setCotizacion(cotizacion);
-        ordenTrabajo.setEstado(EstadoOT.PENDIENTE);
+        ordenTrabajo.setEstado(EstadoOT.EN_PRODUCCION);
         ordenTrabajo.setCreatedAt(OffsetDateTime.now());
 
         // ordenTrabajo.setFechaVencimiento(cotizacion.getFechaVencimiento());  // Copiar desde cotización
