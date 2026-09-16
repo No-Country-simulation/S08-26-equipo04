@@ -73,7 +73,7 @@ public class CotizacionService {
         cotizacion.setObservaciones(dto.getObservaciones());
 
         // Calcular fecha vencimiento: hoy + 30 días
-        cotizacion.setFechaVencimiento(LocalDateTime.now().plusDays(30));
+        // cotizacion.setFechaVencimiento(LocalDateTime.now().plusDays(30));
 
         cotizacion.setFechaCreacion(LocalDateTime.now());
         cotizacion.setFechaActualizacion(LocalDateTime.now());
@@ -206,7 +206,7 @@ public class CotizacionService {
 
         cot.setEstado(EstadoCotizacion.NO_APROBADA);
         cot.setFechaRespuestaCliente(LocalDateTime.now());
-        cot.setMotivoRechazo(motivo);
+        cot.setMotivoRechazoCliente(motivo);
 
         Cotizacion actualizada = cotizacionRepository.save(cot);
         return convertirADTO(actualizada);
@@ -227,10 +227,10 @@ public class CotizacionService {
         dto.setPrecioTotal(cotizacion.getPrecioFinal());
         dto.setEstado(cotizacion.getEstado().toString());
         dto.setObservaciones(cotizacion.getObservaciones());
-        dto.setFechaVencimiento(cotizacion.getFechaVencimiento());
+        // dto.setFechaVencimiento(cotizacion.getFechaVencimiento());
         dto.setFechaEnvioCliente(cotizacion.getFechaEnvioCliente());
         dto.setFechaRespuestaCliente(cotizacion.getFechaRespuestaCliente());
-        dto.setMotivoRechazo(cotizacion.getMotivoRechazo());
+        dto.setMotivoRechazo(cotizacion.getMotivoRechazoCliente());
         return dto;
     }
 }

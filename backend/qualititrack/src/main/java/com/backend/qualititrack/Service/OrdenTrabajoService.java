@@ -47,7 +47,7 @@ public class OrdenTrabajoService {
         ordenTrabajo.setEstado(EstadoOT.PENDIENTE);
         ordenTrabajo.setFechaCreacion(LocalDateTime.now());
 
-        ordenTrabajo.setFechaVencimiento(cotizacion.getFechaVencimiento());  // Copiar desde cotización
+        // ordenTrabajo.setFechaVencimiento(cotizacion.getFechaVencimiento());  // Copiar desde cotización
         ordenTrabajo.setCliente(cotizacion.getSolicitud().getCliente());    //obtenemos el cliente
 
         OrdenTrabajo guardada = ordenTrabajoRepository.save(ordenTrabajo);
