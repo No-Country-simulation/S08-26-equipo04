@@ -92,6 +92,7 @@ public class OrdenTrabajo {
     @PrePersist
     protected void onCreate() {
         createdAt = OffsetDateTime.now();
+        updatedAt = OffsetDateTime.now();
         if (estado == null) {
             estado = EstadoOT.EN_PRODUCCION;
         }
