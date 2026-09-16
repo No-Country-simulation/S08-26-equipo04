@@ -1,28 +1,20 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 import { mocks } from '../mocks';
+import { clearSession, readSession, saveSession } from '../api/session';
 
 const AuthContext = createContext(null);
-export const STORAGE_KEY = 'qualitytrack-auth';
-
-export const readSession = () => {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || null;
-  } catch {
-    return null;
-  }
-};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(readSession);
 
   const login = (session = mocks.auth[0]) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+    saveSession(session);
     setUser(session);
     return session;
   };
 
   const logout = () => {
-    localStorage.removeItem(STORAGE_KEY);
+    clearSession();
     setUser(null);
   };
 
