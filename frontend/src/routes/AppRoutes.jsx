@@ -8,6 +8,7 @@ import { CotizacionFormPage } from '../pages/cotizaciones/CotizacionFormPage';
 import { CotizacionDetailPage } from '../pages/cotizaciones/CotizacionDetailPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { LoginPage } from '../pages/LoginPage';
+import { GestionPlantaPage } from '../pages/planta/GestionPlantaPage';
 import { SolicitudFormPage } from '../pages/solicitudes/SolicitudFormPage';
 import { SolicitudesPage } from '../pages/solicitudes/SolicitudesPage';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -33,6 +34,7 @@ export const AppRoutes = () => {
           <Route element={<ProtectedRoute roles={['JEFE_PRODUCCION']} />}>
             <Route path="cotizaciones/nueva" element={<CotizacionFormPage />} />
             <Route path="cotizaciones/:id/editar" element={<CotizacionFormPage />} />
+            <Route path="planta" element={<GestionPlantaPage />} />
           </Route>
           <Route element={<ProtectedRoute roles={['GERENTE']} />}>
             <Route path="configuracion" element={<Navigate to="/config/fases" replace />} />
