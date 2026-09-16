@@ -8,6 +8,7 @@ const items = [
   { label: 'Inicio', to: '/', icon: LayoutDashboard, roles: [] },
   { label: 'Solicitudes', to: '/solicitudes', icon: ClipboardList, roles: ['VENDEDOR', 'GERENTE'] },
   { label: 'Cotizaciones', to: '/cotizaciones', icon: FileText, roles: ['JEFE_PRODUCCION', 'VENDEDOR'] },
+  { label: 'Planta', to: '/planta', icon: ClipboardList, roles: ['JEFE_PRODUCCION'] },
   { label: 'Configuracion', to: '/config/fases', icon: Settings, roles: ['GERENTE'] },
 ];
 
