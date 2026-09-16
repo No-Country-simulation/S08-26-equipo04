@@ -141,7 +141,7 @@ public class UsuarioService {
 
     /**
      * Convierte Entity → DTO
-     * ✅ Incluye: id, nombre, email, rol, activo, fechas
+     * ✅ Incluye: id, nombre, email, rol, activo
      * ❌ NO incluye: password (seguridad)
      */
     private UsuarioDTO convertirADTO(Usuario usuario) {
@@ -151,8 +151,6 @@ public class UsuarioService {
         dto.setEmail(usuario.getEmail());
         dto.setRol(usuario.getRol());
         dto.setActivo(usuario.getActivo());
-        dto.setCreatedAt(usuario.getCreatedAt());
-        dto.setUpdatedAt(usuario.getUpdatedAt());
         return dto;
     }
 
