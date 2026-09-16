@@ -1,20 +1,32 @@
 package com.backend.qualititrack.modelos;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 import com.backend.qualititrack.Enum.EstadoCotizacion;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotNull;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
-
 @Entity
-@Table(name = "cotizacion")
+@Table(name = "cotizaciones")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -41,17 +53,14 @@ public class Cotizacion {
     @Column(name = "estado", nullable = false)
     private EstadoCotizacion estado;
 
-    @Column(name = "fecha_vencimiento")
-    private LocalDateTime fechaVencimiento;
-
     @Column(name = "fecha_envio_cliente")
     private LocalDateTime fechaEnvioCliente;
 
     @Column(name = "fecha_respuesta_cliente")
     private LocalDateTime fechaRespuestaCliente;
 
-    @Column(name = "motivo_rechazo", columnDefinition = "TEXT")
-    private String motivoRechazo;
+    @Column(name = "motivo_rechazo_cliente", columnDefinition = "TEXT")
+    private String motivoRechazoCliente;
 
     @Column(name = "observaciones", columnDefinition = "TEXT")
     private String observaciones;
@@ -61,6 +70,13 @@ public class Cotizacion {
 
     @Column(name = "updated_at")
     private LocalDateTime fechaActualizacion;
+
+    @OneToMany(
+        mappedBy = "cotizacion", 
+        cascade = jakarta.persistence.CascadeType.ALL, 
+        orphanRemoval = true
+    )
+    private java.util.List<CotizacionFase> fases = new java.util.ArrayList<>();
 
 
     @OneToOne(mappedBy = "cotizacion")
@@ -127,14 +143,6 @@ public class Cotizacion {
         this.estado = estado;
     }
 
-    public LocalDateTime getFechaVencimiento() {
-        return fechaVencimiento;
-    }
-
-    public void setFechaVencimiento(LocalDateTime fechaVencimiento) {
-        this.fechaVencimiento = fechaVencimiento;
-    }
-
     public LocalDateTime getFechaEnvioCliente() {
         return fechaEnvioCliente;
     }
@@ -151,12 +159,12 @@ public class Cotizacion {
         this.fechaRespuestaCliente = fechaRespuestaCliente;
     }
 
-    public String getMotivoRechazo() {
-        return motivoRechazo;
+    public String getMotivoRechazoCliente() {
+        return motivoRechazoCliente;
     }
 
-    public void setMotivoRechazo(String motivoRechazo) {
-        this.motivoRechazo = motivoRechazo;
+    public void setMotivoRechazoCliente(String motivoRechazo) {
+        this.motivoRechazoCliente = motivoRechazo;
     }
 
     public String getObservaciones() {

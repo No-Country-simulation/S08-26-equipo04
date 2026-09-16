@@ -67,8 +67,8 @@ public class CotizacionController {
      * 4. LISTAR PENDIENTES - GET /api/cotizaciones/pendientes
      * Solo JEFE_PRODUCCION
      */
-    @GetMapping("/pendientes")
-    @PreAuthorize("hasAnyRole('JEFE_PRODUCCION')")
+    @GetMapping
+    @PreAuthorize("hasAnyRole('VENDEDOR', 'JEFE_PRODUCCION')")
     public ResponseEntity<List<CotizacionDTO>> listarPendientes() {
         List<CotizacionDTO> pendientes = cotizacionService.listarPendientes();
         return ResponseEntity.ok().body(pendientes);

@@ -1,6 +1,6 @@
 package com.backend.qualititrack.Service;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -44,11 +44,11 @@ public class OrdenTrabajoService {
         OrdenTrabajo ordenTrabajo = new OrdenTrabajo();
         ordenTrabajo.setNumeroOt(generarNumeroOrden());
         ordenTrabajo.setCotizacion(cotizacion);
-        ordenTrabajo.setEstado(EstadoOT.PENDIENTE);
-        ordenTrabajo.setFechaCreacion(LocalDateTime.now());
+        ordenTrabajo.setEstado(EstadoOT.EN_PRODUCCION);
+        ordenTrabajo.setCreatedAt(OffsetDateTime.now());
 
-        ordenTrabajo.setFechaVencimiento(cotizacion.getFechaVencimiento());  // Copiar desde cotización
-        ordenTrabajo.setCliente(cotizacion.getSolicitud().getCliente());    //obtenemos el cliente
+        // ordenTrabajo.setFechaVencimiento(cotizacion.getFechaVencimiento());  // Copiar desde cotización
+        // ordenTrabajo.setCliente(cotizacion.getSolicitud().getCliente());    //obtenemos el cliente
 
         OrdenTrabajo guardada = ordenTrabajoRepository.save(ordenTrabajo);
         return convertirADTO(guardada);
@@ -100,7 +100,7 @@ public class OrdenTrabajoService {
 
         // Si el nuevo estado es COMPLETADA, registrar fecha de completación
         if (nuevoEstado == EstadoOT.COMPLETADA) {
-            ordenTrabajo.setFechaTerminacion(LocalDateTime.now());
+            ordenTrabajo.setFechaEntrega(OffsetDateTime.now());
         }
 
         OrdenTrabajo actualizada = ordenTrabajoRepository.save(ordenTrabajo);
@@ -117,7 +117,7 @@ public class OrdenTrabajoService {
                         "La orden de trabajo con ID " + id + " no existe"));
 
         ordenTrabajo.setEstado(EstadoOT.CANCELADA);
-        ordenTrabajo.setNotas("Cancelada: " + motivo);
+        // ordenTrabajo.setNotas("Cancelada: " + motivo);
 
         OrdenTrabajo actualizada = ordenTrabajoRepository.save(ordenTrabajo);
         return convertirADTO(actualizada);
@@ -139,10 +139,10 @@ public class OrdenTrabajoService {
         OrdenTrabajoDTO dto = new OrdenTrabajoDTO();
         dto.setId(ordenTrabajo.getId());
         dto.setNumeroOT(ordenTrabajo.getNumeroOt());
-        dto.setFechaCreacion(ordenTrabajo.getFechaCreacion());
-        dto.setFechaTerminoReal(ordenTrabajo.getFechaTerminacion());
+        dto.setFechaCreacion(ordenTrabajo.getCreatedAt());
+        dto.setFechaTerminoReal(ordenTrabajo.getFechaEntrega());
         dto.setEstado(ordenTrabajo.getEstado());
-        dto.setDescripcion(ordenTrabajo.getNotas());
+        // dto.setDescripcion(ordenTrabajo.getNotas());
         dto.setCotizacionId(ordenTrabajo.getCotizacion().getId());
         return dto;
     }
