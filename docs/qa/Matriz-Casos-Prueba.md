@@ -86,8 +86,6 @@ El recorrido esperado para QA es:
 | TC-A-1.1-02 | Registrar solicitud sin razón social | Dirección y teléfono válidos; descripción válida; cantidad = 1; razón social vacía | 1. Completar los campos restantes. 2. Dejar razón social vacía. 3. Intentar guardar. | La solicitud no debe registrarse porque la razón social es obligatoria. | Negativo | Alta | NOT RUN |
 | TC-A-1.1-03 | Registrar solicitud sin dirección del cliente | Razón social válida; teléfono válido; descripción válida; cantidad = 1; dirección vacía | 1. Completar los campos restantes. 2. Dejar dirección vacía. 3. Guardar la solicitud. | La solicitud se registra correctamente sin dirección, ya que la dirección es opcional en el diseño actual. | Funcional | Media | NOT RUN |
 | TC-A-1.1-04 | Registrar solicitud sin teléfono del cliente | Razón social válida; dirección válida; descripción válida; cantidad = 1; teléfono vacío | 1. Completar los campos restantes. 2. Dejar teléfono vacío. 3. Guardar la solicitud. | La solicitud se registra correctamente sin teléfono, ya que el teléfono es opcional en el diseño actual. | Funcional | Media | NOT RUN |
-
-> **Nota PM:** Posible mejora futura — evaluar si la dirección y el teléfono deberían pasar a ser obligatorios.
 | TC-A-1.1-05 | Registrar solicitud sin descripción de pieza/trabajo | Datos del cliente válidos; descripción vacía; cantidad = 1 | 1. Completar los datos del cliente. 2. Dejar descripción vacía. 3. Informar cantidad. 4. Intentar guardar. | La solicitud no debe registrarse porque la descripción de pieza/trabajo es obligatoria. | Negativo | Crítica | NOT RUN |
 | TC-A-1.1-06 | Registrar solicitud sin cantidad | Datos del cliente válidos; descripción válida; cantidad no informada | 1. Completar los datos obligatorios del cliente. 2. Informar descripción. 3. No informar cantidad. 4. Intentar guardar. | La solicitud no debe registrarse porque la cantidad es obligatoria. | Negativo | Crítica | NOT RUN |
 | TC-A-1.1-07 | Registrar solicitud con cantidad igual a 0 | Datos del cliente válidos; descripción válida; cantidad = 0 | 1. Completar los datos obligatorios. 2. Informar cantidad = 0. 3. Intentar guardar. | La solicitud no debe registrarse porque la cantidad debe ser mayor que 0. | Negativo | Alta | NOT RUN |
@@ -104,6 +102,8 @@ El recorrido esperado para QA es:
 ### Validación principal
 
 QA debe comprobar que la solicitud quede registrada completa y disponible para continuar el circuito hacia la cotización.
+
+> **Nota PM:** Posible mejora futura — evaluar si la dirección y el teléfono deberían pasar a ser obligatorios.
 
 ---
 
@@ -382,3 +382,4 @@ El criterio de cierre será entonces la ejecución de todas las fases de la OT h
 7. **HU-5.1:** se elimina la nota de dependencia sobre filtrado de operarios, dado que PM indica que ya está resuelto.
 
 **Cobertura resultante:** 50 casos en Fase A: 44 casos por HU + 1 E2E principal + 5 E2E negativos.
+
