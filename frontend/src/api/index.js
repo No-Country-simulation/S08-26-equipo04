@@ -1,0 +1,8 @@
+export { default as api } from './client';
+export * from './helpers';
+
+export const apiGet = (url, config = {}) => api.get(url, config);
+export const apiPost = (url, data, config = {}) => api.post(url, data, config);
+export const apiPut = (url, data, config = {}) => api.put(url, data, config);
+export const apiPatch = (url, data, config = {}) => api.patch(url, data, config);
+export const apiDelete = (url, config = {}) => api.delete(url, config);
