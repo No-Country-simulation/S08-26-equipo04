@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { toast } from 'sonner';
-
-const STORAGE_KEY = 'qualitytrack-auth';
+import { clearSession, readSession } from './session';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
@@ -12,14 +11,6 @@ const api = axios.create({
   },
 });
 
-const getStoredSession = () => {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || null;
-  } catch {
-    return null;
-  }
-};
-
 const redirectToLogin = () => {
   if (window.location.pathname !== '/login') {
     window.location.replace('/login');
@@ -27,7 +18,7 @@ const redirectToLogin = () => {
 };
 
 api.interceptors.request.use((config) => {
-  const session = getStoredSession();
+  const session = readSession();
   const token = session?.token;
 
   if (token) {
@@ -48,7 +39,7 @@ api.interceptors.response.use(
     const message = response?.data?.message || response?.data?.error || 'No se pudo completar la solicitud.';
 
     if (status === 401) {
-      localStorage.removeItem(STORAGE_KEY);
+      clearSession();
       toast.error('Tu sesión expiró. Inicia sesión nuevamente.');
       redirectToLogin();
     } else if (status === 403) {

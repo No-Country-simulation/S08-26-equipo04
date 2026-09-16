@@ -1,5 +1,8 @@
-export { default as api } from './client';
+import api from './client';
+
+export { api };
 export * from './helpers';
+export * from './session';
 
 export const apiGet = (url, config = {}) => api.get(url, config);
 export const apiPost = (url, data, config = {}) => api.post(url, data, config);
