@@ -1,11 +1,12 @@
 package com.backend.qualititrack.Service;
 
-import com.backend.qualititrack.modelos.Fase;
-import com.backend.qualititrack.modelos.FaseCatalogo;
-import com.backend.qualititrack.repository.FaseRepository;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import java.util.List;
+
+import com.backend.qualititrack.modelos.FaseCatalogo;
+import com.backend.qualititrack.repository.FaseRepository;
 
 @Service
 public class FaseService {

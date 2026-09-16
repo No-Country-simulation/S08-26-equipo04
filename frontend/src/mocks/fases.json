@@ -1,0 +1,65 @@
+[
+  {
+    "id": 1,
+    "codigo": "CORTE",
+    "nombre": "Corte",
+    "descripcion": "Corte por láser, plasma o sierra",
+    "activo": true,
+    "created_at": "2026-09-01T10:00:00Z",
+    "updated_at": "2026-09-01T10:00:00Z"
+  },
+  {
+    "id": 2,
+    "codigo": "PLEGADO",
+    "nombre": "Plegado",
+    "descripcion": "Conformado en prensa plegadora",
+    "activo": true,
+    "created_at": "2026-09-01T10:00:00Z",
+    "updated_at": "2026-09-01T10:00:00Z"
+  },
+  {
+    "id": 3,
+    "codigo": "SOLDADURA",
+    "nombre": "Soldadura",
+    "descripcion": "Unión térmica MIG/TIG",
+    "activo": true,
+    "created_at": "2026-09-01T10:00:00Z",
+    "updated_at": "2026-09-01T10:00:00Z"
+  },
+  {
+    "id": 4,
+    "codigo": "FUNDICION",
+    "nombre": "Fundición",
+    "descripcion": "Colada en molde",
+    "activo": true,
+    "created_at": "2026-09-01T10:00:00Z",
+    "updated_at": "2026-09-01T10:00:00Z"
+  },
+  {
+    "id": 5,
+    "codigo": "MECANIZADO",
+    "nombre": "Mecanizado",
+    "descripcion": "CNC por arranque de viruta",
+    "activo": true,
+    "created_at": "2026-09-01T10:00:00Z",
+    "updated_at": "2026-09-01T10:00:00Z"
+  },
+  {
+    "id": 6,
+    "codigo": "ENSAMBLE",
+    "nombre": "Ensamble",
+    "descripcion": "Montaje y fijación de componentes",
+    "activo": true,
+    "created_at": "2026-09-01T10:00:00Z",
+    "updated_at": "2026-09-01T10:00:00Z"
+  },
+  {
+    "id": 7,
+    "codigo": "PRUEBA",
+    "nombre": "Prueba",
+    "descripcion": "Ensayos y test de estanqueidad",
+    "activo": true,
+    "created_at": "2026-09-01T10:00:00Z",
+    "updated_at": "2026-09-01T10:00:00Z"
+  }
+]
