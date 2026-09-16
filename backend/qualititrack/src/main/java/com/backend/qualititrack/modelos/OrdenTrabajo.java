@@ -1,9 +1,11 @@
 package com.backend.qualititrack.modelos;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
+import java.util.List;
 
 import com.backend.qualititrack.Enum.EstadoOT;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -13,63 +15,210 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-// 9. Órdenes de Trabajo[cite: 1]
 @Entity
-@Table(name = "ordenes_trabajo")
-@Getter
-@Setter
+@Table(name = "orden_trabajo")
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class OrdenTrabajo {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "numero_ot", nullable = false, unique = true, length = 30)
+    @NotBlank(message = "El número de OT no puede estar vacío")
+    @Column(name = "numero_ot", nullable = false, unique = true)
     private String numeroOt;
 
-    // Relación uno a uno por regla D8 / R5 del negocio (Unique)[cite: 1]
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cotizacion_id", nullable = false, unique = true)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado", length = 30)
+    private EstadoOT estado;
+
+    @Column(name = "fecha_inicio")
+    private LocalDateTime fechaInicio;
+
+    @Column(name ="notas_baja")
+    private String notas;
+
+    public String getNotas() {
+        return notas;
+    }
+
+    public void setNotas(String notas) {
+        this.notas = notas;
+    }
+
+    @NotNull(message = "La fecha de vencimiento no puede ser nula")
+    @Column(name = "fecha_vencimiento", nullable = false)
+    private LocalDateTime fechaVencimiento;
+
+    @Column(name = "fecha_terminacion")
+    private LocalDateTime fechaTerminacion;
+
+    @Column(name = "fecha_creacion", nullable = false, updatable = false)
+    private LocalDateTime fechaCreacion;
+
+    @Column(name = "fecha_actualizacion")
+    private LocalDateTime fechaActualizacion;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "cliente_id", nullable = false)
+    private Cliente cliente;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "cotizacion_id", nullable = false)
     private Cotizacion cotizacion;
 
-    @Column(nullable = false)
-    @Builder.Default
-    private Integer cantidad = 1;
+    @OneToMany(
+            mappedBy = "ordenTrabajo",
+            cascade = CascadeType.REMOVE,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private List<OtFase> fases;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
-    @Builder.Default
-    private EstadoOT estado = EstadoOT.EN_PRODUCCION;
+    @OneToMany(
+            mappedBy = "ordenTrabajo",
+            cascade = CascadeType.REMOVE,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private List<Adjunto> documentos;
 
-    @Column(name = "fecha_inicio_produccion")
-    private OffsetDateTime fechaInicioProduccion;
 
-    @Column(name = "fecha_pase_calidad")
-    private OffsetDateTime fechaPaseCalidad;
+    @OneToOne(
+            mappedBy = "ordenTrabajo",
+            cascade = CascadeType.REMOVE,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private AuditoriaCalidad calidadChecklist;
 
-    @Column(name = "fecha_pase_despacho")
-    private OffsetDateTime fechaPaseDespacho;
+    @PrePersist
+    protected void onCreate() {
+        fechaCreacion = LocalDateTime.now();
+        if (estado == null) {
+            estado = EstadoOT.EN_PRODUCCION;
+        }
+    }
 
-    @Column(name = "fecha_entrega")
-    private OffsetDateTime fechaEntrega;
+    @PreUpdate
+    protected void onUpdate() {
+        fechaActualizacion = LocalDateTime.now();
+    }
 
-    @Column(name = "receptor_nombre", length = 150)
-    private String receptorNombre;
+    public Long getId() {
+        return id;
+    }
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt;
+    public String getNumeroOt() {
+        return numeroOt;
+    }
+
+    public void setNumeroOt(String numeroOt) {
+        this.numeroOt = numeroOt;
+    }
+
+    public EstadoOT getEstado() {
+        return estado;
+    }
+
+    public void setEstado(EstadoOT estado) {
+        this.estado = estado;
+    }
+
+    public LocalDateTime getFechaVencimiento() {
+        return fechaVencimiento;
+    }
+
+    public void setFechaVencimiento(LocalDateTime fechaVencimiento) {
+        this.fechaVencimiento = fechaVencimiento;
+    }
+
+    public LocalDateTime getFechaInicio() {
+        return fechaInicio;
+    }
+
+    public void setFechaInicio(LocalDateTime fechaInicio) {
+        this.fechaInicio = fechaInicio;
+    }
+
+    public LocalDateTime getFechaTerminacion() {
+        return fechaTerminacion;
+    }
+
+    public void setFechaTerminacion(LocalDateTime fechaTerminacion) {
+        this.fechaTerminacion = fechaTerminacion;
+    }
+
+    public LocalDateTime getFechaCreacion() {
+        return fechaCreacion;
+    }
+
+    public void setFechaCreacion(LocalDateTime fechaCreacion) {
+        this.fechaCreacion = fechaCreacion;
+    }
+
+    public LocalDateTime getFechaActualizacion() {
+        return fechaActualizacion;
+    }
+
+    public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
+        this.fechaActualizacion = fechaActualizacion;
+    }
+
+    public Cliente getCliente() {
+        return cliente;
+    }
+
+    public void setCliente(Cliente cliente) {
+        this.cliente = cliente;
+    }
+
+    public Cotizacion getCotizacion() {
+        return cotizacion;
+    }
+
+    public void setCotizacion(Cotizacion cotizacion) {
+        this.cotizacion = cotizacion;
+    }
+
+    public List<OtFase> getFases() {
+        return fases;
+    }
+
+    public void setFases(List<OtFase> fases) {
+        this.fases = fases;
+    }
+
+    public AuditoriaCalidad getCalidadChecklist() {
+        return calidadChecklist;
+    }
+
+    public void setCalidadChecklist(AuditoriaCalidad calidadChecklist) {
+        this.calidadChecklist = calidadChecklist;
+    }
+
+    public List<Adjunto> getDocumentos() {
+        return documentos;
+    }
+
+    public void setDocumentos(List<Adjunto> documentos) {
+        this.documentos = documentos;
+    }
 }

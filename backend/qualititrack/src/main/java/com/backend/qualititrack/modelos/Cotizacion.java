@@ -1,39 +1,24 @@
 package com.backend.qualititrack.modelos;
 
+import com.backend.qualititrack.Enum.EstadoCotizacion;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.List;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-// 7. Cotizaciones[cite: 1]
 @Entity
-@Table(name = "cotizaciones")
-@Getter
-@Setter
+@Table(name = "cotizacion")
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class Cotizacion {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -41,8 +26,7 @@ public class Cotizacion {
     @Column(name = "numero_cotizacion", nullable = false, unique = true, length = 30)
     private String numeroCotizacion;
 
-    // Relación uno a uno por regla D7 / R4 del negocio (Unique)[cite: 1]
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "solicitud_id", nullable = false, unique = true)
     private Solicitud solicitud;
 
@@ -54,32 +38,159 @@ public class Cotizacion {
     private BigDecimal precioFinal;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
-    @Builder.Default
-    private EstadoCotizacion estado = EstadoCotizacion.LISTA_PARA_ENVIAR;
+    @Column(name = "estado", nullable = false)
+    private EstadoCotizacion estado;
+
+    @Column(name = "fecha_vencimiento")
+    private LocalDateTime fechaVencimiento;
 
     @Column(name = "fecha_envio_cliente")
-    private OffsetDateTime fechaEnvioCliente;
+    private LocalDateTime fechaEnvioCliente;
 
     @Column(name = "fecha_respuesta_cliente")
-    private OffsetDateTime fechaRespuestaCliente;
+    private LocalDateTime fechaRespuestaCliente;
 
-    @Column(name = "motivo_rechazo_cliente", columnDefinition = "TEXT")
-    private String motivoRechazoCliente;
+    @Column(name = "motivo_rechazo", columnDefinition = "TEXT")
+    private String motivoRechazo;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "observaciones", columnDefinition = "TEXT")
     private String observaciones;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
+    private LocalDateTime fechaCreacion;
 
-    @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt;
+    @Column(name = "updated_at")
+    private LocalDateTime fechaActualizacion;
 
-    @OneToMany(mappedBy = "cotizacion", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CotizacionFase> fases;
 
-    public enum EstadoCotizacion {
-        LISTA_PARA_ENVIAR, ENVIADA_A_CLIENTE, APROBADA, NO_APROBADA
+    @OneToOne(mappedBy = "cotizacion")
+    @JsonIgnore
+    private OrdenTrabajo ordenTrabajo;
+
+    @PrePersist
+    protected void onCreate() {
+        fechaCreacion = LocalDateTime.now();
+        fechaActualizacion = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        fechaActualizacion = LocalDateTime.now();
+    }
+
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getNumeroCotizacion() {
+        return numeroCotizacion;
+    }
+
+    public void setNumeroCotizacion(String numeroCotizacion) {
+        this.numeroCotizacion = numeroCotizacion;
+    }
+
+    public Solicitud getSolicitud() {
+        return solicitud;
+    }
+
+    public void setSolicitud(Solicitud solicitud) {
+        this.solicitud = solicitud;
+    }
+
+    public Usuario getJefeProduccion() {
+        return jefeProduccion;
+    }
+
+    public void setJefeProduccion(Usuario jefeProduccion) {
+        this.jefeProduccion = jefeProduccion;
+    }
+
+    public BigDecimal getPrecioFinal() {
+        return precioFinal;
+    }
+
+    public void setPrecioFinal(BigDecimal precioFinal) {
+        this.precioFinal = precioFinal;
+    }
+
+    public EstadoCotizacion getEstado() {
+        return estado;
+    }
+
+    public void setEstado(EstadoCotizacion estado) {
+        this.estado = estado;
+    }
+
+    public LocalDateTime getFechaVencimiento() {
+        return fechaVencimiento;
+    }
+
+    public void setFechaVencimiento(LocalDateTime fechaVencimiento) {
+        this.fechaVencimiento = fechaVencimiento;
+    }
+
+    public LocalDateTime getFechaEnvioCliente() {
+        return fechaEnvioCliente;
+    }
+
+    public void setFechaEnvioCliente(LocalDateTime fechaEnvioCliente) {
+        this.fechaEnvioCliente = fechaEnvioCliente;
+    }
+
+    public LocalDateTime getFechaRespuestaCliente() {
+        return fechaRespuestaCliente;
+    }
+
+    public void setFechaRespuestaCliente(LocalDateTime fechaRespuestaCliente) {
+        this.fechaRespuestaCliente = fechaRespuestaCliente;
+    }
+
+    public String getMotivoRechazo() {
+        return motivoRechazo;
+    }
+
+    public void setMotivoRechazo(String motivoRechazo) {
+        this.motivoRechazo = motivoRechazo;
+    }
+
+    public String getObservaciones() {
+        return observaciones;
+    }
+
+    public void setObservaciones(String observaciones) {
+        this.observaciones = observaciones;
+    }
+
+    public LocalDateTime getFechaCreacion() {
+        return fechaCreacion;
+    }
+
+    public void setFechaCreacion(LocalDateTime fechaCreacion) {
+        this.fechaCreacion = fechaCreacion;
+    }
+
+    public LocalDateTime getFechaActualizacion() {
+        return fechaActualizacion;
+    }
+
+    public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
+        this.fechaActualizacion = fechaActualizacion;
+    }
+
+    public OrdenTrabajo getOrdenTrabajo() {
+        return ordenTrabajo;
+    }
+
+    public void setOrdenTrabajo(OrdenTrabajo ordenTrabajo) {
+        this.ordenTrabajo = ordenTrabajo;
     }
 }
+
+
+

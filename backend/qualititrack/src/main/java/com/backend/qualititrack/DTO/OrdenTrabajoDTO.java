@@ -49,4 +49,100 @@ public class OrdenTrabajoDTO {
     private LocalDateTime fechaInicioReal;
 
     private LocalDateTime fechaTerminoReal;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getCotizacionId() {
+        return cotizacionId;
+    }
+
+    public void setCotizacionId(Long cotizacionId) {
+        this.cotizacionId = cotizacionId;
+    }
+
+    public EstadoOT getEstado() {
+        return estado;
+    }
+
+    public void setEstado(EstadoOT estado) {
+        this.estado = estado;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    public String getNumeroOT() {
+        return numeroOT;
+    }
+
+    public void setNumeroOT(String numeroOT) {
+        this.numeroOT = numeroOT;
+    }
+
+    public LocalDateTime getFechaVencimiento() {
+        return fechaVencimiento;
+    }
+
+    public void setFechaVencimiento(LocalDateTime fechaVencimiento) {
+        this.fechaVencimiento = fechaVencimiento;
+    }
+
+    public String getObservaciones() {
+        return observaciones;
+    }
+
+    public void setObservaciones(String observaciones) {
+        this.observaciones = observaciones;
+    }
+
+    public Integer getPrioridad() {
+        return prioridad;
+    }
+
+    public void setPrioridad(Integer prioridad) {
+        this.prioridad = prioridad;
+    }
+
+    public LocalDateTime getFechaCreacion() {
+        return fechaCreacion;
+    }
+
+    public void setFechaCreacion(LocalDateTime fechaCreacion) {
+        this.fechaCreacion = fechaCreacion;
+    }
+
+    public LocalDateTime getFechaActualizacion() {
+        return fechaActualizacion;
+    }
+
+    public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
+        this.fechaActualizacion = fechaActualizacion;
+    }
+
+    public LocalDateTime getFechaTerminoReal() {
+        return fechaTerminoReal;
+    }
+
+    public void setFechaTerminoReal(LocalDateTime fechaTerminoReal) {
+        this.fechaTerminoReal = fechaTerminoReal;
+    }
+
+    public LocalDateTime getFechaInicioReal() {
+        return fechaInicioReal;
+    }
+
+    public void setFechaInicioReal(LocalDateTime fechaInicioReal) {
+        this.fechaInicioReal = fechaInicioReal;
+    }
 }
