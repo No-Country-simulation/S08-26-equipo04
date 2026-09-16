@@ -19,4 +19,27 @@ public class FaseService {
     public Fase crearFase(Fase fase) {
         return faseRepository.save(fase);
     }
+
+    // Actualizar campos de una fase existente
+    public Fase actualizarFase(Long id, Fase detallesFase) {
+        Fase fase = faseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Fase no encontrada con ID: " + id));
+
+        // Actualiza los campos necesarios según la entidad Fase
+        fase.setNombre(detallesFase.getNombre());
+        // Agrega aquí los demás campos que tenga la entidad Fase
+
+        return faseRepository.save(fase);
+    }
+
+    // Habilitar o deshabilitar operarios sobre una fase específica
+    public Fase gestionarHabilitacionOperario(Long faseId, Long operarioId, boolean habilitar) {
+        Fase fase = faseRepository.findById(faseId)
+                .orElseThrow(() -> new RuntimeException("Fase no encontrada con ID: " + faseId));
+
+        // Aquí se integra la lógica de relación entre la fase y el operario
+        // actualizar una lista o tabla intermedia)
+
+        return faseRepository.save(fase);
+    }
 }

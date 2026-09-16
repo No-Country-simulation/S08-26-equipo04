@@ -2,6 +2,7 @@ package com.backend.qualititrack.Controller;
 
 import com.backend.qualititrack.modelos.Fase;
 import com.backend.qualititrack.Service.FaseService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,16 +17,79 @@ public class FaseController {
     @Autowired
     private FaseService faseService;
 
+    /**
+     * GET /api/fases
+     * Obtiene la lista de fases (Accesible por GERENTE y JEFE_PRODUCCION).
+     */
     @GetMapping
-    @PreAuthorize("hasAnyRole('GERENTE', 'JEFE_PRODUCCION', 'OPERARIO')")
+    @PreAuthorize("hasAnyRole('GERENTE', 'JEFE_PRODUCCION')")
     public ResponseEntity<List<Fase>> listarFases() {
-        return ResponseEntity.ok(faseService.listarFases());
+        List<Fase> fases = faseService.listarFases();
+        return ResponseEntity.ok(fases);
     }
 
+    /**
+     * POST /api/fases
+     * Crea una nueva fase (Solo GERENTE).
+     */
     @PostMapping
     @PreAuthorize("hasRole('GERENTE')")
-    public ResponseEntity<Fase> crearFase(@RequestBody Fase fase) {
+    public ResponseEntity<Fase> crearFase(@RequestBody @Valid Fase fase) {
         Fase nuevaFase = faseService.crearFase(fase);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevaFase);
+    }
+
+    /**
+     * PUT /api/fases/{id}
+     * Actualiza los campos de una fase existente o permite borrado lógico (Solo
+     * GERENTE).
+     */
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('GERENTE')")
+    public ResponseEntity<Fase> actualizarFase(
+            @PathVariable Long id,
+            @RequestBody Fase detallesFase) {
+
+        Fase faseActualizada = faseService.actualizarFase(id, detallesFase);
+        return ResponseEntity.ok(faseActualizada);
+    }
+
+    /**
+     * POST /api/fases/{id}/habilitar
+     * Habilita o deshabilita operarios sobre una fase específica mediante JSON Body
+     * (Solo GERENTE).
+     */
+    @PostMapping("/{id}/habilitar")
+    @PreAuthorize("hasRole('GERENTE')")
+    public ResponseEntity<Fase> habilitarOperarioEnFase(
+            @PathVariable Long id,
+            @RequestBody HabilitarOperarioDTO dto) {
+
+        Fase faseModificada = faseService.gestionarHabilitacionOperario(id, dto.getOperarioId(), dto.isHabilitado());
+        return ResponseEntity.ok(faseModificada);
+    }
+
+    /**
+     * DTO interno para recibir el payload del endpoint de habilitación.
+     */
+    public static class HabilitarOperarioDTO {
+        private Long operarioId;
+        private boolean habilitado;
+
+        public Long getOperarioId() {
+            return operarioId;
+        }
+
+        public void setOperarioId(Long operarioId) {
+            this.operarioId = operarioId;
+        }
+
+        public boolean isHabilitado() {
+            return habilitado;
+        }
+
+        public void setHabilitado(boolean habilitado) {
+            this.habilitado = habilitado;
+        }
     }
 }
