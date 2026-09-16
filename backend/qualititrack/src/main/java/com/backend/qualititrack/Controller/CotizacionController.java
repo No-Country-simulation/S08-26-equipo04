@@ -75,10 +75,10 @@ public class CotizacionController {
     }
 
     /**
-     * 5. ENVIAR AL CLIENTE - PUT /api/cotizaciones/{id}/enviar-cliente
+     * 5. ENVIAR AL CLIENTE - PUT /api/cotizaciones/{id}
      * Solo VENDEDOR
      */
-    @PutMapping("/{id}/enviar-cliente")
+    @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('VENDEDOR')")
     public ResponseEntity<CotizacionDTO> enviarAlCliente(@PathVariable Long id) {
         Long vendedorId = obtenerIdDelUsuario();
