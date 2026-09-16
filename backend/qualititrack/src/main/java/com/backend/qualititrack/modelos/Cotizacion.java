@@ -16,6 +16,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -69,6 +70,13 @@ public class Cotizacion {
 
     @Column(name = "updated_at")
     private LocalDateTime fechaActualizacion;
+
+    @OneToMany(
+        mappedBy = "cotizacion", 
+        cascade = jakarta.persistence.CascadeType.ALL, 
+        orphanRemoval = true
+    )
+    private java.util.List<CotizacionFase> fases = new java.util.ArrayList<>();
 
 
     @OneToOne(mappedBy = "cotizacion")

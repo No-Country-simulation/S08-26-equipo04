@@ -10,11 +10,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.backend.qualititrack.DTO.CotizacionDTO;
+import com.backend.qualititrack.DTO.CotizacionFaseDTO;
 import com.backend.qualititrack.Enum.EstadoCotizacion;
 import com.backend.qualititrack.modelos.Cotizacion;
+import com.backend.qualititrack.modelos.CotizacionFase;
 import com.backend.qualititrack.modelos.Solicitud;
 import com.backend.qualititrack.modelos.Usuario;
 import com.backend.qualititrack.repository.CotizacionRepository;
+import com.backend.qualititrack.repository.FaseRepository;
 import com.backend.qualititrack.repository.SolicitudRepository;
 import com.backend.qualititrack.repository.UsuarioRepository;
 
@@ -33,6 +36,9 @@ public class CotizacionService {
 
     @Autowired
     private OrdenTrabajoService ordenTrabajoService;
+
+    @Autowired
+    private FaseRepository faseRepository;
 
     /**
      * 1. CREAR - JEFE_PRODUCCION crea cotización
@@ -55,12 +61,26 @@ public class CotizacionService {
             throw new IllegalArgumentException("El precio debe ser mayor a 0");
         }
 
+        // Validar existencia de fases en el request
+        if (dto.getFases() == null || dto.getFases().isEmpty()) {
+            throw new IllegalArgumentException("La cotización debe incluir al menos una fase");
+        }
+
         // Validar que el usuario es JEFE_PRODUCCION
         Usuario jefe = usuarioRepository.findById(jefeId)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
 
         if (!jefe.getRol().toString().equals("JEFE_PRODUCCION")) {
             throw new IllegalArgumentException("Solo Jefe de Producción puede crear cotizaciones");
+        }
+
+        // Validar unicidad del número de secuencia
+        java.util.Set<Integer> secuencias = new java.util.HashSet<>();
+        for (CotizacionFaseDTO f : dto.getFases()) {
+            if (!secuencias.add(f.getNumeroSecuencia())) {
+                throw new IllegalArgumentException(
+                        "El número de secuencia no puede repetirse: " + f.getNumeroSecuencia());
+            }
         }
 
         // Crear cotización
@@ -77,11 +97,28 @@ public class CotizacionService {
 
         cotizacion.setFechaCreacion(LocalDateTime.now());
         cotizacion.setFechaActualizacion(LocalDateTime.now());
+
+        // Construir y vincular las fases
+        for (CotizacionFaseDTO faseDto : dto.getFases()) {
+            com.backend.qualititrack.modelos.FaseCatalogo catalogo = faseRepository
+                    .findById(faseDto.getFaseCatalogoId())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Fase de catálogo no encontrada: " + faseDto.getFaseCatalogoId()));
+
+            CotizacionFase cf = new CotizacionFase();
+            cf.setCotizacion(cotizacion); // Relación bidireccional (dueño)
+            cf.setFaseCatalogo(catalogo);
+            cf.setNumeroSecuencia(faseDto.getNumeroSecuencia());
+            cf.setTiempoEstimadoMinutos(faseDto.getTiempoEstimadoMinutos());
+            cf.setInstruccionesFase(faseDto.getInstruccionesFase());
+            cf.setCreatedAt(java.time.OffsetDateTime.now());
+
+            cotizacion.getFases().add(cf);
+        }
+
         Cotizacion guardada = cotizacionRepository.save(cotizacion);
         return convertirADTO(guardada);
     }
-
-
 
     /**
      * 2. OBTENER POR ID
@@ -109,7 +146,7 @@ public class CotizacionService {
      */
     @Transactional(readOnly = true)
     public List<CotizacionDTO> listarPendientes() {
-        return cotizacionRepository.findByEstado(EstadoCotizacion.LISTA_PARA_ENVIAR.toString()).stream()
+        return cotizacionRepository.findByEstado(EstadoCotizacion.LISTA_PARA_ENVIAR).stream()
                 .map(this::convertirADTO)
                 .collect(Collectors.toList());
     }
@@ -211,7 +248,6 @@ public class CotizacionService {
         Cotizacion actualizada = cotizacionRepository.save(cot);
         return convertirADTO(actualizada);
 
-
     }
 
     private String generarNumeroCotizacion() {
@@ -219,6 +255,7 @@ public class CotizacionService {
         long timestamp = System.currentTimeMillis() % 10000;
         return String.format("COT-%d-%04d", ano, timestamp);
     }
+
     private CotizacionDTO convertirADTO(Cotizacion cotizacion) {
         CotizacionDTO dto = new CotizacionDTO();
         dto.setId(cotizacion.getId());
@@ -228,9 +265,22 @@ public class CotizacionService {
         dto.setEstado(cotizacion.getEstado().toString());
         dto.setObservaciones(cotizacion.getObservaciones());
         // dto.setFechaVencimiento(cotizacion.getFechaVencimiento());
+        dto.setJefeProduccionId(cotizacion.getJefeProduccion().getId());
         dto.setFechaEnvioCliente(cotizacion.getFechaEnvioCliente());
         dto.setFechaRespuestaCliente(cotizacion.getFechaRespuestaCliente());
         dto.setMotivoRechazo(cotizacion.getMotivoRechazoCliente());
+
+        // Incorporar contenido de fases al DTO
+        List<CotizacionFaseDTO> fasesDto = cotizacion.getFases().stream().map(f -> {
+            CotizacionFaseDTO fd = new CotizacionFaseDTO();
+            fd.setFaseCatalogoId(f.getFaseCatalogo().getId());
+            fd.setNumeroSecuencia(f.getNumeroSecuencia());
+            fd.setTiempoEstimadoMinutos(f.getTiempoEstimadoMinutos());
+            fd.setInstruccionesFase(f.getInstruccionesFase());
+            return fd;
+        }).collect(Collectors.toList());
+
+        dto.setFases(fasesDto);
         return dto;
     }
 }
