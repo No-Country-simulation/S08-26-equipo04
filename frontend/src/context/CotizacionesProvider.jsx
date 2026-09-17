@@ -4,10 +4,10 @@ import { useAuth } from './AuthContext';
 import { mocks } from '../mocks';
 import { CotizacionesContext } from './CotizacionesContext';
 
-// El DTO de backend trae el nombre de fase como nombre_fase y usa otros
-// nombres (precio_total vs precio_final, motivo_rechazo vs
-// motivo_rechazo_cliente en el GET). Se normaliza en cliente para no romper
-// las vistas; si falta el nombre se resuelve contra el catálogo local.
+// El DTO de backend trae el nombre de fase como nombre_fase. Se normaliza
+// en cliente (precio_final, motivo_rechazo_cliente, fase_nombre) para no
+// romper las vistas; si falta el nombre se resuelve contra el catálogo
+// local. Se toleran los nombres anteriores por compatibilidad.
 const mapFase = (fase, catalogo = mocks.fases) => ({
   ...fase,
   fase_nombre:
@@ -107,7 +107,7 @@ export const CotizacionesProvider = ({ children }) => {
     // fase_nombre e id son solo de UI: el DTO los rechazaría.
     const payload = {
       solicitud_id,
-      precio_total: Number(precio_final),
+      precio_final: Number(precio_final),
       observaciones: observaciones || '',
       fases: fases.map((fase, index) => ({
         fase_catalogo_id: fase.fase_catalogo_id,
