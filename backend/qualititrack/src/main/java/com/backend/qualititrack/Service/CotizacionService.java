@@ -57,7 +57,7 @@ public class CotizacionService {
         }
 
         // Validar precio
-        if (dto.getPrecioTotal().compareTo(BigDecimal.ZERO) <= 0) {
+        if (dto.getPrecioFinal().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("El precio debe ser mayor a 0");
         }
 
@@ -88,7 +88,7 @@ public class CotizacionService {
         cotizacion.setNumeroCotizacion(generarNumeroCotizacion());
         cotizacion.setSolicitud(solicitud);
         cotizacion.setJefeProduccion(jefe);
-        cotizacion.setPrecioFinal(dto.getPrecioTotal());
+        cotizacion.setPrecioFinal(dto.getPrecioFinal());
         cotizacion.setEstado(EstadoCotizacion.LISTA_PARA_ENVIAR);
         cotizacion.setObservaciones(dto.getObservaciones());
 
@@ -261,14 +261,14 @@ public class CotizacionService {
         dto.setId(cotizacion.getId());
         dto.setNumeroCotizacion(cotizacion.getNumeroCotizacion());
         dto.setSolicitudId(cotizacion.getSolicitud().getId());
-        dto.setPrecioTotal(cotizacion.getPrecioFinal());
+        dto.setPrecioFinal(cotizacion.getPrecioFinal());
         dto.setEstado(cotizacion.getEstado().toString());
         dto.setObservaciones(cotizacion.getObservaciones());
         // dto.setFechaVencimiento(cotizacion.getFechaVencimiento());
         dto.setJefeProduccionId(cotizacion.getJefeProduccion().getId());
         dto.setFechaEnvioCliente(cotizacion.getFechaEnvioCliente());
         dto.setFechaRespuestaCliente(cotizacion.getFechaRespuestaCliente());
-        dto.setMotivoRechazo(cotizacion.getMotivoRechazoCliente());
+        dto.setMotivoRechazoCliente(cotizacion.getMotivoRechazoCliente());
 
         // Incorporar contenido de fases al DTO
         List<CotizacionFaseDTO> fasesDto = cotizacion.getFases().stream().map(f -> {
