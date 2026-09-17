@@ -1,10 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { ClipboardList, Loader2, RefreshCcw } from "lucide-react";
+import { ClipboardList, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../../context/AuthContext";
 import { useOtFases } from "../../hooks/useOtFases";
-import { Button, Title } from "../../components/ui";
+import {
+  Button,
+  EmptyState,
+  ErrorBanner,
+  LoadingSpinner,
+  Title,
+} from "../../components/ui";
 import { TaskCardMobile } from "./TaskCardMobile";
+import { TaskDetailModal } from "./TaskDetailModal";
 
 const ESTADOS_ACTIVOS = ["EN_COLA", "EN_EJECUCION"];
 
@@ -14,6 +21,7 @@ export const OperarioPage = () => {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
   const [accionId, setAccionId] = useState(null);
+  const [detalleId, setDetalleId] = useState(null);
 
   const cargar = () => {
     setCargando(true);
@@ -87,6 +95,10 @@ export const OperarioPage = () => {
 
   const reintentar = () => cargar();
 
+  const tareaDetalle = detalleId
+    ? otFases.find((fase) => fase.id === detalleId) ?? null
+    : null;
+
   return (
     <div className="space-y-4 py-2">
       <Title>Mis tareas</Title>
@@ -98,54 +110,28 @@ export const OperarioPage = () => {
       </header>
 
       {error && !cargando && (
-        <div
-          role="alert"
-          className="flex flex-col gap-3 rounded-xl bg-error-light p-4 text-label text-error"
-        >
-          <p>{error}</p>
-          <Button
-            variant="secondary"
-            size="lg"
-            onClick={reintentar}
-            className="min-h-[56px] w-full"
-          >
-            <RefreshCcw className="h-5 w-5" aria-hidden="true" />
-            Reintentar
-          </Button>
-        </div>
+        <ErrorBanner message={error} onRetry={reintentar} />
       )}
 
       {cargando ? (
-        <div
-          className="flex min-h-[40vh] items-center justify-center"
-          role="status"
-          aria-label="Cargando tareas"
-        >
-          <Loader2
-            className="h-10 w-10 animate-spin text-primary"
-            aria-hidden="true"
-          />
-        </div>
+        <LoadingSpinner label="Cargando tareas" size="lg" />
       ) : tareas.length === 0 ? (
-        <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 rounded-2xl bg-surface p-8 text-center shadow-card">
-          <ClipboardList
-            className="h-10 w-10 text-text-muted"
-            aria-hidden="true"
-          />
-          <p className="text-h2 text-ink">No hay tareas asignadas</p>
-          <p className="text-body text-text-secondary">
-            Cuando Produccion te derive una fase, aparecera aqui.
-          </p>
-          <Button
-            variant="secondary"
-            size="lg"
-            onClick={reintentar}
-            className="mt-2 min-h-[56px] w-full"
-          >
-            <RefreshCcw className="h-5 w-5" aria-hidden="true" />
-            Actualizar
-          </Button>
-        </div>
+        <EmptyState
+          icon={ClipboardList}
+          title="No hay tareas asignadas"
+          description="Cuando Produccion te derive una fase, aparecera aqui."
+          action={
+            <Button
+              variant="secondary"
+              size="lg"
+              onClick={reintentar}
+              className="mt-2 min-h-[56px] w-full"
+            >
+              <RefreshCcw className="h-5 w-5" aria-hidden="true" />
+              Actualizar
+            </Button>
+          }
+        />
       ) : (
         <ul className="grid grid-cols-1 gap-4">
           {tareas.map((tarea) => (
@@ -155,11 +141,18 @@ export const OperarioPage = () => {
                 accionEnCurso={accionId === tarea.id}
                 onIniciar={handleIniciar}
                 onFinalizar={handleFinalizar}
+                onVerDetalle={(item) => setDetalleId(item.id)}
               />
             </li>
           ))}
         </ul>
       )}
+      <TaskDetailModal
+        key={detalleId}
+        tarea={tareaDetalle}
+        open={detalleId !== null}
+        onClose={() => setDetalleId(null)}
+      />
     </div>
   );
 };

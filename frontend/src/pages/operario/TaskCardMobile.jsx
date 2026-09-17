@@ -1,4 +1,4 @@
-import { CheckCheck, Clock3, Play } from 'lucide-react';
+import { CheckCheck, Clock3, Eye, Play } from 'lucide-react';
 import { Badge, Button, Card } from '../../components/ui';
 
 const estadoConfig = {
@@ -11,7 +11,7 @@ const estadoConfig = {
  * Tarjeta de tarea mobile-first para el Operario (HU-3.1).
  * Botones tactiles grandes (minimo 56px de alto) pensados para tablet/celular.
  */
-export const TaskCardMobile = ({ tarea, accionEnCurso = false, onIniciar, onFinalizar }) => {
+export const TaskCardMobile = ({ tarea, accionEnCurso = false, onIniciar, onFinalizar, onVerDetalle }) => {
   const estado = estadoConfig[tarea.estado] || { variant: 'queue', label: tarea.estado };
   const puedeIniciar = tarea.estado === 'EN_COLA';
   const puedeFinalizar = tarea.estado === 'EN_EJECUCION';
@@ -38,6 +38,16 @@ export const TaskCardMobile = ({ tarea, accionEnCurso = false, onIniciar, onFina
       )}
 
       <div className="mt-4 grid grid-cols-1 gap-3">
+        <Button
+          size="lg"
+          variant="ghost"
+          onClick={() => onVerDetalle?.(tarea)}
+          className="min-h-[56px] w-full text-base font-semibold"
+          aria-label={`Ver detalle de ${tarea.fase_nombre} de ${tarea.ot_numero}`}
+        >
+          <Eye className="h-5 w-5" aria-hidden="true" />
+          Ver detalle
+        </Button>
         {puedeIniciar && (
           <Button
             size="lg"
