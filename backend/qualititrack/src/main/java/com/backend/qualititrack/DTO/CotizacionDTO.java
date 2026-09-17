@@ -26,7 +26,7 @@ public class CotizacionDTO {
 
     @NotNull(message = "Precio requerido")
     @DecimalMin(value = "0.01", message = "El precio debe ser mayor a cero")
-    private BigDecimal precioTotal;
+    private BigDecimal precioFinal;
 
     @NotNull(message = "Debe incluir al menos una fase")
     private List<CotizacionFaseDTO> fases;
@@ -35,6 +35,6 @@ public class CotizacionDTO {
     private String observaciones;
     private LocalDateTime fechaEnvioCliente;
     private LocalDateTime fechaRespuestaCliente;
-    private String motivoRechazo;
+    private String motivoRechazoCliente;
     private LocalDateTime fechaCreacion;
 }
