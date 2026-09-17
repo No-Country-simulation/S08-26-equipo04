@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Inbox, Plus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSolicitudes } from '../../hooks/useSolicitudes';
-import { Badge, Button, Card, CardHeader, CardTitle, DataTable, Title } from '../../components/ui';
+import { Badge, Button, Card, CardHeader, CardTitle, DataTable, EmptyState, ErrorBanner, LoadingSpinner, Title } from '../../components/ui';
 
 const estadoSolicitud = {
   PENDIENTE_COTIZACION: { variant: 'pending', label: 'Pendiente de cotización' },
@@ -13,8 +13,12 @@ const estadoSolicitud = {
 export const SolicitudesPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { solicitudes } = useSolicitudes();
-  const solicitudesVisibles = user?.rol === 'VENDEDOR' ? solicitudes.filter((item) => item.vendedor_id === user.id) : solicitudes;
+  const { solicitudes, cargando, error, recargar } = useSolicitudes();
+  // El backend no devuelve vendedor_id: si falta, se muestra todo
+  // (el servidor ya filtra por PENDIENTE_COTIZACION).
+  const solicitudesVisibles = user?.rol === 'VENDEDOR'
+    ? solicitudes.filter((item) => item.vendedor_id == null || item.vendedor_id === user.id)
+    : solicitudes;
 
   const columns = useMemo(() => [
     { accessorKey: 'numero_solicitud', header: 'Número' },
@@ -54,13 +58,31 @@ export const SolicitudesPage = () => {
         <CardHeader>
           <CardTitle>Pedidos registrados</CardTitle>
         </CardHeader>
-        <DataTable
-          columns={columns}
-          data={solicitudesVisibles}
-          searchable
-          searchPlaceholder="Buscar por numero o cliente..."
-          footer={`${solicitudesVisibles.length} solicitud${solicitudesVisibles.length !== 1 ? 'es' : ''}`}
-        />
+        {cargando ? (
+          <LoadingSpinner label="Cargando solicitudes" />
+        ) : error ? (
+          <ErrorBanner message={error} onRetry={recargar} />
+        ) : solicitudesVisibles.length === 0 ? (
+          <EmptyState
+            icon={Inbox}
+            title="Sin solicitudes pendientes"
+            description="Cuando el equipo comercial cargue pedidos, apareceran aqui."
+            action={user?.rol === 'VENDEDOR' ? (
+              <Button onClick={() => navigate('/solicitudes/nueva')} className="mt-2">
+                <Plus className="h-4 w-4" />
+                Nueva solicitud
+              </Button>
+            ) : null}
+          />
+        ) : (
+          <DataTable
+            columns={columns}
+            data={solicitudesVisibles}
+            searchable
+            searchPlaceholder="Buscar por numero o cliente..."
+            footer={`${solicitudesVisibles.length} ${solicitudesVisibles.length !== 1 ? 'solicitudes' : 'solicitud'}`}
+          />
+        )}
       </Card>
     </div>
   );

@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { ArrowLeft, Save } from 'lucide-react';
 import { mocks } from '../../mocks';
 import { useCotizaciones } from '../../hooks/useCotizaciones';
+import { useSolicitudes } from '../../hooks/useSolicitudes';
 import { Button, Card, CardHeader, CardTitle, Field, Title } from '../../components/ui';
 import { SelectorFases } from '../../components/SelectorFases';
 import { SecuenciaFaseRow } from '../../components/SecuenciaFaseRow';
@@ -19,6 +20,7 @@ export const CotizacionFormPage = () => {
   const navigate = useNavigate();
   const esEdicion = Boolean(id);
   const { cotizaciones, agregarCotizacion, actualizarCotizacion } = useCotizaciones();
+  const { solicitudes, obtenerSolicitud } = useSolicitudes();
 
   const cotizacionExistente = esEdicion
     ? cotizaciones.find((c) => c.id === Number(id))
@@ -31,10 +33,10 @@ export const CotizacionFormPage = () => {
   }, [cotizacionExistente, navigate]);
 
   const solicitudesDisponibles = useMemo(
-    () => mocks.solicitudes.filter(
+    () => solicitudes.filter(
       (s) => (s.estado === 'PENDIENTE_COTIZACION' || s.estado === 'COTIZADA') && !cotizaciones.some((c) => c.solicitud_id === s.id)
     ),
-    [cotizaciones]
+    [solicitudes, cotizaciones]
   );
 
   const fasesCatalogo = useMemo(
@@ -47,7 +49,7 @@ export const CotizacionFormPage = () => {
   );
 
   const solicitudActual = solicitudSeleccionada
-    ? mocks.solicitudes.find((s) => s.id === solicitudSeleccionada)
+    ? obtenerSolicitud(solicitudSeleccionada)
     : null;
 
   const {
@@ -108,7 +110,7 @@ export const CotizacionFormPage = () => {
         actualizarCotizacion(Number(id), data);
         toast.success('Cotizacion actualizada correctamente');
       } else {
-        const solicitud = mocks.solicitudes.find((s) => s.id === solicitudSeleccionada);
+        const solicitud = obtenerSolicitud(solicitudSeleccionada);
         agregarCotizacion({
           numero_cotizacion: `COT-2026-${String(cotizaciones.length + 1).padStart(4, '0')}`,
           solicitud_id: solicitudSeleccionada,
