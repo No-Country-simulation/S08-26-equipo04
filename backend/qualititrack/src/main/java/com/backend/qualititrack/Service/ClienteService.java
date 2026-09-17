@@ -104,6 +104,7 @@ public class ClienteService {
 
     private ClienteDTO convertirADTO(Cliente cliente) {
         ClienteDTO dto = new ClienteDTO();
+        dto.setId(cliente.getId());
         dto.setContactoNombre(cliente.getContactoNombre());
         dto.setEmail(cliente.getEmail());
         dto.setTelefono(cliente.getTelefono());

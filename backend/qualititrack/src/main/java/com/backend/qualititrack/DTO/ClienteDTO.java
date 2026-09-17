@@ -14,6 +14,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class ClienteDTO {
+    private Long id;
+
     @NotBlank(message = "El nombre no puede estar vacío")
     private String contactoNombre;
 
