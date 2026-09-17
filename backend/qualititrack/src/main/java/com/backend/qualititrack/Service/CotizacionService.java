@@ -1,7 +1,7 @@
 package com.backend.qualititrack.Service;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -206,12 +206,9 @@ public class CotizacionService {
 
         Cotizacion actualizada = cotizacionRepository.save(cot);
 
-        // ⚡ TRIGGER: Generar OrdenTrabajo automáticamente
-        try {
-            ordenTrabajoService.generarDesdeCotzacion(actualizada.getId());
-        } catch (Exception e) {
-            throw new RuntimeException("Error al generar Orden de Trabajo: " + e.getMessage());
-        }
+        // Generar OT automáticamente
+        ordenTrabajoService.generarDesdeCotizacion(actualizada.getId());
+        
 
         return convertirADTO(actualizada);
     }
@@ -224,17 +221,13 @@ public class CotizacionService {
     public CotizacionDTO rechazarCotizacion(Long cotizacionId, String motivo, Long vendedorId) {
 
         Cotizacion cot = cotizacionRepository.findById(cotizacionId)
-                .orElseThrow(() -> new IllegalArgumentException("Cotización no encontrada"));
+                .orElseThrow(() -> new EntityNotFoundException("Cotización no encontrada"));
 
         Usuario vendedor = usuarioRepository.findById(vendedorId)
-                .orElseThrow(() -> new IllegalArgumentException("Vendedor no encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Vendedor no encontrado"));
 
         if (!vendedor.getRol().toString().equals("VENDEDOR")) {
-            throw new IllegalArgumentException("Solo vendedores pueden rechazar cotizaciones");
-        }
-
-        if (motivo == null || motivo.isBlank()) {
-            throw new IllegalArgumentException("Debe ingresar motivo del rechazo");
+            throw new AccessDeniedException("Solo vendedores pueden rechazar cotizaciones");
         }
 
         if (!cot.getEstado().equals(EstadoCotizacion.ENVIADA_A_CLIENTE)) {
