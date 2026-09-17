@@ -36,7 +36,7 @@ export const AppRoutes = () => {
               )
             }
           />
-          <Route element={<ProtectedRoute roles={["VENDEDOR", "GERENTE"]} />}>
+          <Route element={<ProtectedRoute roles={["VENDEDOR"]} />}>
             <Route path="solicitudes" element={<SolicitudesPage />} />
           </Route>
           <Route element={<ProtectedRoute roles={["VENDEDOR"]} />}>

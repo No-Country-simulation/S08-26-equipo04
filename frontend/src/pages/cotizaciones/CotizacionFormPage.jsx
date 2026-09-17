@@ -56,6 +56,7 @@ export const CotizacionFormPage = () => {
     register,
     handleSubmit,
     setValue,
+    setError,
     watch,
     formState: { errors, isSubmitting },
   } = useForm({
@@ -104,36 +105,33 @@ export const CotizacionFormPage = () => {
     setValue('fases', nuevasFases, { shouldValidate: true });
   };
 
-  const onSubmit = (data) => {
-    setTimeout(() => {
+  const onSubmit = async (data) => {
+    try {
       if (esEdicion) {
         actualizarCotizacion(Number(id), data);
-        toast.success('Cotizacion actualizada correctamente');
+        toast.success('Cotización actualizada (solo local, sin endpoint de edición).');
       } else {
         const solicitud = obtenerSolicitud(solicitudSeleccionada);
-        agregarCotizacion({
-          numero_cotizacion: `COT-2026-${String(cotizaciones.length + 1).padStart(4, '0')}`,
+        await agregarCotizacion({
           solicitud_id: solicitudSeleccionada,
-          solicitud_numero: solicitud?.numero_solicitud || '',
-          cliente_razon_social: solicitud?.cliente_razon_social || '',
-          jefe_produccion_id: 2,
-          jefe_produccion_nombre: 'Martin Jefe',
           precio_final: data.precio_final,
-          estado: 'LISTA_PARA_ENVIAR',
-          fecha_envio_cliente: null,
-          fecha_respuesta_cliente: null,
-          motivo_rechazo_cliente: null,
-          observaciones: data.observaciones,
-          fases: data.fases.map((f, i) => ({
-            id: i + 1,
-            ...f,
-            numero_secuencia: i + 1,
+          fases: data.fases.map((fase, index) => ({
+            ...fase,
+            numero_secuencia: fase.numero_secuencia ?? index + 1,
           })),
+          observaciones: data.observaciones || '',
+          solicitud_numero: solicitud?.numero_solicitud ?? null,
+          cliente_razon_social: solicitud?.cliente_razon_social ?? null,
         });
-        toast.success('Cotizacion creada correctamente');
+        toast.success('Cotización creada correctamente');
       }
       navigate('/cotizaciones');
-    }, 400);
+    } catch (err) {
+      setError('root', {
+        type: 'manual',
+        message: err.message || 'No se pudo guardar la cotización.',
+      });
+    }
   };
 
   return (
@@ -169,10 +167,12 @@ export const CotizacionFormPage = () => {
             </CardHeader>
 
             <div className="flex flex-col">
-              <label className="text-metadata text-text-muted">
+              <label htmlFor="solicitud_id" className="text-metadata text-text-muted">
                 Seleccionar solicitud
               </label>
               <select
+                id="solicitud_id"
+                name="solicitud_id"
                 value={solicitudSeleccionada || ''}
                 onChange={handleSeleccionarSolicitud}
                 className="input"
@@ -301,10 +301,11 @@ export const CotizacionFormPage = () => {
             />
 
             <div className="flex flex-col">
-              <label className="text-metadata text-text-muted">
+              <label htmlFor="observaciones" className="text-metadata text-text-muted">
                 Observaciones
               </label>
               <textarea
+                id="observaciones"
                 {...register('observaciones')}
                 rows={3}
                 className="input resize-none"
@@ -331,6 +332,11 @@ export const CotizacionFormPage = () => {
             {esEdicion ? 'Guardar cambios' : 'Crear cotizacion'}
           </Button>
         </div>
+        {errors.root && (
+          <p role="alert" className="rounded-lg bg-error-light p-3 text-label text-error">
+            {errors.root.message}
+          </p>
+        )}
       </form>
     </div>
   );

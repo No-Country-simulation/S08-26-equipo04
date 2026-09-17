@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { Inbox, Search } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCotizaciones } from '../../hooks/useCotizaciones';
-import { Badge, Card, DataTable, Title } from '../../components/ui';
+import { useSolicitudes } from '../../hooks/useSolicitudes';
+import { Badge, Card, DataTable, EmptyState, ErrorBanner, SkeletonTable, Title } from '../../components/ui';
 
 const estadoBadge = {
   LISTA_PARA_ENVIAR: 'pending',
@@ -22,19 +23,40 @@ const estadoLabels = {
 export const CotizacionesPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { cotizaciones } = useCotizaciones();
+  const { cotizaciones, cargando, error, recargar } = useCotizaciones();
+  // El DTO de cotización no trae solicitud_numero/cliente: se enriquece
+  // con la lista de solicitudes (igual que solicitudes hace con clientes).
+  const { solicitudes } = useSolicitudes();
   const [busqueda, setBusqueda] = useState('');
   const [estado, setEstado] = useState('TODOS');
 
+  const solicitudPorId = useMemo(
+    () => new Map(solicitudes.map((item) => [item.id, item])),
+    [solicitudes],
+  );
+
+  const filas = useMemo(() => cotizaciones.map((cotizacion) => {
+    const solicitud = solicitudPorId.get(cotizacion.solicitud_id);
+    return {
+      ...cotizacion,
+      solicitud_numero:
+        cotizacion.solicitud_numero ?? solicitud?.numero_solicitud ?? '—',
+      cliente_razon_social:
+        cotizacion.cliente_razon_social ?? solicitud?.cliente_razon_social ?? '—',
+      pieza_trabajo:
+        cotizacion.pieza_trabajo ?? solicitud?.descripcion_pieza ?? null,
+    };
+  }), [cotizaciones, solicitudPorId]);
+
   const cotizacionesFiltradas = useMemo(() => {
     const texto = busqueda.toLowerCase();
-    return cotizaciones.filter((c) => {
+    return filas.filter((c) => {
       const coincideTexto = !texto || [c.numero_cotizacion, c.cliente_razon_social, c.solicitud_numero, c.pieza_trabajo]
         .some((v) => v?.toLowerCase().includes(texto));
       const coincideEstado = estado === 'TODOS' || c.estado === estado;
       return coincideTexto && coincideEstado;
     });
-  }, [cotizaciones, busqueda, estado]);
+  }, [filas, busqueda, estado]);
 
   const columns = useMemo(() => [
     {
@@ -69,7 +91,10 @@ export const CotizacionesPage = () => {
     {
       accessorKey: 'precio_final',
       header: 'Precio',
-      cell: ({ getValue }) => `$${getValue().toLocaleString('es-AR')}`,
+      cell: ({ getValue }) => {
+        const valor = getValue();
+        return valor == null ? '—' : `$${Number(valor).toLocaleString('es-AR')}`;
+      },
     },
     {
       accessorKey: 'estado',
@@ -83,7 +108,10 @@ export const CotizacionesPage = () => {
     {
       accessorKey: 'updated_at',
       header: 'Actualizada',
-      cell: ({ getValue }) => new Date(getValue()).toLocaleDateString('es-AR'),
+      cell: ({ getValue }) => {
+        const valor = getValue();
+        return valor ? new Date(valor).toLocaleDateString('es-AR') : '—';
+      },
     },
   ], [navigate, user?.rol]);
 
@@ -106,9 +134,11 @@ export const CotizacionesPage = () => {
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <label className="relative flex-1">
+        <label className="relative flex-1" htmlFor="cotizaciones-busqueda">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" aria-hidden="true" />
           <input
+            id="cotizaciones-busqueda"
+            name="busqueda"
             className="input pl-9"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
@@ -117,6 +147,8 @@ export const CotizacionesPage = () => {
           />
         </label>
         <select
+          id="cotizaciones-estado"
+          name="estado"
           className="select sm:max-w-xs"
           value={estado}
           onChange={(e) => setEstado(e.target.value)}
@@ -131,12 +163,24 @@ export const CotizacionesPage = () => {
       </div>
 
       <Card>
-        <DataTable
-          columns={columns}
-          data={cotizacionesFiltradas}
-          onRowClick={handleRowClick}
-          footer={`${cotizacionesFiltradas.length} cotización${cotizacionesFiltradas.length !== 1 ? 'es' : ''}`}
-        />
+        {cargando ? (
+          <SkeletonTable columns={7} rows={5} />
+        ) : error ? (
+          <ErrorBanner message={error} onRetry={recargar} />
+        ) : cotizacionesFiltradas.length === 0 ? (
+          <EmptyState
+            icon={Inbox}
+            title="Sin cotizaciones"
+            description="Cuando producción cotice solicitudes, aparecerán aquí."
+          />
+        ) : (
+          <DataTable
+            columns={columns}
+            data={cotizacionesFiltradas}
+            onRowClick={handleRowClick}
+            footer={`${cotizacionesFiltradas.length} cotización${cotizacionesFiltradas.length !== 1 ? 'es' : ''}`}
+          />
+        )}
       </Card>
     </div>
   );

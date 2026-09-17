@@ -25,7 +25,10 @@ const extractMessage = (error, fallback) =>
     : fallback);
 
 export const SolicitudesProvider = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  // El GET /api/solicitudes solo permite VENDEDOR y JEFE_PRODUCCION: no
+  // pedirlo con otros roles para no disparar 403 (toast de permisos).
+  const puedeConsultar = user?.rol === 'VENDEDOR' || user?.rol === 'JEFE_PRODUCCION';
   const [solicitudes, setSolicitudes] = useState([]);
   const [clientes, setClientes] = useState(mocks.clientes);
   // Adjuntos 100% locales hasta BE #36 (sin endpoint de documentos).
@@ -38,7 +41,7 @@ export const SolicitudesProvider = ({ children }) => {
   // cuerpo del efecto) para cumplir react-hooks/set-state-in-effect.
   useEffect(() => {
     let cancelado = false;
-    const promesa = isAuthenticated
+    const promesa = isAuthenticated && puedeConsultar
       ? Promise.all([
         apiGet('/api/solicitudes'),
         // Si falla clientes se conserva el mock para no bloquear el form.
@@ -72,7 +75,7 @@ export const SolicitudesProvider = ({ children }) => {
     return () => {
       cancelado = true;
     };
-  }, [isAuthenticated, version]);
+  }, [isAuthenticated, puedeConsultar, version]);
 
   const recargar = () => {
     setCargando(true);
