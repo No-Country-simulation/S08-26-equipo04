@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Inbox, Search } from 'lucide-react';
+import { Inbox, Plus, Search } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCotizaciones } from '../../hooks/useCotizaciones';
 import { useSolicitudes } from '../../hooks/useSolicitudes';
-import { Badge, Card, DataTable, EmptyState, ErrorBanner, SkeletonTable, Title } from '../../components/ui';
+import { Badge, Button, Card, DataTable, EmptyState, ErrorBanner, SkeletonTable, Title } from '../../components/ui';
 
 const estadoBadge = {
   LISTA_PARA_ENVIAR: 'pending',
@@ -124,12 +124,24 @@ export const CotizacionesPage = () => {
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <Title>Cotizaciones</Title>
-      <div>
-        <h1 className="text-h1 text-ink">Cotizaciones</h1>
-        {user?.rol === 'VENDEDOR' && (
-          <p className="mt-1 text-body text-text-secondary">
-            Revisa las cotizaciones y registra la respuesta del cliente.
-          </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-h1 text-ink">Cotizaciones</h1>
+          {user?.rol === 'VENDEDOR' ? (
+            <p className="mt-1 text-body text-text-secondary">
+              Revisa las cotizaciones y registra la respuesta del cliente.
+            </p>
+          ) : (
+            <p className="mt-1 text-body text-text-secondary">
+              Cotizaciones listas para enviar al cliente.
+            </p>
+          )}
+        </div>
+        {user?.rol === 'JEFE_PRODUCCION' && (
+          <Button onClick={() => navigate('/cotizaciones/nueva')}>
+            <Plus className="h-4 w-4" />
+            Nueva cotización
+          </Button>
         )}
       </div>
 
