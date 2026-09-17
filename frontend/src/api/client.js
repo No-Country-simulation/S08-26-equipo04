@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { clearSession, readSession } from './session';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '',
   timeout: 15000,
   headers: {
     Accept: 'application/json',
@@ -38,7 +38,7 @@ api.interceptors.response.use(
     const status = response?.status;
     const message = response?.data?.message || response?.data?.error || 'No se pudo completar la solicitud.';
 
-    if (status === 401) {
+    if (status === 401 && !error?.config?.url?.includes('/api/auth/login')) {
       clearSession();
       toast.error('Tu sesión expiró. Inicia sesión nuevamente.');
       redirectToLogin();

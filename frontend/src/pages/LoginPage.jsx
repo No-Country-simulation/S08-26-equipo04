@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "../context/AuthContext";
-import { mocks } from "../mocks";
 import { Button, Field, Title } from "../components/ui";
 import { loginSchema, loginDefaults } from "../utils/loginSchema";
 import logoIcon from "../assets/qualitytrack-icon.png";
@@ -48,24 +47,21 @@ export const LoginPage = () => {
     register,
     handleSubmit,
     setError,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: loginDefaults,
   });
 
-  const onSubmit = ({ email, password }) => {
-    const account = mocks.auth.find(
-      (a) => a.email === email && a.password === password,
-    );
-    if (!account) {
+  const onSubmit = async ({ email, password }) => {
+    try {
+      await login({ email, password });
+    } catch (err) {
       setError("root", {
         type: "manual",
-        message: "Credenciales incorrectas. Revisa el correo y la contrasena.",
+        message: err.message || "Credenciales incorrectas. Revisa el correo y la contrasena.",
       });
-      return;
     }
-    login(account);
   };
 
   return (
@@ -120,7 +116,7 @@ export const LoginPage = () => {
                   {errors.root.message}
                 </p>
               )}
-              <Button type="submit" className="w-full mt-2">
+              <Button type="submit" loading={isSubmitting} className="w-full mt-2">
                 Iniciar sesión
               </Button>
             </form>
