@@ -4,14 +4,15 @@ import { useAuth } from './AuthContext';
 import { mocks } from '../mocks';
 import { CotizacionesContext } from './CotizacionesContext';
 
-// El DTO de backend no trae fase_nombre (solo fase_catalogo_id) y usa
-// otros nombres (precio_total vs precio_final, motivo_rechazo vs
-// motivo_rechazo_cliente). Se normaliza en cliente para no romper las
-// vistas hasta que el backend lo incluya.
+// El DTO de backend trae el nombre de fase como nombre_fase y usa otros
+// nombres (precio_total vs precio_final, motivo_rechazo vs
+// motivo_rechazo_cliente en el GET). Se normaliza en cliente para no romper
+// las vistas; si falta el nombre se resuelve contra el catálogo local.
 const mapFase = (fase, catalogo = mocks.fases) => ({
   ...fase,
   fase_nombre:
     fase.fase_nombre ??
+    fase.nombre_fase ??
     catalogo.find((item) => item.id === fase.fase_catalogo_id)?.nombre ??
     null,
 });
@@ -159,7 +160,7 @@ export const CotizacionesProvider = ({ children }) => {
   const aprobarCotizacion = async (id) => {
     let data;
     try {
-      ({ data } = await apiPut(`/api/cotizaciones/${id}/aprobar`, {}));
+      ({ data } = await apiPost(`/api/cotizaciones/${id}/aprobar`, {}));
     } catch (err) {
       throw new Error(
         extractMessage(err, 'No se pudo aprobar la cotización.'),
@@ -179,7 +180,7 @@ export const CotizacionesProvider = ({ children }) => {
 
   const rechazarCotizacion = async (id, motivo) => {
     try {
-      const { data } = await apiPut(`/api/cotizaciones/${id}/rechazar`, { motivo });
+      const { data } = await apiPost(`/api/cotizaciones/${id}/rechazar`, { motivo_rechazo_cliente: motivo });
       return fusionar(data);
     } catch (err) {
       throw new Error(

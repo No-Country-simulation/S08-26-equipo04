@@ -153,7 +153,7 @@ export const CotizacionFormPage = () => {
           {cotizacionExistente && (
             <p className="mt-1 text-body text-text-secondary">
               {cotizacionExistente.numero_cotizacion} —{' '}
-              {cotizacionExistente.cliente_razon_social}
+              {cotizacionExistente.cliente_razon_social ?? solicitudActual?.cliente_razon_social ?? ''}
             </p>
           )}
         </div>
@@ -234,13 +234,13 @@ export const CotizacionFormPage = () => {
               <div>
                 <p className="text-metadata text-text-muted">Solicitud</p>
                 <p className="text-body font-medium text-ink">
-                  {cotizacionExistente.solicitud_numero}
+                  {cotizacionExistente.solicitud_numero ?? solicitudActual?.numero_solicitud ?? '—'}
                 </p>
               </div>
               <div>
                 <p className="text-metadata text-text-muted">Cliente</p>
                 <p className="text-body font-medium text-ink">
-                  {cotizacionExistente.cliente_razon_social}
+                  {cotizacionExistente.cliente_razon_social ?? solicitudActual?.cliente_razon_social ?? '—'}
                 </p>
               </div>
             </div>

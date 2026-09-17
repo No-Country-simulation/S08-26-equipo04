@@ -186,11 +186,11 @@ export const CotizacionDetailPage = () => {
         <div className="grid divide-y divide-border sm:grid-cols-4 sm:divide-x sm:divide-y-0">
           <div>
             <p className="p-4 pb-1 text-metadata text-text-muted">Solicitud</p>
-            <p className="px-4 pb-4 text-body font-semibold text-ink">{cotizacion.solicitud_numero}</p>
+            <p className="px-4 pb-4 text-body font-semibold text-ink">{cotizacion.solicitud_numero ?? solicitud?.numero_solicitud ?? '—'}</p>
           </div>
           <div>
             <p className="p-4 pb-1 text-metadata text-text-muted">Cliente</p>
-            <p className="px-4 pb-4 text-body font-semibold text-ink">{cotizacion.cliente_razon_social}</p>
+            <p className="px-4 pb-4 text-body font-semibold text-ink">{cotizacion.cliente_razon_social ?? solicitud?.cliente_razon_social ?? '—'}</p>
           </div>
           <div>
             <p className="p-4 pb-1 text-metadata text-text-muted">Cantidad</p>
