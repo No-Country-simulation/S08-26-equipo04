@@ -109,7 +109,7 @@ public class CotizacionController {
             @PathVariable Long id,
             @RequestBody MotivoRechazoRequest request) {
         Long vendedorId = obtenerIdDelUsuario();
-        CotizacionDTO actualizada = cotizacionService.rechazarCotizacion(id, request.getMotivo(), vendedorId);
+        CotizacionDTO actualizada = cotizacionService.rechazarCotizacion(id, request.getMotivoRechazoCliente(), vendedorId);
         return ResponseEntity.ok().body(actualizada);
     }
 
@@ -139,14 +139,14 @@ public class CotizacionController {
      * Clase interna para recibir el motivo del rechazo
      */
     public static class MotivoRechazoRequest {
-        private String motivo;
+        private String motivoRechazoCliente;
 
-        public String getMotivo() {
-            return motivo;
+        public String getMotivoRechazoCliente() {
+            return motivoRechazoCliente;
         }
 
-        public void setMotivo(String motivo) {
-            this.motivo = motivo;
+        public void setMotivoRechazoCliente(String motivo) {
+            this.motivoRechazoCliente = motivo;
         }
     }
 }
