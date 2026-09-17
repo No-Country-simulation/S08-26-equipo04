@@ -12,6 +12,8 @@ public class CotizacionFaseDTO {
     @NotNull(message = "El ID de la fase de catálogo es requerido")
     private Long faseCatalogoId;
 
+    private String nombreFase;
+
     @NotNull(message = "El número de secuencia es requerido")
     private Integer numeroSecuencia;
 

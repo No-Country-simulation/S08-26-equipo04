@@ -274,6 +274,7 @@ public class CotizacionService {
         List<CotizacionFaseDTO> fasesDto = cotizacion.getFases().stream().map(f -> {
             CotizacionFaseDTO fd = new CotizacionFaseDTO();
             fd.setFaseCatalogoId(f.getFaseCatalogo().getId());
+            fd.setNombreFase(f.getFaseCatalogo().getNombre());
             fd.setNumeroSecuencia(f.getNumeroSecuencia());
             fd.setTiempoEstimadoMinutos(f.getTiempoEstimadoMinutos());
             fd.setInstruccionesFase(f.getInstruccionesFase());
