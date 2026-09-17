@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { ArrowLeft, FileUp, Paperclip, X } from 'lucide-react';
-import { mocks } from '../../mocks';
 import { useAuth } from '../../context/AuthContext';
 import { useSolicitudes } from '../../hooks/useSolicitudes';
 import { Button, Card, CardTitle, Field, Title } from '../../components/ui';
@@ -15,13 +14,14 @@ const formatBytes = (bytes) => `${(bytes / 1024 / 1024).toFixed(2)} MB`;
 export const SolicitudFormPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { agregarSolicitud } = useSolicitudes();
+  const { agregarSolicitud, clientes } = useSolicitudes();
   const [archivos, setArchivos] = useState([]);
   const [arrastrando, setArrastrando] = useState(false);
   const {
     register,
     handleSubmit,
     setValue,
+    setError,
     watch,
     formState: { errors, isSubmitting },
   } = useForm({ resolver: zodResolver(solicitudSchema), defaultValues: solicitudDefaults });
@@ -40,35 +40,42 @@ export const SolicitudFormPage = () => {
     setValue('adjuntos', restantes, { shouldValidate: true });
   };
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     const cliente = clienteMode === 'registrado'
-      ? mocks.clientes.find((item) => item.id === Number(data.cliente_id))
+      ? clientes.find((item) => item.id === Number(data.cliente_id))
       : { id: null, razon_social: data.cliente_razon_social };
-    agregarSolicitud({
-      solicitud: {
-        cliente_id: cliente.id,
-        cliente_razon_social: cliente.razon_social,
-        vendedor_id: user.id,
-        vendedor_nombre: user.nombre,
-        descripcion_pieza: data.descripcion_pieza,
-        cantidad: Number(data.cantidad),
-        fecha_esperada_entrega: data.fecha_esperada_entrega || null,
-        notas_comerciales: data.notas_comerciales || '',
-        estado: 'PENDIENTE_COTIZACION',
-        ...(clienteMode === 'nuevo' && {
-          cliente_nuevo: {
-            razon_social: data.cliente_razon_social,
-            contacto_nombre: data.cliente_contacto,
-            telefono: data.cliente_telefono,
-            email: data.cliente_email,
-            direccion: data.cliente_direccion,
-          },
-        }),
-      },
-      archivos,
-    });
-    toast.success('Solicitud creada correctamente');
-    navigate('/solicitudes');
+    try {
+      await agregarSolicitud({
+        solicitud: {
+          cliente_id: cliente?.id ?? null,
+          cliente_razon_social: cliente?.razon_social,
+          vendedor_id: user.id,
+          vendedor_nombre: user.nombre,
+          descripcion_pieza: data.descripcion_pieza,
+          cantidad: Number(data.cantidad),
+          fecha_esperada_entrega: data.fecha_esperada_entrega || null,
+          notas_comerciales: data.notas_comerciales || '',
+          estado: 'PENDIENTE_COTIZACION',
+          ...(clienteMode === 'nuevo' && {
+            cliente_nuevo: {
+              razon_social: data.cliente_razon_social,
+              contacto_nombre: data.cliente_contacto,
+              telefono: data.cliente_telefono,
+              email: data.cliente_email,
+              direccion: data.cliente_direccion,
+            },
+          }),
+        },
+        archivos,
+      });
+      toast.success('Solicitud creada correctamente');
+      navigate('/solicitudes');
+    } catch (err) {
+      setError('root', {
+        type: 'manual',
+        message: err.message || 'No se pudo crear la solicitud.',
+      });
+    }
   };
 
   return (
@@ -99,7 +106,7 @@ export const SolicitudFormPage = () => {
                   <label htmlFor="cliente_id" className="block text-label text-text-secondary">Cliente</label>
                   <select id="cliente_id" className={`input ${errors.cliente_id ? 'border-error focus:ring-error' : ''}`} {...register('cliente_id')}>
                     <option value="">Seleccioná un cliente</option>
-                    {mocks.clientes.filter((cliente) => cliente.activo).map((cliente) => <option key={cliente.id} value={cliente.id}>{cliente.razon_social}</option>)}
+                    {clientes.filter((cliente) => cliente.activo !== false).map((cliente, index) => <option key={`${cliente.id ?? 'sin-id'}-${index}`} value={cliente.id ?? ''}>{cliente.razon_social}</option>)}
                   </select>
                   {errors.cliente_id && <p className="text-metadata text-error">{errors.cliente_id.message}</p>}
                 </div>
@@ -156,6 +163,11 @@ export const SolicitudFormPage = () => {
         </div>
 
         <div className="order-first rounded-xl border border-border bg-surface p-3 shadow-card lg:order-none lg:sticky lg:top-6">
+          {errors.root && (
+            <p role="alert" className="mb-3 rounded-lg bg-error-light p-3 text-label text-error">
+              {errors.root.message}
+            </p>
+          )}
           <Button type="submit" loading={isSubmitting} className="w-full">Crear solicitud</Button>
           <Button variant="secondary" type="button" onClick={() => navigate('/solicitudes')} className="mt-2 w-full">Cancelar</Button>
         </div>
