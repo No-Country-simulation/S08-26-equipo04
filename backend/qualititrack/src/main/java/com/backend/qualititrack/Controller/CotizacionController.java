@@ -91,7 +91,7 @@ public class CotizacionController {
      * Solo VENDEDOR
      * ⚡ DISPARA: Generación automática de OrdenTrabajo
      */
-    @PutMapping("/{id}/aprobar")
+    @PostMapping("/{id}/aprobar")
     @PreAuthorize("hasAnyRole('VENDEDOR')")
     public ResponseEntity<CotizacionDTO> aprobarCotizacion(@PathVariable Long id) {
         Long vendedorId = obtenerIdDelUsuario();
@@ -103,7 +103,7 @@ public class CotizacionController {
      * 7. RECHAZAR COTIZACIÓN - PUT /api/cotizaciones/{id}/rechazar
      * Solo VENDEDOR
      */
-    @PutMapping("/{id}/rechazar")
+    @PostMapping("/{id}/rechazar")
     @PreAuthorize("hasAnyRole('VENDEDOR')")
     public ResponseEntity<CotizacionDTO> rechazarCotizacion(
             @PathVariable Long id,
