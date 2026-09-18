@@ -3,9 +3,11 @@ package com.backend.qualititrack.Service;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import com.backend.qualititrack.Enum.NivelRol;
+import com.backend.qualititrack.exception.EntityNotFoundException;
 import com.backend.qualititrack.modelos.FaseCatalogo;
 import com.backend.qualititrack.modelos.FaseOperarioHabilitado;
 import com.backend.qualititrack.modelos.Usuario;
@@ -49,13 +51,13 @@ public class FaseService {
     public FaseOperarioHabilitado gestionarHabilitacionOperario(Long faseId, Long operarioId, boolean habilitar, String emailGerenteAutenticado) {
         // Validar fase
         FaseCatalogo fase = faseRepository.findById(faseId)
-                .orElseThrow(() -> new RuntimeException("Fase no encontrada con ID: " + faseId));
+                .orElseThrow(() -> new EntityNotFoundException("Fase no encontrada con ID: " + faseId));
         
         // Validar usuario y su rol
         Usuario usuario = usuarioRepository.findById(operarioId)
-            .orElseThrow(() -> new RuntimeException("Operario no encontrado con ID: " + operarioId));
+            .orElseThrow(() -> new EntityNotFoundException("Operario no encontrado con ID: " + operarioId));
         if (usuario.getRol() != NivelRol.OPERARIO) {
-            throw new RuntimeException("El usuario no es un operario");
+            throw new AccessDeniedException("El usuario no es un operario");
         }
         
         // Obtener id del gerente que hace la solicitud

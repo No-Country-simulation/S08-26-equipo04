@@ -6,12 +6,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.backend.qualititrack.DTO.CotizacionDTO;
 import com.backend.qualititrack.DTO.CotizacionFaseDTO;
 import com.backend.qualititrack.Enum.EstadoCotizacion;
+import com.backend.qualititrack.exception.EntityNotFoundException;
+import com.backend.qualititrack.exception.InvalidStateException;
 import com.backend.qualititrack.modelos.Cotizacion;
 import com.backend.qualititrack.modelos.CotizacionFase;
 import com.backend.qualititrack.modelos.Solicitud;
@@ -49,36 +52,25 @@ public class CotizacionService {
 
         // Validar solicitud existe
         Solicitud solicitud = solicitudRepository.findById(dto.getSolicitudId())
-                .orElseThrow(() -> new IllegalArgumentException("Solicitud no encontrada"));
+                .orElseThrow(() -> new EntityNotFoundException("Solicitud no encontrada"));
 
         // Validar que no exista cotización previa (una sola por solicitud)
         if (cotizacionRepository.findBySolicitudId(dto.getSolicitudId()).isPresent()) {
-            throw new IllegalArgumentException("Ya existe cotización para esta solicitud");
+            throw new InvalidStateException("Ya existe cotización para esta solicitud");
         }
-
-        // Validar precio
-        if (dto.getPrecioFinal().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("El precio debe ser mayor a 0");
-        }
-
-        // Validar existencia de fases en el request
-        if (dto.getFases() == null || dto.getFases().isEmpty()) {
-            throw new IllegalArgumentException("La cotización debe incluir al menos una fase");
-        }
-
         // Validar que el usuario es JEFE_PRODUCCION
         Usuario jefe = usuarioRepository.findById(jefeId)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
 
         if (!jefe.getRol().toString().equals("JEFE_PRODUCCION")) {
-            throw new IllegalArgumentException("Solo Jefe de Producción puede crear cotizaciones");
+            throw new AccessDeniedException("Solo Jefe de Producción puede crear cotizaciones");
         }
 
         // Validar unicidad del número de secuencia
         java.util.Set<Integer> secuencias = new java.util.HashSet<>();
         for (CotizacionFaseDTO f : dto.getFases()) {
             if (!secuencias.add(f.getNumeroSecuencia())) {
-                throw new IllegalArgumentException(
+                throw new InvalidStateException(
                         "El número de secuencia no puede repetirse: " + f.getNumeroSecuencia());
             }
         }
@@ -95,14 +87,14 @@ public class CotizacionService {
         // Calcular fecha vencimiento: hoy + 30 días
         // cotizacion.setFechaVencimiento(LocalDateTime.now().plusDays(30));
 
-        cotizacion.setFechaCreacion(LocalDateTime.now());
-        cotizacion.setFechaActualizacion(LocalDateTime.now());
+        cotizacion.setFechaCreacion(OffsetDateTime.now());
+        cotizacion.setFechaActualizacion(OffsetDateTime.now());
 
         // Construir y vincular las fases
         for (CotizacionFaseDTO faseDto : dto.getFases()) {
             com.backend.qualititrack.modelos.FaseCatalogo catalogo = faseRepository
                     .findById(faseDto.getFaseCatalogoId())
-                    .orElseThrow(() -> new IllegalArgumentException(
+                    .orElseThrow(() -> new EntityNotFoundException(
                             "Fase de catálogo no encontrada: " + faseDto.getFaseCatalogoId()));
 
             CotizacionFase cf = new CotizacionFase();
@@ -111,7 +103,7 @@ public class CotizacionService {
             cf.setNumeroSecuencia(faseDto.getNumeroSecuencia());
             cf.setTiempoEstimadoMinutos(faseDto.getTiempoEstimadoMinutos());
             cf.setInstruccionesFase(faseDto.getInstruccionesFase());
-            cf.setCreatedAt(java.time.OffsetDateTime.now());
+            cf.setCreatedAt(OffsetDateTime.now());
 
             cotizacion.getFases().add(cf);
         }
@@ -126,7 +118,7 @@ public class CotizacionService {
     @Transactional(readOnly = true)
     public CotizacionDTO obtenerPorId(Long id) {
         Cotizacion cot = cotizacionRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Cotización no encontrada"));
+                .orElseThrow(() -> new EntityNotFoundException("Cotización no encontrada"));
         return convertirADTO(cot);
     }
 
@@ -136,7 +128,7 @@ public class CotizacionService {
     @Transactional(readOnly = true)
     public CotizacionDTO obtenerPorSolicitud(Long solicitudId) {
         Cotizacion cot = cotizacionRepository.findBySolicitudId(solicitudId)
-                .orElseThrow(() -> new IllegalArgumentException("No existe cotización para esta solicitud"));
+                .orElseThrow(() -> new EntityNotFoundException("No existe cotización para esta solicitud"));
         return convertirADTO(cot);
     }
 
@@ -159,17 +151,17 @@ public class CotizacionService {
     public CotizacionDTO enviarAlCliente(Long cotizacionId, Long vendedorId) {
 
         Cotizacion cot = cotizacionRepository.findById(cotizacionId)
-                .orElseThrow(() -> new IllegalArgumentException("Cotización no encontrada"));
+                .orElseThrow(() -> new EntityNotFoundException("Cotización no encontrada"));
 
         Usuario vendedor = usuarioRepository.findById(vendedorId)
-                .orElseThrow(() -> new IllegalArgumentException("Vendedor no encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Vendedor no encontrado"));
 
         if (!vendedor.getRol().toString().equals("VENDEDOR")) {
-            throw new IllegalArgumentException("Solo vendedores pueden enviar cotizaciones");
+            throw new AccessDeniedException("Solo vendedores pueden enviar cotizaciones");
         }
 
         if (!cot.getEstado().equals(EstadoCotizacion.LISTA_PARA_ENVIAR)) {
-            throw new IllegalArgumentException("Cotización no está lista para enviar");
+            throw new InvalidStateException("Cotización no está lista para enviar");
         }
 
         cot.setEstado(EstadoCotizacion.ENVIADA_A_CLIENTE);
@@ -188,17 +180,17 @@ public class CotizacionService {
     public CotizacionDTO aprobarCotizacion(Long cotizacionId, Long vendedorId) {
 
         Cotizacion cot = cotizacionRepository.findById(cotizacionId)
-                .orElseThrow(() -> new IllegalArgumentException("Cotización no encontrada"));
+                .orElseThrow(() -> new EntityNotFoundException("Cotización no encontrada"));
 
         Usuario vendedor = usuarioRepository.findById(vendedorId)
-                .orElseThrow(() -> new IllegalArgumentException("Vendedor no encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Vendedor no encontrado"));
 
         if (!vendedor.getRol().toString().equals("VENDEDOR")) {
-            throw new IllegalArgumentException("Solo vendedores pueden aprobar cotizaciones");
+            throw new AccessDeniedException("Solo vendedores pueden aprobar cotizaciones");
         }
 
         if (!cot.getEstado().equals(EstadoCotizacion.ENVIADA_A_CLIENTE)) {
-            throw new IllegalArgumentException("Cotización no está en estado ENVIADA_A_CLIENTE");
+            throw new InvalidStateException("Cotización no está en estado ENVIADA_A_CLIENTE");
         }
 
         cot.setEstado(EstadoCotizacion.APROBADA);
@@ -231,7 +223,7 @@ public class CotizacionService {
         }
 
         if (!cot.getEstado().equals(EstadoCotizacion.ENVIADA_A_CLIENTE)) {
-            throw new IllegalArgumentException("Solo se puede rechazar si está ENVIADA_A_CLIENTE");
+            throw new InvalidStateException("Solo se puede rechazar si está ENVIADA_A_CLIENTE");
         }
 
         cot.setEstado(EstadoCotizacion.NO_APROBADA);
