@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.backend.qualititrack.DTO.CotizacionDTO;
 import com.backend.qualititrack.Service.CotizacionService;
+import com.backend.qualititrack.exception.EntityNotFoundException;
 import com.backend.qualititrack.modelos.Usuario;
 import com.backend.qualititrack.repository.UsuarioRepository;
 
@@ -129,7 +130,7 @@ public class CotizacionController {
         // TODO: Implementar búsqueda de usuario por email
 
         Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
 
         return usuario.getId();
         //throw new RuntimeException("TODO: Implementar obtención del ID del usuario desde JWT");
