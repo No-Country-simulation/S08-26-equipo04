@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Inbox, Plus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSolicitudes } from '../../hooks/useSolicitudes';
-import { Badge, Button, Card, CardHeader, CardTitle, DataTable, EmptyState, ErrorBanner, LoadingSpinner, Title } from '../../components/ui';
+import { Badge, Button, Card, CardHeader, CardTitle, DataTable, EmptyState, ErrorBanner, SkeletonTable, Title } from '../../components/ui';
 
 const estadoSolicitud = {
   PENDIENTE_COTIZACION: { variant: 'pending', label: 'Pendiente de cotización' },
@@ -59,7 +59,7 @@ export const SolicitudesPage = () => {
           <CardTitle>Pedidos registrados</CardTitle>
         </CardHeader>
         {cargando ? (
-          <LoadingSpinner label="Cargando solicitudes" />
+          <SkeletonTable columns={5} rows={5} />
         ) : error ? (
           <ErrorBanner message={error} onRetry={recargar} />
         ) : solicitudesVisibles.length === 0 ? (
