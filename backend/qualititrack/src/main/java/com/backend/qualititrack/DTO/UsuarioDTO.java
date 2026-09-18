@@ -1,11 +1,12 @@
 package com.backend.qualititrack.DTO;
 
+import java.time.OffsetDateTime;
+
 import com.backend.qualititrack.Enum.NivelRol;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
-import java.time.LocalDateTime;
 
 
 public class UsuarioDTO {
@@ -29,9 +30,9 @@ public class UsuarioDTO {
 
     private Boolean activo;
 
-    private LocalDateTime fechaCreacion;
+    private OffsetDateTime fechaCreacion;
 
-    private LocalDateTime fechaUltimaActividad;
+    private OffsetDateTime fechaUltimaActividad;
 
     // ==================== CONSTRUCTORES ====================
 
@@ -45,7 +46,7 @@ public class UsuarioDTO {
      * Constructor con todos los argumentos
      */
     public UsuarioDTO(Long id, String nombre, String email, String password, NivelRol rol,
-                      Boolean activo, LocalDateTime fechaCreacion, LocalDateTime fechaUltimaActividad) {
+                      Boolean activo, OffsetDateTime fechaCreacion, OffsetDateTime fechaUltimaActividad) {
         this.id = id;
         this.nombre = nombre;
         this.email = email;
@@ -82,11 +83,11 @@ public class UsuarioDTO {
         return activo;
     }
 
-    public LocalDateTime getFechaCreacion() {
+    public OffsetDateTime getFechaCreacion() {
         return fechaCreacion;
     }
 
-    public LocalDateTime getFechaUltimaActividad() {
+    public OffsetDateTime getFechaUltimaActividad() {
         return fechaUltimaActividad;
     }
 
@@ -116,11 +117,11 @@ public class UsuarioDTO {
         this.activo = activo;
     }
 
-    public void setFechaCreacion(LocalDateTime fechaCreacion) {
+    public void setFechaCreacion(OffsetDateTime fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
     }
 
-    public void setFechaUltimaActividad(LocalDateTime fechaUltimaActividad) {
+    public void setFechaUltimaActividad(OffsetDateTime fechaUltimaActividad) {
         this.fechaUltimaActividad = fechaUltimaActividad;
     }
 }

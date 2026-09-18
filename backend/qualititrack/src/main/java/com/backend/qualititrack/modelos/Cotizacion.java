@@ -1,7 +1,7 @@
 package com.backend.qualititrack.modelos;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import com.backend.qualititrack.Enum.EstadoCotizacion;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -54,10 +54,10 @@ public class Cotizacion {
     private EstadoCotizacion estado;
 
     @Column(name = "fecha_envio_cliente")
-    private LocalDateTime fechaEnvioCliente;
+    private OffsetDateTime fechaEnvioCliente;
 
     @Column(name = "fecha_respuesta_cliente")
-    private LocalDateTime fechaRespuestaCliente;
+    private OffsetDateTime fechaRespuestaCliente;
 
     @Column(name = "motivo_rechazo_cliente", columnDefinition = "TEXT")
     private String motivoRechazoCliente;
@@ -66,10 +66,10 @@ public class Cotizacion {
     private String observaciones;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime fechaCreacion;
+    private OffsetDateTime fechaCreacion;
 
     @Column(name = "updated_at")
-    private LocalDateTime fechaActualizacion;
+    private OffsetDateTime fechaActualizacion;
 
     @OneToMany(
         mappedBy = "cotizacion", 
@@ -85,13 +85,13 @@ public class Cotizacion {
 
     @PrePersist
     protected void onCreate() {
-        fechaCreacion = LocalDateTime.now();
-        fechaActualizacion = LocalDateTime.now();
+        fechaCreacion = OffsetDateTime.now();
+        fechaActualizacion = OffsetDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        fechaActualizacion = LocalDateTime.now();
+        fechaActualizacion = OffsetDateTime.now();
     }
 
 
@@ -143,19 +143,19 @@ public class Cotizacion {
         this.estado = estado;
     }
 
-    public LocalDateTime getFechaEnvioCliente() {
+    public OffsetDateTime getFechaEnvioCliente() {
         return fechaEnvioCliente;
     }
 
-    public void setFechaEnvioCliente(LocalDateTime fechaEnvioCliente) {
+    public void setFechaEnvioCliente(OffsetDateTime fechaEnvioCliente) {
         this.fechaEnvioCliente = fechaEnvioCliente;
     }
 
-    public LocalDateTime getFechaRespuestaCliente() {
+    public OffsetDateTime getFechaRespuestaCliente() {
         return fechaRespuestaCliente;
     }
 
-    public void setFechaRespuestaCliente(LocalDateTime fechaRespuestaCliente) {
+    public void setFechaRespuestaCliente(OffsetDateTime fechaRespuestaCliente) {
         this.fechaRespuestaCliente = fechaRespuestaCliente;
     }
 
@@ -175,19 +175,19 @@ public class Cotizacion {
         this.observaciones = observaciones;
     }
 
-    public LocalDateTime getFechaCreacion() {
+    public OffsetDateTime getFechaCreacion() {
         return fechaCreacion;
     }
 
-    public void setFechaCreacion(LocalDateTime fechaCreacion) {
+    public void setFechaCreacion(OffsetDateTime fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
     }
 
-    public LocalDateTime getFechaActualizacion() {
+    public OffsetDateTime getFechaActualizacion() {
         return fechaActualizacion;
     }
 
-    public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
+    public void setFechaActualizacion(OffsetDateTime fechaActualizacion) {
         this.fechaActualizacion = fechaActualizacion;
     }
 
