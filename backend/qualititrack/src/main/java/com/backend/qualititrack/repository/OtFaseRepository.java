@@ -9,4 +9,5 @@ import com.backend.qualititrack.modelos.OtFase;
 public interface OtFaseRepository extends JpaRepository<OtFase, Long> {
     List<OtFase> findByOperario_Id(Long operarioId);
     OtFase findByOrdenTrabajoIdAndNumeroSecuencia(Long ordenTrabajoId, Integer numeroSecuencia);
+    OtFase findByOrdenTrabajoIdAndNumeroSecuenciaAndCicloIteracion(Long otId, Integer numeroSecuencia, Integer cicloIteracion);
 }
