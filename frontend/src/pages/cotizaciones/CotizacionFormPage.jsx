@@ -1,25 +1,37 @@
-import { useMemo, useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { DragDropContext, Droppable } from '@hello-pangea/dnd';
-import { toast } from 'sonner';
-import { ArrowLeft, Save } from 'lucide-react';
-import { mocks } from '../../mocks';
-import { useCotizaciones } from '../../hooks/useCotizaciones';
-import { useSolicitudes } from '../../hooks/useSolicitudes';
-import { Button, Card, CardHeader, CardTitle, Field, Title } from '../../components/ui';
-import { SelectorFases } from '../../components/SelectorFases';
-import { SecuenciaFaseRow } from '../../components/SecuenciaFaseRow';
-import { cotizacionSchema, cotizacionDefaults } from '../../utils/cotizacionSchema';
+import { useMemo, useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { DragDropContext, Droppable } from "@hello-pangea/dnd";
+import { toast } from "sonner";
+import { ArrowLeft, Save } from "lucide-react";
+import { mocks } from "../../mocks";
+import { useCotizaciones } from "../../hooks/useCotizaciones";
+import { useSolicitudes } from "../../hooks/useSolicitudes";
+import {
+  Button,
+  Card,
+  CardHeader,
+  CardTitle,
+  Field,
+  Title,
+} from "../../components/ui";
+import { SelectorFases } from "../../components/SelectorFases";
+import { SecuenciaFaseRow } from "../../components/SecuenciaFaseRow";
+import {
+  cotizacionSchema,
+  cotizacionDefaults,
+} from "../../utils/cotizacionSchema";
+import { useWatch } from "react-hook-form";
 
-const ESTADOS_SOLO_LECTURA = ['ENVIADA_A_CLIENTE', 'APROBADA', 'NO_APROBADA'];
+const ESTADOS_SOLO_LECTURA = ["ENVIADA_A_CLIENTE", "APROBADA", "NO_APROBADA"];
 
 export const CotizacionFormPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const esEdicion = Boolean(id);
-  const { cotizaciones, agregarCotizacion, actualizarCotizacion } = useCotizaciones();
+  const { cotizaciones, agregarCotizacion, actualizarCotizacion } =
+    useCotizaciones();
   const { solicitudes, obtenerSolicitud } = useSolicitudes();
 
   const cotizacionExistente = esEdicion
@@ -27,25 +39,28 @@ export const CotizacionFormPage = () => {
     : null;
 
   useEffect(() => {
-    if (cotizacionExistente && ESTADOS_SOLO_LECTURA.includes(cotizacionExistente.estado)) {
+    if (
+      cotizacionExistente &&
+      ESTADOS_SOLO_LECTURA.includes(cotizacionExistente.estado)
+    ) {
       navigate(`/cotizaciones/${cotizacionExistente.id}`, { replace: true });
     }
   }, [cotizacionExistente, navigate]);
 
   const solicitudesDisponibles = useMemo(
-    () => solicitudes.filter(
-      (s) => (s.estado === 'PENDIENTE_COTIZACION' || s.estado === 'COTIZADA') && !cotizaciones.some((c) => c.solicitud_id === s.id)
-    ),
-    [solicitudes, cotizaciones]
+    () =>
+      solicitudes.filter(
+        (s) =>
+          (s.estado === "PENDIENTE_COTIZACION" || s.estado === "COTIZADA") &&
+          !cotizaciones.some((c) => c.solicitud_id === s.id),
+      ),
+    [solicitudes, cotizaciones],
   );
 
-  const fasesCatalogo = useMemo(
-    () => mocks.fases.filter((f) => f.activo),
-    []
-  );
+  const fasesCatalogo = useMemo(() => mocks.fases.filter((f) => f.activo), []);
 
   const [solicitudSeleccionada, setSolicitudSeleccionada] = useState(
-    cotizacionExistente?.solicitud_id || null
+    cotizacionExistente?.solicitud_id || null,
   );
 
   const solicitudActual = solicitudSeleccionada
@@ -57,7 +72,8 @@ export const CotizacionFormPage = () => {
     handleSubmit,
     setValue,
     setError,
-    watch,
+    getValues,
+    control,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(cotizacionSchema),
@@ -70,12 +86,12 @@ export const CotizacionFormPage = () => {
             instrucciones_fase: f.instrucciones_fase,
           })),
           precio_final: cotizacionExistente.precio_final,
-          observaciones: cotizacionExistente.observaciones || '',
+          observaciones: cotizacionExistente.observaciones || "",
         }
       : cotizacionDefaults,
   });
 
-  const fases = watch('fases');
+  const fases = useWatch({ control, name: "fases" }) ?? [];
 
   const handleSeleccionarSolicitud = (e) => {
     const solicitudId = Number(e.target.value) || null;
@@ -83,33 +99,39 @@ export const CotizacionFormPage = () => {
   };
 
   const handleAgregarFase = (nuevaFase) => {
-    setValue('fases', [...fases, nuevaFase], { shouldValidate: true });
+    const actuales = getValues("fases") ?? [];
+    setValue("fases", [...actuales, nuevaFase], { shouldValidate: true });
   };
 
   const handleActualizarFase = (index, faseActualizada) => {
-    const nuevasFases = [...fases];
+    const actuales = getValues("fases") ?? [];
+    const nuevasFases = [...actuales];
     nuevasFases[index] = faseActualizada;
-    setValue('fases', nuevasFases, { shouldValidate: true });
+    setValue("fases", nuevasFases, { shouldValidate: true });
   };
 
   const handleEliminarFase = (index) => {
-    const nuevasFases = fases.filter((_, i) => i !== index);
-    setValue('fases', nuevasFases, { shouldValidate: true });
+    const actuales = getValues("fases") ?? [];
+    const nuevasFases = actuales.filter((_, i) => i !== index);
+    setValue("fases", nuevasFases, { shouldValidate: true });
   };
 
   const handleDragEnd = (result) => {
     if (!result.destination) return;
-    const nuevasFases = [...fases];
+    const actuales = getValues("fases") ?? [];
+    const nuevasFases = [...actuales];
     const [movida] = nuevasFases.splice(result.source.index, 1);
     nuevasFases.splice(result.destination.index, 0, movida);
-    setValue('fases', nuevasFases, { shouldValidate: true });
+    setValue("fases", nuevasFases, { shouldValidate: true });
   };
 
   const onSubmit = async (data) => {
     try {
       if (esEdicion) {
         actualizarCotizacion(Number(id), data);
-        toast.success('Cotización actualizada (solo local, sin endpoint de edición).');
+        toast.success(
+          "Cotización actualizada (solo local, sin endpoint de edición).",
+        );
       } else {
         const solicitud = obtenerSolicitud(solicitudSeleccionada);
         await agregarCotizacion({
@@ -119,28 +141,28 @@ export const CotizacionFormPage = () => {
             ...fase,
             numero_secuencia: fase.numero_secuencia ?? index + 1,
           })),
-          observaciones: data.observaciones || '',
+          observaciones: data.observaciones || "",
           solicitud_numero: solicitud?.numero_solicitud ?? null,
           cliente_razon_social: solicitud?.cliente_razon_social ?? null,
         });
-        toast.success('Cotización creada correctamente');
+        toast.success("Cotización creada correctamente");
       }
-      navigate('/cotizaciones');
+      navigate("/cotizaciones");
     } catch (err) {
-      setError('root', {
-        type: 'manual',
-        message: err.message || 'No se pudo guardar la cotización.',
+      setError("root", {
+        type: "manual",
+        message: err.message || "No se pudo guardar la cotización.",
       });
     }
   };
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <Title>{esEdicion ? 'Editar cotización' : 'Nueva cotización'}</Title>
+      <Title>{esEdicion ? "Editar cotización" : "Nueva cotización"}</Title>
       <div className="flex items-start gap-4">
         <Button
           variant="ghost"
-          onClick={() => navigate('/cotizaciones')}
+          onClick={() => navigate("/cotizaciones")}
           className="mt-1"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -148,12 +170,14 @@ export const CotizacionFormPage = () => {
         <div>
           <p className="text-label text-primary">Cotizaciones</p>
           <h1 className="mt-1 text-h1 text-ink">
-            {esEdicion ? 'Editar cotizacion' : 'Nueva cotizacion'}
+            {esEdicion ? "Editar cotizacion" : "Nueva cotizacion"}
           </h1>
           {cotizacionExistente && (
             <p className="mt-1 text-body text-text-secondary">
-              {cotizacionExistente.numero_cotizacion} —{' '}
-              {cotizacionExistente.cliente_razon_social ?? solicitudActual?.cliente_razon_social ?? ''}
+              {cotizacionExistente.numero_cotizacion} —{" "}
+              {cotizacionExistente.cliente_razon_social ??
+                solicitudActual?.cliente_razon_social ??
+                ""}
             </p>
           )}
         </div>
@@ -167,20 +191,24 @@ export const CotizacionFormPage = () => {
             </CardHeader>
 
             <div className="flex flex-col">
-              <label htmlFor="solicitud_id" className="text-metadata text-text-muted">
+              <label
+                htmlFor="solicitud_id"
+                className="text-metadata text-text-muted"
+              >
                 Seleccionar solicitud
               </label>
               <select
                 id="solicitud_id"
                 name="solicitud_id"
-                value={solicitudSeleccionada || ''}
+                value={solicitudSeleccionada || ""}
                 onChange={handleSeleccionarSolicitud}
                 className="input"
               >
                 <option value="">Seleccionar una solicitud...</option>
                 {solicitudesDisponibles.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.numero_solicitud} — {s.cliente_razon_social} ({s.descripcion_pieza})
+                    {s.numero_solicitud} — {s.cliente_razon_social} (
+                    {s.descripcion_pieza})
                   </option>
                 ))}
               </select>
@@ -207,14 +235,18 @@ export const CotizacionFormPage = () => {
                   </p>
                 </div>
                 <div>
-                  <p className="text-metadata text-text-muted">Fecha esperada</p>
+                  <p className="text-metadata text-text-muted">
+                    Fecha esperada
+                  </p>
                   <p className="text-body font-medium text-ink">
                     {solicitudActual.fecha_esperada_entrega}
                   </p>
                 </div>
                 {solicitudActual.notas_comerciales && (
                   <div className="sm:col-span-2">
-                    <p className="text-metadata text-text-muted">Notas comerciales</p>
+                    <p className="text-metadata text-text-muted">
+                      Notas comerciales
+                    </p>
                     <p className="text-body text-text-secondary">
                       {solicitudActual.notas_comerciales}
                     </p>
@@ -234,13 +266,17 @@ export const CotizacionFormPage = () => {
               <div>
                 <p className="text-metadata text-text-muted">Solicitud</p>
                 <p className="text-body font-medium text-ink">
-                  {cotizacionExistente.solicitud_numero ?? solicitudActual?.numero_solicitud ?? '—'}
+                  {cotizacionExistente.solicitud_numero ??
+                    solicitudActual?.numero_solicitud ??
+                    "—"}
                 </p>
               </div>
               <div>
                 <p className="text-metadata text-text-muted">Cliente</p>
                 <p className="text-body font-medium text-ink">
-                  {cotizacionExistente.cliente_razon_social ?? solicitudActual?.cliente_razon_social ?? '—'}
+                  {cotizacionExistente.cliente_razon_social ??
+                    solicitudActual?.cliente_razon_social ??
+                    "—"}
                 </p>
               </div>
             </div>
@@ -256,7 +292,11 @@ export const CotizacionFormPage = () => {
             <DragDropContext onDragEnd={handleDragEnd}>
               <Droppable droppableId="fases">
                 {(provided) => (
-                  <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-3">
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className="space-y-3"
+                  >
                     {fases.map((fase, index) => (
                       <SecuenciaFaseRow
                         key={`${fase.fase_catalogo_id}-${index}`}
@@ -296,17 +336,20 @@ export const CotizacionFormPage = () => {
               type="number"
               min="0"
               step="0.01"
-              {...register('precio_final', { valueAsNumber: true })}
+              {...register("precio_final", { valueAsNumber: true })}
               error={errors.precio_final?.message}
             />
 
             <div className="flex flex-col">
-              <label htmlFor="observaciones" className="text-metadata text-text-muted">
+              <label
+                htmlFor="observaciones"
+                className="text-metadata text-text-muted"
+              >
                 Observaciones
               </label>
               <textarea
                 id="observaciones"
-                {...register('observaciones')}
+                {...register("observaciones")}
                 rows={3}
                 className="input resize-none"
                 placeholder="Notas adicionales..."
@@ -319,7 +362,7 @@ export const CotizacionFormPage = () => {
           <Button
             type="button"
             variant="secondary"
-            onClick={() => navigate('/cotizaciones')}
+            onClick={() => navigate("/cotizaciones")}
           >
             Cancelar
           </Button>
@@ -329,11 +372,14 @@ export const CotizacionFormPage = () => {
             disabled={!esEdicion && !solicitudSeleccionada}
           >
             <Save className="h-4 w-4" />
-            {esEdicion ? 'Guardar cambios' : 'Crear cotizacion'}
+            {esEdicion ? "Guardar cambios" : "Crear cotizacion"}
           </Button>
         </div>
         {errors.root && (
-          <p role="alert" className="rounded-lg bg-error-light p-3 text-label text-error">
+          <p
+            role="alert"
+            className="rounded-lg bg-error-light p-3 text-label text-error"
+          >
             {errors.root.message}
           </p>
         )}

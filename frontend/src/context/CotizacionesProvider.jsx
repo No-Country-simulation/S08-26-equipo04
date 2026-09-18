@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
-import { apiGet, apiPost, apiPut } from '../api';
-import { useAuth } from './AuthContext';
-import { mocks } from '../mocks';
-import { CotizacionesContext } from './CotizacionesContext';
+import { useCallback, useEffect, useState } from "react";
+import { apiGet, apiPost, apiPut } from "../api";
+import { useAuth } from "./AuthContext";
+import { mocks } from "../mocks";
+import { CotizacionesContext } from "./CotizacionesContext";
 
 // El DTO de backend trae el nombre de fase como nombre_fase. Se normaliza
 // en cliente (precio_final, motivo_rechazo_cliente, fase_nombre) para no
@@ -31,8 +31,8 @@ const extractMessage = (error, fallback) =>
   error?.response?.data?.detail ||
   error?.response?.data?.message ||
   error?.response?.data?.error ||
-  (error?.code === 'ECONNABORTED'
-    ? 'El servidor tarda en responder (Render en frio). Reintenta.'
+  (error?.code === "ECONNABORTED"
+    ? "El servidor tarda en responder (Render en frio). Reintenta."
     : fallback);
 
 const numeroOTDe = (orden) =>
@@ -42,7 +42,8 @@ export const CotizacionesProvider = ({ children }) => {
   const { isAuthenticated, user } = useAuth();
   // El GET /api/cotizaciones solo permite VENDEDOR y JEFE_PRODUCCION: no
   // pedirlo con otros roles para no disparar 403 (toast de permisos).
-  const puedeConsultar = user?.rol === 'VENDEDOR' || user?.rol === 'JEFE_PRODUCCION';
+  const puedeConsultar =
+    user?.rol === "VENDEDOR" || user?.rol === "JEFE_PRODUCCION";
   const [cotizaciones, setCotizaciones] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
@@ -52,23 +53,23 @@ export const CotizacionesProvider = ({ children }) => {
   // cuerpo del efecto) para cumplir react-hooks/set-state-in-effect.
   useEffect(() => {
     let cancelado = false;
-    // OJO: pendientes se sirve en GET /api/cotizaciones (el controller
-    // mapea listarPendientes en @GetMapping plano, sin sufijo /pendientes).
-    const promesa = isAuthenticated && puedeConsultar
-      ? apiGet('/api/cotizaciones')
-      : Promise.resolve(null);
+
+    const promesa =
+      isAuthenticated && puedeConsultar
+        ? apiGet("/api/cotizaciones")
+        : Promise.resolve(null);
     promesa.then(
       (resultado) => {
         if (cancelado) return;
-        setCotizaciones(
-          (resultado?.data ?? []).map((item) => mapItem(item)),
-        );
+        setCotizaciones((resultado?.data ?? []).map((item) => mapItem(item)));
         setError(null);
         setCargando(false);
       },
       (err) => {
         if (cancelado) return;
-        setError(extractMessage(err, 'No se pudieron cargar las cotizaciones.'));
+        setError(
+          extractMessage(err, "No se pudieron cargar las cotizaciones."),
+        );
         setCargando(false);
       },
     );
@@ -89,8 +90,7 @@ export const CotizacionesProvider = ({ children }) => {
     const mapeada = mapItem(item);
     setCotizaciones((prev) =>
       prev.some((c) => c.id === mapeada.id)
-        ? prev.map((c) =>
-          (c.id === mapeada.id ? { ...c, ...mapeada } : c))
+        ? prev.map((c) => (c.id === mapeada.id ? { ...c, ...mapeada } : c))
         : [...prev, mapeada],
     );
     return mapeada;
@@ -100,7 +100,7 @@ export const CotizacionesProvider = ({ children }) => {
     solicitud_id,
     precio_final,
     fases = [],
-    observaciones = '',
+    observaciones = "",
     solicitud_numero = null,
     cliente_razon_social = null,
   }) => {
@@ -108,16 +108,16 @@ export const CotizacionesProvider = ({ children }) => {
     const payload = {
       solicitud_id,
       precio_final: Number(precio_final),
-      observaciones: observaciones || '',
+      observaciones: observaciones || "",
       fases: fases.map((fase, index) => ({
         fase_catalogo_id: fase.fase_catalogo_id,
         numero_secuencia: fase.numero_secuencia ?? index + 1,
         tiempo_estimado_minutos: Number(fase.tiempo_estimado_minutos),
-        instrucciones_fase: fase.instrucciones_fase || '',
+        instrucciones_fase: fase.instrucciones_fase || "",
       })),
     };
     try {
-      const { data } = await apiPost('/api/cotizaciones', payload);
+      const { data } = await apiPost("/api/cotizaciones", payload);
       const creada = {
         ...mapItem(data),
         solicitud_numero,
@@ -126,10 +126,9 @@ export const CotizacionesProvider = ({ children }) => {
       setCotizaciones((prev) => [...prev, creada]);
       return creada;
     } catch (err) {
-      throw new Error(
-        extractMessage(err, 'No se pudo crear la cotización.'),
-        { cause: err },
-      );
+      throw new Error(extractMessage(err, "No se pudo crear la cotización."), {
+        cause: err,
+      });
     }
   };
 
@@ -150,10 +149,9 @@ export const CotizacionesProvider = ({ children }) => {
       const { data } = await apiPut(`/api/cotizaciones/${id}`, {});
       return fusionar(data);
     } catch (err) {
-      throw new Error(
-        extractMessage(err, 'No se pudo enviar la cotización.'),
-        { cause: err },
-      );
+      throw new Error(extractMessage(err, "No se pudo enviar la cotización."), {
+        cause: err,
+      });
     }
   };
 
@@ -163,7 +161,7 @@ export const CotizacionesProvider = ({ children }) => {
       ({ data } = await apiPost(`/api/cotizaciones/${id}/aprobar`, {}));
     } catch (err) {
       throw new Error(
-        extractMessage(err, 'No se pudo aprobar la cotización.'),
+        extractMessage(err, "No se pudo aprobar la cotización."),
         { cause: err },
       );
     }
@@ -171,7 +169,9 @@ export const CotizacionesProvider = ({ children }) => {
     // La OT la genera el backend al aprobar: se verifica que exista.
     let ordenTrabajo;
     try {
-      ({ data: ordenTrabajo } = await apiGet(`/api/ordenes-trabajo/cotizacion/${id}`));
+      ({ data: ordenTrabajo } = await apiGet(
+        `/api/ordenes-trabajo/cotizacion/${id}`,
+      ));
     } catch {
       ordenTrabajo = null;
     }
@@ -180,11 +180,13 @@ export const CotizacionesProvider = ({ children }) => {
 
   const rechazarCotizacion = async (id, motivo) => {
     try {
-      const { data } = await apiPost(`/api/cotizaciones/${id}/rechazar`, { motivo_rechazo_cliente: motivo });
+      const { data } = await apiPost(`/api/cotizaciones/${id}/rechazar`, {
+        motivo_rechazo_cliente: motivo,
+      });
       return fusionar(data);
     } catch (err) {
       throw new Error(
-        extractMessage(err, 'No se pudo rechazar la cotización.'),
+        extractMessage(err, "No se pudo rechazar la cotización."),
         { cause: err },
       );
     }
@@ -200,8 +202,7 @@ export const CotizacionesProvider = ({ children }) => {
     const mapeada = mapItem(data);
     setCotizaciones((prev) =>
       prev.some((c) => c.id === mapeada.id)
-        ? prev.map((c) =>
-          (c.id === mapeada.id ? { ...c, ...mapeada } : c))
+        ? prev.map((c) => (c.id === mapeada.id ? { ...c, ...mapeada } : c))
         : [...prev, mapeada],
     );
     return mapeada;
