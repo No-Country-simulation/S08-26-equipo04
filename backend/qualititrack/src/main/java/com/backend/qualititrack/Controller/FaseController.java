@@ -14,11 +14,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.backend.qualititrack.DTO.FaseOperarioHabilitadoResponseDTO;
 import com.backend.qualititrack.Service.FaseService;
 import com.backend.qualititrack.modelos.FaseCatalogo;
-import com.backend.qualititrack.modelos.FaseOperarioHabilitado;
 
 import jakarta.validation.Valid;
+import lombok.Builder;
+import lombok.Data;
 
 @RestController
 @RequestMapping("/api/fases")
@@ -74,35 +76,22 @@ public class FaseController {
      */
     @PostMapping("/{id}/habilitar")
     @PreAuthorize("hasRole('GERENTE')")
-    public ResponseEntity<FaseOperarioHabilitado> habilitarOperarioEnFase(
+    public ResponseEntity<FaseOperarioHabilitadoResponseDTO> habilitarOperarioEnFase(
             @PathVariable Long id,
             @RequestBody HabilitarOperarioDTO dto, Authentication auth) {
 
-        FaseOperarioHabilitado faseModificada = faseService.gestionarHabilitacionOperario(id, dto.getOperarioId(), dto.isHabilitado(), auth.getName());
+        FaseOperarioHabilitadoResponseDTO faseModificada = faseService.gestionarHabilitacionOperario(id, dto.getOperarioId(), dto.getHabilitado(), auth.getName());
         return ResponseEntity.ok(faseModificada);
     }
 
     /**
      * DTO interno para recibir el payload del endpoint de habilitación.
      */
+    @Data 
+    @Builder 
     public static class HabilitarOperarioDTO {
         private Long operarioId;
-        private boolean habilitado;
-
-        public Long getOperarioId() {
-            return operarioId;
-        }
-
-        public void setOperarioId(Long operarioId) {
-            this.operarioId = operarioId;
-        }
-
-        public boolean isHabilitado() {
-            return habilitado;
-        }
-
-        public void setHabilitado(boolean habilitado) {
-            this.habilitado = habilitado;
-        }
+        @Builder.Default
+        private Boolean habilitado = true;
     }
 }
