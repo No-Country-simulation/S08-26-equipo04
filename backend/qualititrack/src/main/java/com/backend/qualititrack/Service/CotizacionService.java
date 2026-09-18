@@ -1,6 +1,5 @@
 package com.backend.qualititrack.Service;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -85,7 +84,7 @@ public class CotizacionService {
         cotizacion.setObservaciones(dto.getObservaciones());
 
         // Calcular fecha vencimiento: hoy + 30 días
-        // cotizacion.setFechaVencimiento(LocalDateTime.now().plusDays(30));
+        // cotizacion.setFechaVencimiento(OffsetDateTime.now().plusDays(30));
 
         cotizacion.setFechaCreacion(OffsetDateTime.now());
         cotizacion.setFechaActualizacion(OffsetDateTime.now());
@@ -133,12 +132,11 @@ public class CotizacionService {
     }
 
     /**
-     * 4. LISTAR PENDIENTES (estado LISTA_PARA_ENVIAR)
-     * Para que JEFE_PRODUCCION vea cuáles están listas
+     * 4. LISTAR COTIZACIONES
      */
     @Transactional(readOnly = true)
-    public List<CotizacionDTO> listarPendientes() {
-        return cotizacionRepository.findByEstado(EstadoCotizacion.LISTA_PARA_ENVIAR).stream()
+    public List<CotizacionDTO> listarCotizaciones() {
+        return cotizacionRepository.findAll().stream()
                 .map(this::convertirADTO)
                 .collect(Collectors.toList());
     }
@@ -165,7 +163,7 @@ public class CotizacionService {
         }
 
         cot.setEstado(EstadoCotizacion.ENVIADA_A_CLIENTE);
-        cot.setFechaEnvioCliente(LocalDateTime.now());
+        cot.setFechaEnvioCliente(OffsetDateTime.now());
 
         Cotizacion actualizada = cotizacionRepository.save(cot);
         return convertirADTO(actualizada);
@@ -194,13 +192,12 @@ public class CotizacionService {
         }
 
         cot.setEstado(EstadoCotizacion.APROBADA);
-        cot.setFechaRespuestaCliente(LocalDateTime.now());
+        cot.setFechaRespuestaCliente(OffsetDateTime.now());
 
         Cotizacion actualizada = cotizacionRepository.save(cot);
 
         // Generar OT automáticamente
         ordenTrabajoService.generarDesdeCotizacion(actualizada.getId());
-        
 
         return convertirADTO(actualizada);
     }
@@ -227,7 +224,7 @@ public class CotizacionService {
         }
 
         cot.setEstado(EstadoCotizacion.NO_APROBADA);
-        cot.setFechaRespuestaCliente(LocalDateTime.now());
+        cot.setFechaRespuestaCliente(OffsetDateTime.now());
         cot.setMotivoRechazoCliente(motivo);
 
         Cotizacion actualizada = cotizacionRepository.save(cot);

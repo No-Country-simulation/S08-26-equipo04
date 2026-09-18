@@ -69,8 +69,8 @@ public class CotizacionController {
      */
     @GetMapping
     @PreAuthorize("hasAnyRole('VENDEDOR', 'JEFE_PRODUCCION')")
-    public ResponseEntity<List<CotizacionDTO>> listarPendientes() {
-        List<CotizacionDTO> pendientes = cotizacionService.listarPendientes();
+    public ResponseEntity<List<CotizacionDTO>> listarCotizaciones() {
+        List<CotizacionDTO> pendientes = cotizacionService.listarCotizaciones();
         return ResponseEntity.ok().body(pendientes);
     }
 
