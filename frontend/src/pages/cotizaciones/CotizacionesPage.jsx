@@ -1,23 +1,33 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Inbox, Plus, Search } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { useCotizaciones } from '../../hooks/useCotizaciones';
-import { useSolicitudes } from '../../hooks/useSolicitudes';
-import { Badge, Button, Card, DataTable, EmptyState, ErrorBanner, SkeletonTable, Title } from '../../components/ui';
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Inbox, Plus, Search } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import { useCotizaciones } from "../../hooks/useCotizaciones";
+import { useSolicitudes } from "../../hooks/useSolicitudes";
+import {
+  Badge,
+  Button,
+  Card,
+  DataTable,
+  EmptyState,
+  ErrorBanner,
+  SkeletonTable,
+  Title,
+} from "../../components/ui";
+import { formatDateTime } from "../../api/helpers";
 
 const estadoBadge = {
-  LISTA_PARA_ENVIAR: 'pending',
-  ENVIADA_A_CLIENTE: 'quoted',
-  APROBADA: 'approved',
-  NO_APROBADA: 'production',
+  LISTA_PARA_ENVIAR: "pending",
+  ENVIADA_A_CLIENTE: "quoted",
+  APROBADA: "approved",
+  NO_APROBADA: "production",
 };
 
 const estadoLabels = {
-  ENVIADA_A_CLIENTE: 'Enviada al cliente',
-  APROBADA: 'Aprobada',
-  NO_APROBADA: 'No aprobada',
-  LISTA_PARA_ENVIAR: 'Lista para enviar',
+  ENVIADA_A_CLIENTE: "Enviada al cliente",
+  APROBADA: "Aprobada",
+  NO_APROBADA: "No aprobada",
+  LISTA_PARA_ENVIAR: "Lista para enviar",
 };
 
 export const CotizacionesPage = () => {
@@ -27,98 +37,121 @@ export const CotizacionesPage = () => {
   // El DTO de cotización no trae solicitud_numero/cliente: se enriquece
   // con la lista de solicitudes (igual que solicitudes hace con clientes).
   const { solicitudes } = useSolicitudes();
-  const [busqueda, setBusqueda] = useState('');
-  const [estado, setEstado] = useState('TODOS');
+  const [busqueda, setBusqueda] = useState("");
+  const [estado, setEstado] = useState("TODOS");
 
   const solicitudPorId = useMemo(
     () => new Map(solicitudes.map((item) => [item.id, item])),
     [solicitudes],
   );
 
-  const filas = useMemo(() => cotizaciones.map((cotizacion) => {
-    const solicitud = solicitudPorId.get(cotizacion.solicitud_id);
-    return {
-      ...cotizacion,
-      solicitud_numero:
-        cotizacion.solicitud_numero ?? solicitud?.numero_solicitud ?? '—',
-      cliente_razon_social:
-        cotizacion.cliente_razon_social ?? solicitud?.cliente_razon_social ?? '—',
-      pieza_trabajo:
-        cotizacion.pieza_trabajo ?? solicitud?.descripcion_pieza ?? null,
-    };
-  }), [cotizaciones, solicitudPorId]);
+  const filas = useMemo(
+    () =>
+      cotizaciones.map((cotizacion) => {
+        const solicitud = solicitudPorId.get(cotizacion.solicitud_id);
+        return {
+          ...cotizacion,
+          solicitud_numero:
+            cotizacion.solicitud_numero ?? solicitud?.numero_solicitud ?? "—",
+          cliente_razon_social:
+            cotizacion.cliente_razon_social ??
+            solicitud?.cliente_razon_social ??
+            "—",
+          pieza_trabajo:
+            cotizacion.pieza_trabajo ?? solicitud?.descripcion_pieza ?? null,
+        };
+      }),
+    [cotizaciones, solicitudPorId],
+  );
 
   const cotizacionesFiltradas = useMemo(() => {
     const texto = busqueda.toLowerCase();
     return filas.filter((c) => {
-      const coincideTexto = !texto || [c.numero_cotizacion, c.cliente_razon_social, c.solicitud_numero, c.pieza_trabajo]
-        .some((v) => v?.toLowerCase().includes(texto));
-      const coincideEstado = estado === 'TODOS' || c.estado === estado;
+      const coincideTexto =
+        !texto ||
+        [
+          c.numero_cotizacion,
+          c.cliente_razon_social,
+          c.solicitud_numero,
+          c.pieza_trabajo,
+        ].some((v) => v?.toLowerCase().includes(texto));
+      const coincideEstado = estado === "TODOS" || c.estado === estado;
       return coincideTexto && coincideEstado;
     });
   }, [filas, busqueda, estado]);
 
-  const columns = useMemo(() => [
-    {
-      accessorKey: 'numero_cotizacion',
-      header: 'Cotización',
-      cell: ({ row }) => {
-        const cot = row.original;
-        return (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(cot.estado === 'LISTA_PARA_ENVIAR' && user?.rol === 'JEFE_PRODUCCION'
-                ? `/cotizaciones/${cot.id}/editar`
-                : `/cotizaciones/${cot.id}`);
-            }}
-            className="font-medium text-primary hover:underline"
-            aria-label={`${cot.estado === 'LISTA_PARA_ENVIAR' && user?.rol === 'JEFE_PRODUCCION' ? 'Editar' : 'Ver'} ${cot.numero_cotizacion}`}
-          >
-            {cot.numero_cotizacion}
-          </button>
-        );
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: "numero_cotizacion",
+        header: "Cotización",
+        cell: ({ row }) => {
+          const cot = row.original;
+          return (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(
+                  cot.estado === "LISTA_PARA_ENVIAR" &&
+                    user?.rol === "JEFE_PRODUCCION"
+                    ? `/cotizaciones/${cot.id}/editar`
+                    : `/cotizaciones/${cot.id}`,
+                );
+              }}
+              className="font-medium text-primary hover:underline"
+              aria-label={`${cot.estado === "LISTA_PARA_ENVIAR" && user?.rol === "JEFE_PRODUCCION" ? "Editar" : "Ver"} ${cot.numero_cotizacion}`}
+            >
+              {cot.numero_cotizacion}
+            </button>
+          );
+        },
       },
-    },
-    { accessorKey: 'solicitud_numero', header: 'Solicitud' },
-    { accessorKey: 'cliente_razon_social', header: 'Cliente' },
-    {
-      accessorKey: 'pieza_trabajo',
-      header: 'Pieza o trabajo',
-      cell: ({ getValue }) => getValue() || 'Trabajo metalúrgico',
-    },
-    {
-      accessorKey: 'precio_final',
-      header: 'Precio',
-      cell: ({ getValue }) => {
-        const valor = getValue();
-        return valor == null ? '—' : `$${Number(valor).toLocaleString('es-AR')}`;
+      { accessorKey: "solicitud_numero", header: "Solicitud" },
+      { accessorKey: "cliente_razon_social", header: "Cliente" },
+      {
+        accessorKey: "pieza_trabajo",
+        header: "Pieza o trabajo",
+        cell: ({ getValue }) => getValue() || "Trabajo metalúrgico",
       },
-    },
-    {
-      accessorKey: 'estado',
-      header: 'Estado',
-      cell: ({ getValue }) => (
-        <Badge variant={estadoBadge[getValue()] || 'pending'} type="inline">
-          {estadoLabels[getValue()] || getValue().replace(/_/g, ' ')}
-        </Badge>
-      ),
-    },
-    {
-      accessorKey: 'updated_at',
-      header: 'Actualizada',
-      cell: ({ getValue }) => {
-        const valor = getValue();
-        return valor ? new Date(valor).toLocaleDateString('es-AR') : '—';
+      {
+        accessorKey: "precio_final",
+        header: "Precio",
+        cell: ({ getValue }) => {
+          const valor = getValue();
+          return valor == null
+            ? "—"
+            : `$${Number(valor).toLocaleString("es-AR")}`;
+        },
       },
-    },
-  ], [navigate, user?.rol]);
+      {
+        accessorKey: "estado",
+        header: "Estado",
+        cell: ({ getValue }) => (
+          <Badge variant={estadoBadge[getValue()] || "pending"} type="inline">
+            {estadoLabels[getValue()] || getValue().replace(/_/g, " ")}
+          </Badge>
+        ),
+      },
+      {
+        accessorKey: "updated_at",
+        header: "Actualizada",
+        cell: ({ getValue }) => (
+          <span className="whitespace-nowrap tabular-nums">
+            {formatDateTime(getValue())}
+          </span>
+        ),
+      },
+    ],
+    [navigate, user?.rol],
+  );
 
   const handleRowClick = (row) => {
-    navigate(row.estado === 'LISTA_PARA_ENVIAR' && user?.rol === 'JEFE_PRODUCCION'
-      ? `/cotizaciones/${row.id}/editar`
-      : `/cotizaciones/${row.id}`);
+    navigate(
+      row.estado === "LISTA_PARA_ENVIAR" && user?.rol === "JEFE_PRODUCCION"
+        ? `/cotizaciones/${row.id}/editar`
+        : `/cotizaciones/${row.id}`,
+    );
   };
 
   return (
@@ -127,7 +160,7 @@ export const CotizacionesPage = () => {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-h1 text-ink">Cotizaciones</h1>
-          {user?.rol === 'VENDEDOR' ? (
+          {user?.rol === "VENDEDOR" ? (
             <p className="mt-1 text-body text-text-secondary">
               Revisa las cotizaciones y registra la respuesta del cliente.
             </p>
@@ -137,8 +170,8 @@ export const CotizacionesPage = () => {
             </p>
           )}
         </div>
-        {user?.rol === 'JEFE_PRODUCCION' && (
-          <Button onClick={() => navigate('/cotizaciones/nueva')}>
+        {user?.rol === "JEFE_PRODUCCION" && (
+          <Button onClick={() => navigate("/cotizaciones/nueva")}>
             <Plus className="h-4 w-4" />
             Nueva cotización
           </Button>
@@ -147,7 +180,10 @@ export const CotizacionesPage = () => {
 
       <div className="flex flex-col gap-3 sm:flex-row">
         <label className="relative flex-1" htmlFor="cotizaciones-busqueda">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" aria-hidden="true" />
+          <Search
+            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted"
+            aria-hidden="true"
+          />
           <input
             id="cotizaciones-busqueda"
             name="busqueda"
@@ -190,7 +226,7 @@ export const CotizacionesPage = () => {
             columns={columns}
             data={cotizacionesFiltradas}
             onRowClick={handleRowClick}
-            footer={`${cotizacionesFiltradas.length} cotización${cotizacionesFiltradas.length !== 1 ? 'es' : ''}`}
+            footer={`${cotizacionesFiltradas.length} cotización${cotizacionesFiltradas.length !== 1 ? "es" : ""}`}
           />
         )}
       </Card>

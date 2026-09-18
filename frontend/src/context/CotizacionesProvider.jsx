@@ -195,8 +195,8 @@ export const CotizacionesProvider = ({ children }) => {
   const obtenerCotizacion = (id) =>
     cotizaciones.find((item) => item.id === Number(id)) ?? null;
 
-  // Las transicionadas (ENVIADA/APROBADA/...) no vienen en el listado de
-  // pendientes: se busca por id como fallback (p. ej. recarga del detalle).
+  // El listado trae todas; se busca por id como fallback (p. ej. recarga
+  // directa del detalle sin pasar por la lista).
   const cargarCotizacion = useCallback(async (id) => {
     const { data } = await apiGet(`/api/cotizaciones/${id}`);
     const mapeada = mapItem(data);

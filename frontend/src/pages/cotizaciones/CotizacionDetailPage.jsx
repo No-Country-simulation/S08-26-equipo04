@@ -38,7 +38,7 @@ export const CotizacionDetailPage = () => {
   const [motivo, setMotivo] = useState('');
   const [accionError, setAccionError] = useState(null);
   const [procesando, setProcesando] = useState(false);
-  // Fallback remoto: las transicionadas no vienen en pendientes.
+  // Fallback remoto: si se entra directo al detalle sin pasar por el listado.
   const [remota, setRemota] = useState(null);
 
   const local = useMemo(
