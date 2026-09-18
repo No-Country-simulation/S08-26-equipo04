@@ -15,7 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.backend.qualititrack.DTO.CotizacionDTO;
+import com.backend.qualititrack.DTO.CotizacionRequestDTO;
+import com.backend.qualititrack.DTO.CotizacionResponseDTO;
 import com.backend.qualititrack.Service.CotizacionService;
 import com.backend.qualititrack.exception.EntityNotFoundException;
 import com.backend.qualititrack.modelos.Usuario;
@@ -36,9 +37,9 @@ public class CotizacionController {
      */
     @PostMapping
     @PreAuthorize("hasAnyRole('JEFE_PRODUCCION')")
-    public ResponseEntity<CotizacionDTO> crear(@RequestBody CotizacionDTO dto) {
+    public ResponseEntity<CotizacionResponseDTO> crear(@RequestBody CotizacionRequestDTO dto) {
         Long jefeId = obtenerIdDelUsuario();
-        CotizacionDTO creada = cotizacionService.crear(dto, jefeId);
+        CotizacionResponseDTO creada = cotizacionService.crear(dto, jefeId);
         return ResponseEntity.status(HttpStatus.CREATED).body(creada);
     }
 
@@ -48,8 +49,8 @@ public class CotizacionController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('JEFE_PRODUCCION', 'VENDEDOR', 'OPERARIO', 'CALIDAD')")
-    public ResponseEntity<CotizacionDTO> obtenerPorId(@PathVariable Long id) {
-        CotizacionDTO cotizacion = cotizacionService.obtenerPorId(id);
+    public ResponseEntity<CotizacionResponseDTO> obtenerPorId(@PathVariable Long id) {
+        CotizacionResponseDTO cotizacion = cotizacionService.obtenerPorId(id);
         return ResponseEntity.ok().body(cotizacion);
     }
 
@@ -59,8 +60,8 @@ public class CotizacionController {
      */
     @GetMapping("/solicitud/{solicitudId}")
     @PreAuthorize("hasAnyRole('JEFE_PRODUCCION', 'VENDEDOR')")
-    public ResponseEntity<CotizacionDTO> obtenerPorSolicitud(@PathVariable Long solicitudId) {
-        CotizacionDTO cotizacion = cotizacionService.obtenerPorSolicitud(solicitudId);
+    public ResponseEntity<CotizacionResponseDTO> obtenerPorSolicitud(@PathVariable Long solicitudId) {
+        CotizacionResponseDTO cotizacion = cotizacionService.obtenerPorSolicitud(solicitudId);
         return ResponseEntity.ok().body(cotizacion);
     }
 
@@ -70,8 +71,8 @@ public class CotizacionController {
      */
     @GetMapping
     @PreAuthorize("hasAnyRole('VENDEDOR', 'JEFE_PRODUCCION')")
-    public ResponseEntity<List<CotizacionDTO>> listarCotizaciones() {
-        List<CotizacionDTO> pendientes = cotizacionService.listarCotizaciones();
+    public ResponseEntity<List<CotizacionResponseDTO>> listarCotizaciones() {
+        List<CotizacionResponseDTO> pendientes = cotizacionService.listarCotizaciones();
         return ResponseEntity.ok().body(pendientes);
     }
 
@@ -81,9 +82,9 @@ public class CotizacionController {
      */
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('VENDEDOR')")
-    public ResponseEntity<CotizacionDTO> enviarAlCliente(@PathVariable Long id) {
+    public ResponseEntity<CotizacionResponseDTO> enviarAlCliente(@PathVariable Long id) {
         Long vendedorId = obtenerIdDelUsuario();
-        CotizacionDTO actualizada = cotizacionService.enviarAlCliente(id, vendedorId);
+        CotizacionResponseDTO actualizada = cotizacionService.enviarAlCliente(id, vendedorId);
         return ResponseEntity.ok().body(actualizada);
     }
 
@@ -94,9 +95,9 @@ public class CotizacionController {
      */
     @PostMapping("/{id}/aprobar")
     @PreAuthorize("hasAnyRole('VENDEDOR')")
-    public ResponseEntity<CotizacionDTO> aprobarCotizacion(@PathVariable Long id) {
+    public ResponseEntity<CotizacionResponseDTO> aprobarCotizacion(@PathVariable Long id) {
         Long vendedorId = obtenerIdDelUsuario();
-        CotizacionDTO actualizada = cotizacionService.aprobarCotizacion(id, vendedorId);
+        CotizacionResponseDTO actualizada = cotizacionService.aprobarCotizacion(id, vendedorId);
         return ResponseEntity.ok().body(actualizada);
     }
 
@@ -106,11 +107,11 @@ public class CotizacionController {
      */
     @PostMapping("/{id}/rechazar")
     @PreAuthorize("hasAnyRole('VENDEDOR')")
-    public ResponseEntity<CotizacionDTO> rechazarCotizacion(
+    public ResponseEntity<CotizacionResponseDTO> rechazarCotizacion(
             @PathVariable Long id,
             @RequestBody MotivoRechazoRequest request) {
         Long vendedorId = obtenerIdDelUsuario();
-        CotizacionDTO actualizada = cotizacionService.rechazarCotizacion(id, request.getMotivoRechazoCliente(), vendedorId);
+        CotizacionResponseDTO actualizada = cotizacionService.rechazarCotizacion(id, request.getMotivoRechazoCliente(), vendedorId);
         return ResponseEntity.ok().body(actualizada);
     }
 
