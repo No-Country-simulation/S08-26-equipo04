@@ -9,8 +9,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.backend.qualititrack.DTO.CotizacionDTO;
 import com.backend.qualititrack.DTO.CotizacionFaseDTO;
+import com.backend.qualititrack.DTO.CotizacionRequestDTO;
+import com.backend.qualititrack.DTO.CotizacionResponseDTO;
 import com.backend.qualititrack.Enum.EstadoCotizacion;
 import com.backend.qualititrack.exception.EntityNotFoundException;
 import com.backend.qualititrack.exception.InvalidStateException;
@@ -47,7 +48,7 @@ public class CotizacionService {
      * Estado inicial: LISTA_PARA_ENVIAR
      * Fecha vencimiento: hoy + 30 días
      */
-    public CotizacionDTO crear(CotizacionDTO dto, Long jefeId) {
+    public CotizacionResponseDTO crear(CotizacionRequestDTO dto, Long jefeId) {
 
         // Validar solicitud existe
         Solicitud solicitud = solicitudRepository.findById(dto.getSolicitudId())
@@ -115,7 +116,7 @@ public class CotizacionService {
      * 2. OBTENER POR ID
      */
     @Transactional(readOnly = true)
-    public CotizacionDTO obtenerPorId(Long id) {
+    public CotizacionResponseDTO obtenerPorId(Long id) {
         Cotizacion cot = cotizacionRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cotización no encontrada"));
         return convertirADTO(cot);
@@ -125,7 +126,7 @@ public class CotizacionService {
      * 3. OBTENER POR SOLICITUD (una sola)
      */
     @Transactional(readOnly = true)
-    public CotizacionDTO obtenerPorSolicitud(Long solicitudId) {
+    public CotizacionResponseDTO obtenerPorSolicitud(Long solicitudId) {
         Cotizacion cot = cotizacionRepository.findBySolicitudId(solicitudId)
                 .orElseThrow(() -> new EntityNotFoundException("No existe cotización para esta solicitud"));
         return convertirADTO(cot);
@@ -135,7 +136,7 @@ public class CotizacionService {
      * 4. LISTAR COTIZACIONES
      */
     @Transactional(readOnly = true)
-    public List<CotizacionDTO> listarCotizaciones() {
+    public List<CotizacionResponseDTO> listarCotizaciones() {
         return cotizacionRepository.findAll().stream()
                 .map(this::convertirADTO)
                 .collect(Collectors.toList());
@@ -146,7 +147,7 @@ public class CotizacionService {
      * Cambia estado: LISTA_PARA_ENVIAR → ENVIADA_A_CLIENTE
      */
     @Transactional
-    public CotizacionDTO enviarAlCliente(Long cotizacionId, Long vendedorId) {
+    public CotizacionResponseDTO enviarAlCliente(Long cotizacionId, Long vendedorId) {
 
         Cotizacion cot = cotizacionRepository.findById(cotizacionId)
                 .orElseThrow(() -> new EntityNotFoundException("Cotización no encontrada"));
@@ -175,7 +176,7 @@ public class CotizacionService {
      * ⚡ DISPARA: Generación automática de OrdenTrabajo
      */
     @Transactional
-    public CotizacionDTO aprobarCotizacion(Long cotizacionId, Long vendedorId) {
+    public CotizacionResponseDTO aprobarCotizacion(Long cotizacionId, Long vendedorId) {
 
         Cotizacion cot = cotizacionRepository.findById(cotizacionId)
                 .orElseThrow(() -> new EntityNotFoundException("Cotización no encontrada"));
@@ -207,7 +208,7 @@ public class CotizacionService {
      * Cambia estado: ENVIADA_A_CLIENTE → NO_APROBADA
      */
     @Transactional
-    public CotizacionDTO rechazarCotizacion(Long cotizacionId, String motivo, Long vendedorId) {
+    public CotizacionResponseDTO rechazarCotizacion(Long cotizacionId, String motivo, Long vendedorId) {
 
         Cotizacion cot = cotizacionRepository.findById(cotizacionId)
                 .orElseThrow(() -> new EntityNotFoundException("Cotización no encontrada"));
@@ -238,8 +239,8 @@ public class CotizacionService {
         return String.format("COT-%d-%04d", ano, timestamp);
     }
 
-    private CotizacionDTO convertirADTO(Cotizacion cotizacion) {
-        CotizacionDTO dto = new CotizacionDTO();
+    private CotizacionResponseDTO convertirADTO(Cotizacion cotizacion) {
+        CotizacionResponseDTO dto = new CotizacionResponseDTO();
         dto.setId(cotizacion.getId());
         dto.setNumeroCotizacion(cotizacion.getNumeroCotizacion());
         dto.setSolicitudId(cotizacion.getSolicitud().getId());
@@ -251,6 +252,8 @@ public class CotizacionService {
         dto.setFechaEnvioCliente(cotizacion.getFechaEnvioCliente());
         dto.setFechaRespuestaCliente(cotizacion.getFechaRespuestaCliente());
         dto.setMotivoRechazoCliente(cotizacion.getMotivoRechazoCliente());
+        dto.setFechaCreacion(cotizacion.getFechaCreacion());
+        dto.setFechaActualizacion(cotizacion.getFechaActualizacion());
 
         // Incorporar contenido de fases al DTO
         List<CotizacionFaseDTO> fasesDto = cotizacion.getFases().stream().map(f -> {
