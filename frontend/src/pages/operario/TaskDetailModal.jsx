@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { addMinutes, differenceInMinutes, format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { ChevronDown, Clock3, FileText, MessagesSquare } from "lucide-react";
-import { mocks } from "../../mocks";
 import {
   Badge,
   EmptyState,
@@ -32,8 +31,10 @@ const formatBytes = (bytes) => {
 
 /**
  * Detalle de tarea del operario (HU-3.2/3.3/3.4). Solo lectura:
- * adjuntos/planos de la solicitud, vencimiento calculado y notas
- * separadas por origen. El operario no puede crear notas.
+ * vencimiento calculado. Sin mocks: la OT, los adjuntos y las notas quedan
+ * como "sin datos" hasta que existan GET /api/ordenes-trabajo (ya usado para
+ * ot_numero), GET /api/solicitudes/{id}/documentos (BE #36) y
+ * GET /api/ot-fases/{id}/notas (BE #87). El operario no puede crear notas.
  */
 export const TaskDetailModal = ({ tarea, open, onClose }) => {
   const [cargando, setCargando] = useState(true);
@@ -41,8 +42,7 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
 
   useEffect(() => {
     if (!open) return undefined;
-    // Los mocks son sincronos; se simula latencia para ejercitar
-    // los estados de UI segun spec §7.1 (reemplazar por GET reales).
+    // Latencia simulada para ejercitar los estados de UI segun spec §7.1.
     const timer = setTimeout(() => {
       setError(null);
       setCargando(false);
@@ -52,25 +52,9 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
 
   const detalle = useMemo(() => {
     if (!tarea) return null;
-    const ot = mocks.ordenesTrabajo.find(
-      (item) => item.id === tarea.orden_trabajo_id,
-    );
-    const cotizacion = ot
-      ? mocks.cotizaciones.find((item) => item.id === ot.cotizacion_id)
-      : null;
-    const solicitudId = cotizacion?.solicitud_id ?? null;
-    const adjuntos =
-      solicitudId == null
-        ? []
-        : mocks.adjuntos.filter((item) => item.solicitud_id === solicitudId);
-    const notas = mocks.notas.filter(
-      (item) => item.ot_fase_id === tarea.id,
-    );
-    const notasCalidad = notas.filter((item) => item.origen === "CALIDAD");
-    const notasProduccion = notas.filter(
-      (item) => item.origen !== "CALIDAD",
-    );
-    return { ot, cotizacion, adjuntos, notasCalidad, notasProduccion };
+    // Sin mocks: la OT, los adjuntos y las notas quedan vacios hasta BE #36
+    // y #87. Un id real jamas debe cruzarse con datos inventados.
+    return { ot: null, cotizacion: null, adjuntos: [], notasCalidad: [], notasProduccion: [] };
   }, [tarea]);
 
   const vencimiento = useMemo(() => {
@@ -110,7 +94,7 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
       <div className="space-y-6">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-metadata text-text-muted">{tarea.ot_numero}</p>
+            <p className="text-metadata text-text-muted">{tarea.ot_numero ?? "—"}</p>
             <p className="text-label text-text-secondary">
               Fase {tarea.numero_secuencia}
               {detalle.ot ? ` · ${detalle.ot.cliente_razon_social}` : ""}
@@ -159,7 +143,7 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
           </h3>
           {detalle.adjuntos.length === 0 ? (
             <p className="mt-2 rounded-xl bg-canvas p-3 text-label text-text-secondary">
-              Sin adjuntos: esta solicitud no tiene planos ni documentos.
+              Sin adjuntos disponibles por el momento.
             </p>
           ) : (
             <ul className="mt-2 space-y-2">
@@ -193,8 +177,7 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
           {detalle.notasCalidad.length === 0 &&
           detalle.notasProduccion.length === 0 ? (
             <p className="mt-2 rounded-xl bg-canvas p-3 text-label text-text-secondary">
-              Sin notas: no hay notas de Calidad ni de Produccion para esta
-              tarea.
+              Sin notas disponibles por el momento.
             </p>
           ) : (
             <div className="mt-2 space-y-2">
@@ -262,7 +245,7 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
       open={open}
       onClose={onClose}
       title={
-        tarea ? `${tarea.ot_numero} · ${tarea.fase_nombre}` : "Detalle de tarea"
+        tarea ? `${tarea.ot_numero ?? "—"} · ${tarea.fase_nombre ?? "Fase sin nombre"}` : "Detalle de tarea"
       }
     >
       <div className="max-h-[70vh] overflow-y-auto">{renderContenido()}</div>

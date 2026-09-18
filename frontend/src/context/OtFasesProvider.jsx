@@ -1,127 +1,181 @@
-import { useCallback, useMemo, useState } from 'react';
-import { mocks } from '../mocks';
+import { useCallback, useEffect, useState } from 'react';
+import { apiGet, apiPost } from '../api';
+import { useAuth } from './AuthContext';
 import { OtFasesContext } from './OtFasesContext';
 
 /**
- * Provider de fases de OT para el Operario (HU-3.1).
+ * Provider de fases de OT para el Operario (HU-3.1) contra API real.
  *
- * Estrategia de mocks (§7.2 Plan-Trabajo): misma estructura del contrato
- * Especificacion-Tecnica §6.4. Cuando el backend entregue los endpoints
- * reales, solo se reemplaza el cuerpo de `iniciarFase` / `finalizarFase` /
- * `recargar` por llamadas axios a:
- *   GET  /api/ot-fases
- *   POST /api/ot-fases/{id}/iniciar
- *   POST /api/ot-fases/{id}/finalizar
+ * Regla de esta migracion: sin mocks. Si el backend no manda un dato, queda
+ * en `null` y la vista lo muestra como faltante ("—" / "sin datos") en vez
+ * de inventarlo: asi los huecos del contrato se ven y no se tapan errores.
  *
- * La transicion "fase siguiente -> Calidad" la resuelve el backend en
- * produccion; aqui se simula en el mock para no bloquear la maquetacion:
- *  - si existe fase siguiente de la misma OT -> pasa a EN_COLA
- *  - si no hay fase siguiente -> OT a estado Calidad + fecha_pase_calidad
- *    (inicio de la espera en Calidad, necesario para HU-5.4)
+ * - GET /api/ot-fases filtra por el operario logueado via JWT: no hay
+ *   filtrado local por usuario.
+ * - POST /api/ot-fases/{id}/iniciar y /finalizar resuelven la transicion en
+ *   backend (siguiente fase a EN_COLA u OT a Calidad): despues de cada
+ *   mutacion se refresca la lista en vez de simularla local.
+ * - El DTO (OtFaseResponseDTO, SNAKE_CASE) trae solo ids: `ot_numero` se
+ *   completa con GET /api/ordenes-trabajo/{id} (permitido para OPERARIO);
+ *   si falla queda en `null`. `fase_nombre` queda en `null` hasta que el
+ *   backend lo incluya en el DTO (GET /api/fases es 403 para este rol).
+ *
+ * Deuda explicita (no bloquea, BE #36 y #87): adjuntos y notas no tienen
+ * endpoint todavia; el detalle muestra "sin datos" hasta que existan
+ * GET /api/solicitudes/{id}/documentos y GET /api/ot-fases/{id}/notas.
  */
 
-// Retardo simulado de red para que los estados loading/spinner sean visibles.
-const MOCK_LATENCY_MS = 400;
+const extractMessage = (error, fallback) =>
+  error?.response?.data?.detail ||
+  error?.response?.data?.message ||
+  error?.response?.data?.error ||
+  (error?.code === 'ECONNABORTED'
+    ? 'El servidor tarda en responder (Render en frio). Reintenta.'
+    : fallback);
 
-const nowIso = () => new Date().toISOString();
+const numeroOTDe = (orden) =>
+  orden?.numero_ot ?? orden?.numeroOT ?? orden?.numero_o_t ?? null;
 
-const diffMinutos = (inicioIso, finIso) => {
-  const diff = new Date(finIso).getTime() - new Date(inicioIso).getTime();
-  return Math.max(1, Math.round(diff / 60000));
-};
+const mapItem = (item, operarioNombre = null) => ({
+  ...item,
+  // Sin fallback a catalogo local: si el DTO no trae el nombre queda en
+  // null y la vista lo muestra como faltante.
+  fase_nombre: item.fase_nombre ?? null,
+  operario_nombre: item.operario_nombre ?? operarioNombre,
+  ot_numero: item.ot_numero ?? null,
+  created_at: item.created_at ?? null,
+  updated_at: item.updated_at ?? null,
+});
 
 export const OtFasesProvider = ({ children }) => {
-  const [otFases, setOtFases] = useState(mocks.otFases);
-  const [ordenes, setOrdenes] = useState(mocks.ordenesTrabajo);
+  const { isAuthenticated, user } = useAuth();
+  // El GET /api/ot-fases permite OPERARIO y JEFE_PRODUCCION: no pedirlo con
+  // otros roles para no disparar 403 (toast de permisos).
+  const puedeConsultar =
+    user?.rol === 'OPERARIO' || user?.rol === 'JEFE_PRODUCCION';
+  const [otFases, setOtFases] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(null);
+  const [version, setVersion] = useState(0);
 
-  const iniciarFase = useCallback(
-    async (id) => {
-      const actual = otFases.find((fase) => fase.id === id);
-      if (!actual) throw new Error('Tarea no encontrada.');
-      if (actual.estado !== 'EN_COLA') {
-        throw new Error(`La tarea ${actual.ot_numero} ya no esta en cola.`);
+  // GET /api/ot-fases + ot_numero real por OT. Sin numero inventado: si la
+  // OT no se puede resolver queda en `null` y la vista muestra "—".
+  const cargarLista = useCallback(async () => {
+    const { data } = await apiGet('/api/ot-fases');
+    const base = (data ?? []).map((item) =>
+      mapItem(item, user?.nombre ?? null),
+    );
+    const ids = [
+      ...new Set(
+        base.map((fase) => fase.orden_trabajo_id).filter((id) => id != null),
+      ),
+    ];
+    const resultados = await Promise.allSettled(
+      ids.map((id) => apiGet(`/api/ordenes-trabajo/${id}`)),
+    );
+    const numeros = new Map();
+    resultados.forEach((resultado, index) => {
+      if (resultado.status === 'fulfilled') {
+        numeros.set(ids[index], numeroOTDe(resultado.value?.data));
       }
-      await new Promise((resolve) => setTimeout(resolve, MOCK_LATENCY_MS));
-      const inicio = nowIso();
-      const actualizada = {
-        ...actual,
-        estado: 'EN_EJECUCION',
-        fecha_inicio_real: inicio,
-        updated_at: inicio,
-      };
-      setOtFases((prev) => prev.map((fase) => (fase.id === id ? actualizada : fase)));
-      return actualizada;
-    },
-    [otFases],
-  );
+    });
+    return base.map((fase) => ({
+      ...fase,
+      ot_numero: fase.ot_numero ?? numeros.get(fase.orden_trabajo_id) ?? null,
+    }));
+  }, [user?.nombre]);
 
-  const finalizarFase = useCallback(
-    async (id) => {
-      const actual = otFases.find((fase) => fase.id === id);
-      if (!actual) throw new Error('Tarea no encontrada.');
-      if (actual.estado !== 'EN_EJECUCION') {
-        throw new Error('Solo se puede terminar una tarea en ejecucion.');
-      }
-      await new Promise((resolve) => setTimeout(resolve, MOCK_LATENCY_MS));
-      const fin = nowIso();
-      const terminada = {
-        ...actual,
-        estado: 'TERMINADO',
-        fecha_fin_real: fin,
-        duracion_real_minutos: diffMinutos(actual.fecha_inicio_real || fin, fin),
-        updated_at: fin,
-      };
+  // Todos los setState ocurren en callbacks de la promesa (nunca en el
+  // cuerpo del efecto) para cumplir react-hooks/set-state-in-effect.
+  useEffect(() => {
+    let cancelado = false;
+    const promesa =
+      isAuthenticated && puedeConsultar
+        ? cargarLista()
+        : Promise.resolve(null);
+    promesa.then(
+      (lista) => {
+        if (cancelado) return;
+        setOtFases(lista ?? []);
+        setError(null);
+        setCargando(false);
+      },
+      (err) => {
+        if (cancelado) return;
+        setError(extractMessage(err, 'No se pudieron cargar las tareas.'));
+        setCargando(false);
+      },
+    );
+    return () => {
+      cancelado = true;
+    };
+  }, [isAuthenticated, puedeConsultar, version, cargarLista]);
 
-      // Fase siguiente de la misma OT (menor numero_secuencia mayor al actual).
-      const siguiente =
-        otFases
-          .filter(
-            (fase) =>
-              fase.orden_trabajo_id === actual.orden_trabajo_id &&
-              fase.numero_secuencia > actual.numero_secuencia &&
-              fase.estado !== 'TERMINADO',
-          )
-          .sort((a, b) => a.numero_secuencia - b.numero_secuencia)[0] || null;
+  const recargar = () => {
+    setCargando(true);
+    setError(null);
+    setVersion((v) => v + 1);
+  };
 
-      setOtFases((prev) =>
-        prev.map((fase) => {
-          if (fase.id === id) return terminada;
-          // El backend deriva la tarea al operario habilitado de esa fase;
-          // en el mock se marca EN_COLA para que aparezca en su lista.
-          if (siguiente && fase.id === siguiente.id && fase.estado !== 'EN_EJECUCION') {
-            return { ...fase, estado: 'EN_COLA', updated_at: fin };
-          }
-          return fase;
-        }),
+  const iniciarFase = async (id) => {
+    try {
+      const { data } = await apiPost(`/api/ot-fases/${id}/iniciar`, {});
+      const actualizada = mapItem(data, user?.nombre ?? null);
+      const lista = await cargarLista();
+      setOtFases(
+        lista.some((fase) => fase.id === actualizada.id)
+          ? lista.map((fase) => (fase.id === actualizada.id ? { ...fase, ...actualizada } : fase))
+          : [...lista, actualizada],
       );
+      return actualizada;
+    } catch (err) {
+      throw new Error(extractMessage(err, 'No se pudo iniciar la tarea.'), {
+        cause: err,
+      });
+    }
+  };
 
-      // Sin fase siguiente -> la OT pasa a Calidad y se registra el inicio
-      // de la espera en Calidad (dato para el tiempo promedio de HU-5.4).
-      if (!siguiente) {
-        setOrdenes((prev) =>
-          prev.map((ot) =>
-            ot.id === actual.orden_trabajo_id
-              ? { ...ot, estado: 'EN_CALIDAD', fecha_pase_calidad: fin, updated_at: fin }
-              : ot,
-          ),
-        );
-      }
+  const finalizarFase = async (id) => {
+    let data;
+    try {
+      ({ data } = await apiPost(`/api/ot-fases/${id}/finalizar`, {}));
+    } catch (err) {
+      throw new Error(extractMessage(err, 'No se pudo terminar la tarea.'), {
+        cause: err,
+      });
+    }
+    const terminada = mapItem(data, user?.nombre ?? null);
+    const lista = await cargarLista();
+    setOtFases(
+      lista.some((fase) => fase.id === terminada.id)
+        ? lista.map((fase) =>
+            fase.id === terminada.id ? { ...fase, ...terminada } : fase,
+          )
+        : [...lista, terminada],
+    );
+    // El POST solo devuelve la fase terminada: el estado de la OT dice si
+    // paso a Calidad o si la siguiente fase quedo en cola (sea mia o de otro
+    // operario). Si no se puede leer, la vista usa un mensaje generico.
+    let otEstado = null;
+    try {
+      const { data: orden } = await apiGet(
+        `/api/ordenes-trabajo/${terminada.orden_trabajo_id}`,
+      );
+      otEstado = orden?.estado ?? orden?.estado_ot ?? null;
+    } catch {
+      // Sin estado de OT: la vista usa un mensaje generico.
+    }
+    return { terminada, lista, otEstado };
+  };
 
-      return { terminada, siguiente };
-    },
-    [otFases],
-  );
-
-  const recargar = useCallback(async () => {
-    await new Promise((resolve) => setTimeout(resolve, MOCK_LATENCY_MS));
-    setOtFases([...mocks.otFases]);
-    setOrdenes([...mocks.ordenesTrabajo]);
-  }, []);
-
-  const value = useMemo(
-    () => ({ otFases, ordenes, iniciarFase, finalizarFase, recargar }),
-    [otFases, ordenes, iniciarFase, finalizarFase, recargar],
-  );
+  const value = {
+    otFases,
+    cargando,
+    error,
+    recargar,
+    iniciarFase,
+    finalizarFase,
+  };
 
   return <OtFasesContext.Provider value={value}>{children}</OtFasesContext.Provider>;
 };

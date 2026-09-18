@@ -20,8 +20,8 @@ export const TaskCardMobile = ({ tarea, accionEnCurso = false, onIniciar, onFina
     <Card className="w-full p-4 sm:p-5" data-testid={`task-card-${tarea.id}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-metadata text-text-muted">{tarea.ot_numero}</p>
-          <h3 className="truncate text-h2 text-ink">{tarea.fase_nombre}</h3>
+          <p className="text-metadata text-text-muted">{tarea.ot_numero ?? "—"}</p>
+          <h3 className="truncate text-h2 text-ink">{tarea.fase_nombre ?? "Fase sin nombre"}</h3>
           <p className="mt-0.5 text-label text-text-secondary">
             Fase {tarea.numero_secuencia}
             {tarea.tiempo_estimado_minutos ? ` · ~${tarea.tiempo_estimado_minutos} min` : ''}
@@ -43,7 +43,7 @@ export const TaskCardMobile = ({ tarea, accionEnCurso = false, onIniciar, onFina
           variant="ghost"
           onClick={() => onVerDetalle?.(tarea)}
           className="min-h-[56px] w-full text-base font-semibold"
-          aria-label={`Ver detalle de ${tarea.fase_nombre} de ${tarea.ot_numero}`}
+          aria-label={`Ver detalle de ${tarea.fase_nombre ?? "la fase"} de ${tarea.ot_numero ?? "la OT"}`}
         >
           <Eye className="h-5 w-5" aria-hidden="true" />
           Ver detalle
@@ -54,7 +54,7 @@ export const TaskCardMobile = ({ tarea, accionEnCurso = false, onIniciar, onFina
             onClick={() => onIniciar?.(tarea)}
             loading={accionEnCurso}
             className="min-h-[56px] w-full text-base font-semibold"
-            aria-label={`Iniciar ${tarea.fase_nombre} de ${tarea.ot_numero}`}
+            aria-label={`Iniciar ${tarea.fase_nombre ?? "la fase"} de ${tarea.ot_numero ?? "la OT"}`}
           >
             <Play className="h-5 w-5" aria-hidden="true" />
             Iniciar
@@ -67,7 +67,7 @@ export const TaskCardMobile = ({ tarea, accionEnCurso = false, onIniciar, onFina
             onClick={() => onFinalizar?.(tarea)}
             loading={accionEnCurso}
             className="min-h-[56px] w-full text-base font-semibold"
-            aria-label={`Terminar ${tarea.fase_nombre} de ${tarea.ot_numero}`}
+            aria-label={`Terminar ${tarea.fase_nombre ?? "la fase"} de ${tarea.ot_numero ?? "la OT"}`}
           >
             <CheckCheck className="h-5 w-5" aria-hidden="true" />
             Terminar
