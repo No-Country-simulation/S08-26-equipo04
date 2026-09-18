@@ -1,10 +1,12 @@
 package com.backend.qualititrack.DTO;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,12 +31,14 @@ public class CotizacionDTO {
     private BigDecimal precioFinal;
 
     @NotNull(message = "Debe incluir al menos una fase")
+    @NotEmpty(message = "La cotización debe incluir al menos una fase")
+    @Valid
     private List<CotizacionFaseDTO> fases;
 
     private String estado;
     private String observaciones;
-    private LocalDateTime fechaEnvioCliente;
-    private LocalDateTime fechaRespuestaCliente;
+    private OffsetDateTime fechaEnvioCliente;
+    private OffsetDateTime fechaRespuestaCliente;
     private String motivoRechazoCliente;
-    private LocalDateTime fechaCreacion;
+    private OffsetDateTime fechaCreacion;
 }

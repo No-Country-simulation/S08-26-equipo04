@@ -28,7 +28,7 @@ public class OrdenTrabajoService {
     /**
      * GENERAR DESDE COTIZACIÓN (Auto-trigger cuando se aprueba cotización)
      */
-    public OrdenTrabajoDTO generarDesdeCotzacion(Long cotizacionId) {
+    public OrdenTrabajoDTO generarDesdeCotizacion(Long cotizacionId) {
         // Validar que la cotización existe
         Cotizacion cotizacion = cotizacionRepository.findById(cotizacionId)
                 .orElseThrow(() -> new IllegalArgumentException(

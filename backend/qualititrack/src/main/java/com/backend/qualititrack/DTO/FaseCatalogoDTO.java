@@ -1,6 +1,7 @@
 package com.backend.qualititrack.DTO;
 
-import java.time.LocalDateTime;
+
+import java.time.OffsetDateTime;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -29,5 +30,5 @@ public class FaseCatalogoDTO {
 
     private Boolean activa;
 
-    private LocalDateTime fechaCreacion;
+    private OffsetDateTime fechaCreacion;
 }

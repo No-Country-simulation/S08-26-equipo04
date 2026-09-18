@@ -1,5 +1,6 @@
 package com.backend.qualititrack.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,7 +33,25 @@ public class SolicitudService {
 
     private String generarNumeroSolicitud() {
         // Generador temporal. Para producción, lo ideal es buscar el MAX(id) en BD y sumarle 1.
-        return "SOL-" + System.currentTimeMillis(); 
+        return "SOL-" + System.currentTimeMillis();
+    }
+
+    // Devuelve en una lista los campos faltantes para crear un cliente en un dto de solicitud.
+    private List<String> camposFaltantesNuevoCliente(SolicitudDTO dto){
+        List<String> faltantes = new ArrayList<>();
+        if (dto.getRazonSocial() == null || dto.getRazonSocial().isBlank()) {
+            faltantes.add("razonSocial");
+        }
+        if (dto.getContactoNombre() == null || dto.getContactoNombre().isBlank()) {
+            faltantes.add("contactoNombre");
+        }
+        if (dto.getTelefono() == null || dto.getTelefono().isBlank()) {
+            faltantes.add("telefono");
+        }
+        if (dto.getDireccion() == null || dto.getDireccion().isBlank()) {
+            faltantes.add("direccion");
+        }
+        return faltantes;
     }
 
     // Crea una nueva
@@ -42,9 +61,16 @@ public class SolicitudService {
         // Si el cliente existe, se utiliza
         if (dto.getClienteId() != null) {
             cliente = clienteRepository.findById(dto.getClienteId())
-                    .orElseThrow(() -> new EntityNotFoundException("El cliente con ID " + dto.getClienteId() + " no existe"));
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "El cliente con ID " + dto.getClienteId() + " no existe"));
         } else {
-            // si no, se utilizan los datos del DTO para crear un nuevo cliente
+            // si no, verificar que se tengan los datos necesarios para crear un nuevo cliente
+            List<String> faltantes = camposFaltantesNuevoCliente(dto);
+            if (!faltantes.isEmpty()) {
+                throw new IllegalArgumentException(
+                        "Faltan datos obligatorios para crear el nuevo cliente: " + String.join(", ", faltantes));
+            }
+            // si están todos los datos, generar el cliente
             Cliente nuevoCliente = new Cliente();
             nuevoCliente.setRazonSocial(dto.getRazonSocial());
             nuevoCliente.setContactoNombre(dto.getContactoNombre());
