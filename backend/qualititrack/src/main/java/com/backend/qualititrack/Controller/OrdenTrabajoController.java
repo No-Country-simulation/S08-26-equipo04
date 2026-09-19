@@ -5,15 +5,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.backend.qualititrack.DTO.EntregaOtRequestDTO;
 import com.backend.qualititrack.DTO.OrdenTrabajoDTO;
 import com.backend.qualititrack.Enum.EstadoOT;
 import com.backend.qualititrack.Service.OrdenTrabajoService;
+import com.backend.qualititrack.modelos.OrdenTrabajo;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/ordenes-trabajo")
@@ -110,5 +115,18 @@ public class OrdenTrabajoController {
         public void setMotivo(String motivo) {
             this.motivo = motivo;
         }
+    }
+
+    /**
+     * ESTABLECER OT COMO ENTREGADA - POST /api/ordenes-trabajo/{id}/entrega
+     * Solo VENDEDOR
+     */
+    @PostMapping("/{id}/entrega")
+    @PreAuthorize("hasAnyRole('VENDEDOR')")
+    public ResponseEntity<OrdenTrabajoDTO> entregarOrdenTrabajo(
+            @PathVariable Long id,
+            @Valid @RequestBody EntregaOtRequestDTO request) {
+        OrdenTrabajoDTO orden = ordenTrabajoService.marcarComoEntregada(id, request);
+        return ResponseEntity.ok().body(orden);
     }
 }

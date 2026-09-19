@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.backend.qualititrack.DTO.EntregaOtRequestDTO;
 import com.backend.qualititrack.DTO.OrdenTrabajoDTO;
 import com.backend.qualititrack.Enum.EstadoOT;
 import com.backend.qualititrack.modelos.Cotizacion;
@@ -14,6 +15,7 @@ import com.backend.qualititrack.modelos.OrdenTrabajo;
 import com.backend.qualititrack.repository.CotizacionRepository;
 import com.backend.qualititrack.repository.OrdenTrabajoRepository;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -145,5 +147,29 @@ public class OrdenTrabajoService {
         dto.setDescripcion(ordenTrabajo.getNotas());
         dto.setCotizacionId(ordenTrabajo.getCotizacion().getId());
         return dto;
+    }
+
+    /**
+     * Marca una Orden de Trabajo como entregada (Issue #91)
+     */
+    @Transactional
+    public OrdenTrabajoDTO marcarComoEntregada(Long id, EntregaOtRequestDTO request) {
+        OrdenTrabajo ot = ordenTrabajoRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("La Orden de Trabajo con ID " + id + " no existe"));
+
+        // Validar que la OT esté en estado DESPACHO
+        if (ot.getEstado() != EstadoOT.DESPACHO) {
+            throw new IllegalStateException("La Orden de Trabajo no se encuentra en estado DESPACHO y no puede ser entregada.");
+        }
+
+        // Actualizar el estado y los campos de entrega
+        ot.setEstado(EstadoOT.ENTREGADA);
+        ot.setFechaEntrega(LocalDateTime.now());
+        ot.setReceptorNombre(request.getReceptorNombre());
+
+        OrdenTrabajo otGuardada = ordenTrabajoRepository.save(ot);
+        
+        // Retornar convertido a DTO (según el método de mapeo que use tu servicio)
+        return convertirADTO(otGuardada); // Asegúrate de usar el método de mapeo a DTO que ya tengas en tu servicio
     }
 }

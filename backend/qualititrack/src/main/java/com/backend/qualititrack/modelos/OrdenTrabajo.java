@@ -221,4 +221,27 @@ public class OrdenTrabajo {
     public void setDocumentos(List<Adjunto> documentos) {
         this.documentos = documentos;
     }
+
+    @Column(name = "fecha_entrega")
+    private LocalDateTime fechaEntrega;
+
+    @Column(name = "receptor_nombre")
+    private String receptorNombre;
+
+    // Getters y Setters
+    public LocalDateTime getFechaEntrega() {
+        return fechaEntrega;
+    }
+
+    public void setFechaEntrega(LocalDateTime fechaEntrega) {
+        this.fechaEntrega = fechaEntrega;
+    }
+
+    public String getReceptorNombre() {
+        return receptorNombre;
+    }
+
+    public void setReceptorNombre(String receptorNombre) {
+        this.receptorNombre = receptorNombre;
+    }
 }
