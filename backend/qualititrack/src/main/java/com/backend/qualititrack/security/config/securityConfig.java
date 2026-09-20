@@ -47,8 +47,9 @@ public class securityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(http -> {
-                    // Endpoints públicos (sin token requerido)
+                    // Endpoints públicos (sin token requerido: autenticación y health check)
                     http.requestMatchers("/api/auth/**").permitAll();
+                    http.requestMatchers("/actuator/health").permitAll();
                     
                     // Todos los demás requieren autenticación
                     http.anyRequest().authenticated();
