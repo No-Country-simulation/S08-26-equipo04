@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { PackageCheck } from "lucide-react";
+import { toast } from "sonner";
 import { useOrdenesTrabajo } from "../../hooks/useOrdenesTrabajo";
 import {
   Badge,
@@ -8,10 +9,11 @@ import {
   DataTable,
   EmptyState,
   ErrorBanner,
-  LoadingSpinner,
+  Modal,
+  SkeletonTable,
   Title,
 } from "../../components/ui";
-import { formatDateTime } from "../../api/helpers";
+import { formatDate, formatDateTime } from "../../api/helpers";
 
 const estadoBadge = {
   DESPACHO: "pending",
@@ -31,6 +33,7 @@ export const DespachoPage = () => {
   const [selectedOt, setSelectedOt] = useState(null);
   const [receptorNombre, setReceptorNombre] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
 
   const ordenesDespacho = useMemo(
     () => ordenesTrabajo.filter((ot) => ot.estado === "DESPACHO"),
@@ -93,17 +96,7 @@ export const DespachoPage = () => {
       {
         accessorKey: "fecha_esperada_entrega",
         header: "Entrega solicitada",
-        cell: ({ getValue }) => {
-          const value = getValue();
-
-          if (!value) {
-            return "—";
-          }
-
-          return new Intl.DateTimeFormat("es-AR").format(
-            new Date(`${value}T00:00:00`),
-          );
-        },
+        cell: ({ getValue }) => formatDate(getValue()),
       },
       {
         accessorKey: "estado",
@@ -122,6 +115,12 @@ export const DespachoPage = () => {
     [],
   );
 
+  const handleCloseModal = () => {
+    setSelectedOt(null);
+    setReceptorNombre("");
+    setSubmitError(null);
+  };
+
   const handleConfirmEntrega = async (event) => {
     event.preventDefault();
 
@@ -131,16 +130,22 @@ export const DespachoPage = () => {
 
     try {
       setIsSubmitting(true);
+      setSubmitError(null);
 
       await registrarEntrega({
         id: selectedOt.id,
         receptor_nombre: receptorNombre.trim(),
       });
 
-      setSelectedOt(null);
-      setReceptorNombre("");
+      toast.success(
+        `${selectedOt.numero_ot} entregada a ${receptorNombre.trim()}`,
+      );
+      handleCloseModal();
     } catch (err) {
-      console.error(err);
+      const message =
+        err?.message || "No se pudo registrar la entrega. Reintente.";
+      setSubmitError(message);
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -169,9 +174,7 @@ export const DespachoPage = () => {
 
       <Card>
         {cargando ? (
-          <div className="flex min-h-48 items-center justify-center">
-            <LoadingSpinner />
-          </div>
+          <SkeletonTable columns={7} rows={5} />
         ) : error ? (
           <ErrorBanner message={error} onRetry={recargar} />
         ) : ordenesFiltradas.length === 0 ? (
@@ -191,18 +194,13 @@ export const DespachoPage = () => {
         )}
       </Card>
 
-      {selectedOt && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="registrar-entrega-title"
-        >
-          <div className="w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-card">
-            <h2 id="registrar-entrega-title" className="text-h2 text-ink">
-              Registrar entrega
-            </h2>
-
+      <Modal
+        open={Boolean(selectedOt)}
+        onClose={handleCloseModal}
+        title="Registrar entrega"
+      >
+        {selectedOt && (
+          <>
             <p className="mt-1 text-body text-text-secondary">
               Confirmar la entrega de la orden{" "}
               <strong className="text-ink">{selectedOt.numero_ot}</strong>.
@@ -231,14 +229,17 @@ export const DespachoPage = () => {
                 />
               </div>
 
+              {submitError && (
+                <p role="alert" className="text-metadata text-error">
+                  {submitError}
+                </p>
+              )}
+
               <div className="flex justify-end gap-3 pt-2">
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => {
-                    setSelectedOt(null);
-                    setReceptorNombre("");
-                  }}
+                  onClick={handleCloseModal}
                 >
                   Cancelar
                 </Button>
@@ -248,9 +249,9 @@ export const DespachoPage = () => {
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </Modal>
     </div>
   );
 };

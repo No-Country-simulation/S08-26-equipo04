@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  PackageCheck,
   PanelLeftClose,
   Settings,
   Wrench,
@@ -31,7 +32,7 @@ const items = [
   {
     label: "Entregas",
     to: "/despacho",
-    icon: ClipboardList,
+    icon: PackageCheck,
     roles: ["VENDEDOR", "JEFE_PRODUCCION"],
   },
   {

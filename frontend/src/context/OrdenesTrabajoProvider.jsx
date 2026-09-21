@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
 import { OrdenesTrabajoContext } from "./OrdenesTrabajoContext";
 import ordenesTrabajoMock from "../mocks/ordenes-trabajo.json";
@@ -24,13 +24,21 @@ export const OrdenesTrabajoProvider = ({ children }) => {
   );
 
   const [error, setError] = useState(null);
+  const [cargando, setCargando] = useState(true);
 
-  const cargando = false;
+  // Simula la carga inicial del mock hasta que exista endpoint real.
+  useEffect(() => {
+    const timer = setTimeout(() => setCargando(false), 400);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const recargar = useCallback(() => {
     setError(null);
+    setCargando(true);
 
     setOrdenesTrabajo(ordenesTrabajoMock.map(mapItem));
+    setCargando(false);
   }, []);
 
   const fusionar = useCallback((item) => {
