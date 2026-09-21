@@ -1,41 +1,117 @@
-import { NavLink } from 'react-router-dom';
-import { ClipboardList, FileText, LayoutDashboard, LogOut, Menu, PanelLeftClose, Settings, Wrench, X } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import logoFull from '../assets/qualitytrack-logo.png';
-import logoIcon from '../assets/qualitytrack-icon.png';
+import { NavLink } from "react-router-dom";
+import {
+  ClipboardList,
+  FileText,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  PackageCheck,
+  PanelLeftClose,
+  Settings,
+  Wrench,
+  X,
+} from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import logoFull from "../assets/qualitytrack-logo.png";
+import logoIcon from "../assets/qualitytrack-icon.png";
 
 const items = [
-  { label: 'Inicio', to: '/', icon: LayoutDashboard, roles: [] },
-  { label: 'Solicitudes', to: '/solicitudes', icon: ClipboardList, roles: ['VENDEDOR'] },
-  { label: 'Cotizaciones', to: '/cotizaciones', icon: FileText, roles: ['JEFE_PRODUCCION', 'VENDEDOR'] },
-  { label: 'Planta', to: '/planta', icon: ClipboardList, roles: ['JEFE_PRODUCCION'] },
-  { label: 'Configuracion', to: '/config/fases', icon: Settings, roles: ['GERENTE'] },
-  { label: 'Mis tareas', to: '/operario', icon: Wrench, roles: ['OPERARIO'] },
+  { label: "Inicio", to: "/", icon: LayoutDashboard, roles: [] },
+  {
+    label: "Solicitudes",
+    to: "/solicitudes",
+    icon: ClipboardList,
+    roles: ["VENDEDOR"],
+  },
+  {
+    label: "Cotizaciones",
+    to: "/cotizaciones",
+    icon: FileText,
+    roles: ["JEFE_PRODUCCION", "VENDEDOR"],
+  },
+  {
+    label: "Entregas",
+    to: "/despacho",
+    icon: PackageCheck,
+    roles: ["VENDEDOR", "JEFE_PRODUCCION"],
+  },
+  {
+    label: "Planta",
+    to: "/planta",
+    icon: ClipboardList,
+    roles: ["JEFE_PRODUCCION"],
+  },
+  {
+    label: "Configuracion",
+    to: "/config/fases",
+    icon: Settings,
+    roles: ["GERENTE"],
+  },
+  { label: "Mis tareas", to: "/operario", icon: Wrench, roles: ["OPERARIO"] },
 ];
 
 export const Sidebar = ({ collapsed, mobileOpen, onToggle, onClose, role }) => {
   const { user, logout } = useAuth();
-  const visibleItems = items.filter(({ roles }) => roles.length === 0 || roles.includes(role));
-  const initials = user?.nombre?.split(' ').map((part) => part[0]).slice(0, 2).join('') || 'QT';
+  const visibleItems = items.filter(
+    ({ roles }) => roles.length === 0 || roles.includes(role),
+  );
+  const initials =
+    user?.nombre
+      ?.split(" ")
+      .map((part) => part[0])
+      .slice(0, 2)
+      .join("") || "QT";
 
   return (
     <>
-      {mobileOpen && <button aria-label="Cerrar menu" className="fixed inset-0 z-30 bg-ink/30 lg:hidden" onClick={onClose} />}
-      <aside className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border bg-surface transition-transform lg:static lg:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} ${collapsed ? 'lg:w-24' : ''}`}>
+      {mobileOpen && (
+        <button
+          aria-label="Cerrar menu"
+          className="fixed inset-0 z-30 bg-ink/30 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border bg-surface transition-transform lg:static lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"} ${collapsed ? "lg:w-24" : ""}`}
+      >
         <div className="flex h-16 items-center justify-between border-b border-border px-4">
           {!collapsed ? (
             <img src={logoFull} alt="QualityTrack" className="h-8 w-auto" />
           ) : (
             <img src={logoIcon} alt="QT" className="mx-auto h-7 w-7" />
           )}
-          <button type="button" onClick={onClose} className="rounded-lg p-2 text-text-muted hover:bg-canvas lg:hidden" aria-label="Cerrar menu"><X className="h-5 w-5" /></button>
-          <button type="button" onClick={onToggle} className="hidden rounded-lg p-2 text-text-muted hover:bg-canvas lg:block" aria-label={collapsed ? 'Expandir menu' : 'Contraer menu'}>
-            {collapsed ? <Menu className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-2 text-text-muted hover:bg-canvas lg:hidden"
+            aria-label="Cerrar menu"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={onToggle}
+            className="hidden rounded-lg p-2 text-text-muted hover:bg-canvas lg:block"
+            aria-label={collapsed ? "Expandir menu" : "Contraer menu"}
+          >
+            {collapsed ? (
+              <Menu className="h-5 w-5" />
+            ) : (
+              <PanelLeftClose className="h-5 w-5" />
+            )}
           </button>
         </div>
         <nav className="flex-1 space-y-1 p-3" aria-label="Navegacion principal">
           {visibleItems.map(({ label, to, icon: Icon }) => (
-            <NavLink key={to} to={to} end={to !== '/'} onClick={onClose} className={({ isActive }) => `flex items-center gap-3 rounded-lg px-3 py-2.5 text-label transition-colors ${isActive ? 'bg-primary-tint text-primary' : 'text-text-secondary hover:bg-canvas'}`}>
+            <NavLink
+              key={to}
+              to={to}
+              end={to !== "/"}
+              onClick={onClose}
+              className={({ isActive }) =>
+                `flex items-center gap-3 rounded-lg px-3 py-2.5 text-label transition-colors ${isActive ? "bg-primary-tint text-primary" : "text-text-secondary hover:bg-canvas"}`
+              }
+            >
               <Icon className="h-5 w-5 shrink-0" />
               {!collapsed && <span>{label}</span>}
             </NavLink>
@@ -43,14 +119,27 @@ export const Sidebar = ({ collapsed, mobileOpen, onToggle, onClose, role }) => {
         </nav>
         <div className="border-t border-border p-3">
           <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-tint text-label text-primary">{initials}</span>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-tint text-label text-primary">
+              {initials}
+            </span>
             {!collapsed && (
               <>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-label text-ink">{user?.nombre || 'Usuario'}</p>
-                  <p className="truncate text-metadata text-text-muted">{user?.rol || 'Invitado'}</p>
+                  <p className="truncate text-label text-ink">
+                    {user?.nombre || "Usuario"}
+                  </p>
+                  <p className="truncate text-metadata text-text-muted">
+                    {user?.rol || "Invitado"}
+                  </p>
                 </div>
-                <button type="button" onClick={logout} className="shrink-0 rounded-lg p-2 text-text-muted hover:bg-canvas" aria-label="Cerrar sesion"><LogOut className="h-5 w-5" /></button>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="shrink-0 rounded-lg p-2 text-text-muted hover:bg-canvas"
+                  aria-label="Cerrar sesion"
+                >
+                  <LogOut className="h-5 w-5" />
+                </button>
               </>
             )}
           </div>
