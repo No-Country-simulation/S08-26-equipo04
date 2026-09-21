@@ -1,13 +1,14 @@
 import { NavLink } from "react-router-dom";
 import {
+  Clipboard,
   ClipboardList,
   FileText,
   LayoutDashboard,
   LogOut,
   Menu,
-  PackageCheck,
   PanelLeftClose,
   Settings,
+  Truck,
   Wrench,
   X,
 } from "lucide-react";
@@ -20,7 +21,7 @@ const items = [
   {
     label: "Solicitudes",
     to: "/solicitudes",
-    icon: ClipboardList,
+    icon: Clipboard,
     roles: ["VENDEDOR"],
   },
   {
@@ -30,9 +31,15 @@ const items = [
     roles: ["JEFE_PRODUCCION", "VENDEDOR"],
   },
   {
+    label: "Órdenes de trabajo",
+    to: "/ordenes-trabajo",
+    icon: ClipboardList,
+    roles: ["VENDEDOR"],
+  },
+  {
     label: "Entregas",
     to: "/despacho",
-    icon: PackageCheck,
+    icon: Truck,
     roles: ["VENDEDOR", "JEFE_PRODUCCION"],
   },
   {

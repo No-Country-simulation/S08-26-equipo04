@@ -155,7 +155,7 @@ export const CotizacionesPage = () => {
   };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
+    <div className="mx-auto max-w-[1360px] space-y-8">
       <Title>Cotizaciones</Title>
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -178,7 +178,7 @@ export const CotizacionesPage = () => {
         )}
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <label className="relative flex-1" htmlFor="cotizaciones-busqueda">
           <Search
             className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted"
@@ -187,7 +187,7 @@ export const CotizacionesPage = () => {
           <input
             id="cotizaciones-busqueda"
             name="busqueda"
-            className="input pl-9"
+            className="input h-11 pl-10 text-body"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             placeholder="Buscar por cotización, cliente o pieza"
@@ -197,7 +197,7 @@ export const CotizacionesPage = () => {
         <select
           id="cotizaciones-estado"
           name="estado"
-          className="select sm:max-w-xs"
+          className="select h-11 sm:w-[220px] sm:max-w-none text-body"
           value={estado}
           onChange={(e) => setEstado(e.target.value)}
           aria-label="Filtrar por estado"
@@ -210,7 +210,7 @@ export const CotizacionesPage = () => {
         </select>
       </div>
 
-      <Card>
+      <Card className="p-0">
         {cargando ? (
           <SkeletonTable columns={7} rows={5} />
         ) : error ? (
@@ -226,6 +226,7 @@ export const CotizacionesPage = () => {
             columns={columns}
             data={cotizacionesFiltradas}
             onRowClick={handleRowClick}
+            comfortable
             footer={`${cotizacionesFiltradas.length} cotización${cotizacionesFiltradas.length !== 1 ? "es" : ""}`}
           />
         )}
