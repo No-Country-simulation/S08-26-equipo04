@@ -18,6 +18,7 @@ export const DataTable = ({
   searchPlaceholder = 'Buscar...',
   pageSize = 10,
   initialSorting = [],
+  comfortable = false,
 }) => {
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState(initialSorting);
@@ -70,7 +71,7 @@ export const DataTable = ({
       )}
 
       <div className="table-container">
-        <table className="table">
+        <table className={`table ${comfortable ? 'table-comfortable' : ''}`}>
           <thead>
             {headerGroups.map((headerGroup) => (
               <tr key={headerGroup.id}>
