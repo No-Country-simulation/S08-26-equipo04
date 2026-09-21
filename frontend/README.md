@@ -6,8 +6,8 @@ Aplicación cliente web para **QualityTrack** (Sistema de Gestión de Calidad In
 
 El proyecto utiliza una arquitectura moderna basada en React, enfocada en rendimiento, mantenibilidad y rapidez de desarrollo:
 
-- **Core & Enrutado:** [React](https://react.dev/) (v19) + [Vite](https://vitejs.dev/) + [React Router DOM](https://reactrouter.com/) (v7) + [React Helmet Async](https://github.com/stayunqiue/react-helmet-async) (gestión de `<head>` y títulos dinámicos)
-- **Manejo de Estado y API:** [Axios](https://axios-http.com/) (con interceptores para JWT) + [TanStack React Query](https://tanstack.com/query/latest)
+- **Core & Enrutado:** [React](https://react.dev/) (v19) + [Vite](https://vitejs.dev/) + [React Router DOM](https://reactrouter.com/) (v7) + [React Helmet Async](https://github.com/staylor/react-helmet-async) (gestión de `<head>` y títulos dinámicos)
+- **Manejo de Estado y API:** [Axios](https://axios-http.com/) (con interceptores para JWT) + providers de Context por dominio (`Auth`, `Solicitudes`, `Cotizaciones`, `OtFases`, `OrdenesTrabajo`)
 - **Estilos & UI:** [Tailwind CSS v3](https://tailwindcss.com/) (con PostCSS & Autoprefixer) + [Lucide React](https://lucide.dev/) (iconografía) + [Sonner](https://sonner.emilkowal.ski/) (notificaciones / toasts)
 - **Formularios & Validaciones:** [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/) + `@hookform/resolvers`
 - **Tablas & Gráficos:** [TanStack Table](https://tanstack.com/table/v8) + [Recharts](https://recharts.org/)
@@ -24,13 +24,13 @@ src/
 ├── api/             # Clientes Axios, interceptores y endpoints por dominio
 ├── assets/          # Recursos estáticos (imágenes, logos)
 ├── components/      # Componentes UI reutilizables (ui/, modales, tablas)
-├── context/         # Estado global de la aplicación (AuthContext, UI)
-├── hooks/           # Custom hooks reutilizables (useOrders, usePhases, etc.)
-├── layouts/         # Layouts estructurales (MainLayout, AuthLayout)
+├── context/         # Estado global por dominio (Auth, Solicitudes, Cotizaciones, OtFases, OrdenesTrabajo)
+├── hooks/           # Custom hooks por dominio (useSolicitudes, useCotizaciones, useOtFases, useOrdenesTrabajo)
+├── layouts/         # Layouts estructurales (AppLayout, OperarioLayout) con Sidebar y Navbar
 ├── mocks/           # Mocks de API y datos locales para desarrollo
 ├── pages/           # Vistas/Pantallas principales vinculadas a rutas
-├── routes/          # Rutas del sistema y wrappers de protección por rol
-├── utils/           # Helpers, formateadores de fecha y validadores
+├── routes/          # Definición de rutas (AppRoutes) y protección por rol (ProtectedRoute)
+├── utils/           # Esquemas de validación (Zod) por dominio
 ├── App.jsx          # Componente raíz
 ├── index.css        # Importaciones de Tailwind CSS y estilos globales
 └── main.jsx         # Punto de entrada de la aplicación React
@@ -62,7 +62,7 @@ src/
    Crea un archivo `.env.local` en la raíz del frontend tomando como base `.env.example`:
 
 ```text
-VITE_API_BASE_URL=http://localhost:8080/api
+VITE_API_BASE_URL=http://localhost:8080
 ```
 
 4. Iniciar servidor de desarrollo:
@@ -81,21 +81,23 @@ VITE_API_BASE_URL=http://localhost:8080/api
 
 ## 🛡️ Roles y Rutas de la Aplicación
 
-El sistema cuenta con 5 roles diferenciados. Las rutas están protegidas mediante el wrapper PrivateRoutes según el rol autenticado (JWT):
+El sistema cuenta con 5 roles diferenciados (GERENTE, JEFE_PRODUCCION, VENDEDOR, OPERARIO, CALIDAD). Las rutas están protegidas mediante el wrapper `ProtectedRoute` según el rol autenticado (JWT):
 
-| Ruta                 | Rol permitido             | Descripción                                           |
-| -------------------- | ------------------------- | ----------------------------------------------------- |
-| `/solicitudes`       | VENDEDOR                  | Creación de solicitudes de pedido con adjuntos        |
-| `/cotizaciones`      | VENDEDOR, JEFE_PRODUCCION | Revisión y respuesta a cotizaciones                   |
-| `/expediente/:id`    | VENDEDOR                  | Trazabilidad e historial completo de la OT            |
-| `/despacho`          | VENDEDOR                  | Registro de entregas de OTs en estado Despacho        |
-| `/produccion`        | JEFE_PRODUCCION           | Cotización con asignación de fases y tiempos          |
-| `/planta`            | JEFE_PRODUCCION           | Monitoreo de carga de planta y reasignaciones         |
-| `/operario`          | OPERARIO                  | Vista Mobile-First para ejecución de tareas asignadas |
-| `/calidad`           | CALIDAD                   | Auditorías y checklist de 8 puntos                    |
-| `/config/fases`      | GERENTE                   | Catálogo global de fases y habilitación de operarios  |
-| `/dashboard/planta`  | GERENTE                   | Dashboard global de congestión de planta              |
-| `/dashboard/calidad` | GERENTE                   | Métricas globales de calidad y retrabajos             |
+| Ruta                              | Rol permitido                  | Descripción                                        |
+| --------------------------------- | ------------------------------ | -------------------------------------------------- |
+| `/`                               | Todos (OPERARIO va a `/operario`) | Panel general con resumen operativo             |
+| `/solicitudes`                    | VENDEDOR                       | Listado de solicitudes de pedido                   |
+| `/solicitudes/nueva`              | VENDEDOR                       | Creación de solicitud con adjuntos                 |
+| `/cotizaciones`                   | VENDEDOR, JEFE_PRODUCCION      | Revisión de cotizaciones                           |
+| `/cotizaciones/:id`               | VENDEDOR, JEFE_PRODUCCION      | Detalle de cotización                              |
+| `/cotizaciones/nueva`             | JEFE_PRODUCCION                | Creación de cotización con fases y tiempos         |
+| `/cotizaciones/:id/editar`        | JEFE_PRODUCCION                | Edición de cotización                              |
+| `/despacho`                       | VENDEDOR, JEFE_PRODUCCION      | Registro de entregas de OTs en estado Despacho     |
+| `/planta`                         | JEFE_PRODUCCION                | Gestión de planta                                  |
+| `/config/fases`                   | GERENTE                        | Catálogo global de fases                           |
+| `/config/fases/:faseId/operarios` | GERENTE                        | Habilitación de operarios por fase                 |
+| `/operario`                       | OPERARIO                       | Tareas asignadas al operario                       |
+| `/login`                          | Pública                        | Inicio de sesión                                   |
 
 ## 🤝 Flujo de Contribución
 
