@@ -148,6 +148,14 @@ button:disabled {
     @apply px-4 py-3 border-b border-border text-body;
   }
 
+  .table-comfortable th {
+    @apply px-6 py-4;
+  }
+
+  .table-comfortable td {
+    @apply px-6 py-4;
+  }
+
   .table tbody tr:hover {
     @apply bg-canvas;
   }

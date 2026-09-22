@@ -7,7 +7,7 @@ import { SolicitudesContext } from './SolicitudesContext';
 // El DTO de lista del backend no trae razon social del cliente ni
 // vendedor (solo cliente_id / razon_social cruda). Se enriquece en
 // cliente para no romper las vistas hasta que el backend lo incluya.
-const mapItem = (item, listaClientes = mocks.clientes) => ({
+const mapItem = (item, listaClientes = []) => ({
   ...item,
   cliente_razon_social:
     item.cliente_razon_social ??
@@ -25,9 +25,12 @@ const extractMessage = (error, fallback) =>
     : fallback);
 
 export const SolicitudesProvider = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  // El GET /api/solicitudes solo permite VENDEDOR y JEFE_PRODUCCION: no
+  // pedirlo con otros roles para no disparar 403 (toast de permisos).
+  const puedeConsultar = user?.rol === 'VENDEDOR' || user?.rol === 'JEFE_PRODUCCION';
   const [solicitudes, setSolicitudes] = useState([]);
-  const [clientes, setClientes] = useState(mocks.clientes);
+  const [clientes, setClientes] = useState([]);
   // Adjuntos 100% locales hasta BE #36 (sin endpoint de documentos).
   const [adjuntos, setAdjuntos] = useState(mocks.adjuntos);
   const [cargando, setCargando] = useState(true);
@@ -38,11 +41,11 @@ export const SolicitudesProvider = ({ children }) => {
   // cuerpo del efecto) para cumplir react-hooks/set-state-in-effect.
   useEffect(() => {
     let cancelado = false;
-    const promesa = isAuthenticated
+    const promesa = isAuthenticated && puedeConsultar
       ? Promise.all([
         apiGet('/api/solicitudes'),
-        // Si falla clientes se conserva el mock para no bloquear el form.
-        apiGet('/api/clientes').catch(() => ({ data: mocks.clientes })),
+        // Sin fallback a mock: si clientes falla se muestra el error.
+        apiGet('/api/clientes'),
       ])
       : Promise.resolve(null);
     promesa.then(
@@ -72,7 +75,7 @@ export const SolicitudesProvider = ({ children }) => {
     return () => {
       cancelado = true;
     };
-  }, [isAuthenticated, version]);
+  }, [isAuthenticated, puedeConsultar, version]);
 
   const recargar = () => {
     setCargando(true);

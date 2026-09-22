@@ -13,6 +13,9 @@ import { SolicitudFormPage } from "../pages/solicitudes/SolicitudFormPage";
 import { SolicitudesPage } from "../pages/solicitudes/SolicitudesPage";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { OperarioPage } from "../pages/operario/OperarioPage";
+import { DespachoPage } from "../pages/despacho/DespachoPage";
+import { OrdenesTrabajoPage } from "../pages/ordenes-trabajo/OrdenesTrabajoPage";
+import { ExpedientePage } from "../pages/vendedor/ExpedientePage";
 
 export const AppRoutes = () => {
   const { user } = useAuth();
@@ -36,11 +39,20 @@ export const AppRoutes = () => {
               )
             }
           />
-          <Route element={<ProtectedRoute roles={["VENDEDOR", "GERENTE"]} />}>
+          <Route element={<ProtectedRoute roles={["VENDEDOR"]} />}>
             <Route path="solicitudes" element={<SolicitudesPage />} />
           </Route>
           <Route element={<ProtectedRoute roles={["VENDEDOR"]} />}>
             <Route path="solicitudes/nueva" element={<SolicitudFormPage />} />
+          </Route>
+          <Route
+            element={<ProtectedRoute roles={["VENDEDOR", "JEFE_PRODUCCION"]} />}
+          >
+            <Route path="despacho" element={<DespachoPage />} />
+          </Route>
+          <Route element={<ProtectedRoute roles={["VENDEDOR"]} />}>
+            <Route path="ordenes-trabajo" element={<OrdenesTrabajoPage />} />
+            <Route path="ordenes-trabajo/:id" element={<ExpedientePage />} />
           </Route>
           <Route
             element={<ProtectedRoute roles={["JEFE_PRODUCCION", "VENDEDOR"]} />}
@@ -74,7 +86,10 @@ export const AppRoutes = () => {
           </Route>
         </Route>
       </Route>
-      <Route path="*" element={<Navigate to={user ? home : "/login"} replace />} />
+      <Route
+        path="*"
+        element={<Navigate to={user ? home : "/login"} replace />}
+      />
     </Routes>
   );
 };
