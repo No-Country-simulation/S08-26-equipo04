@@ -13,11 +13,19 @@ import { SolicitudFormPage } from "../pages/solicitudes/SolicitudFormPage";
 import { SolicitudesPage } from "../pages/solicitudes/SolicitudesPage";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { OperarioPage } from "../pages/operario/OperarioPage";
+import { CalidadPage } from "../pages/calidad/CalidadPage";
+import { CalidadAuditPage } from "../pages/calidad/CalidadAuditPage";
 
 export const AppRoutes = () => {
   const { user } = useAuth();
   // El operario no tiene vista de Inicio: entra directo a Mis tareas.
-  const home = user?.rol === "OPERARIO" ? "/operario" : "/";
+  // Calidad tampoco: entra directo a su panel de control.
+  const home =
+    user?.rol === "OPERARIO"
+      ? "/operario"
+      : user?.rol === "CALIDAD"
+        ? "/calidad"
+        : "/";
   return (
     <Routes>
       <Route
@@ -31,6 +39,8 @@ export const AppRoutes = () => {
             element={
               user?.rol === "OPERARIO" ? (
                 <Navigate to="/operario" replace />
+              ) : user?.rol === "CALIDAD" ? (
+                <Navigate to="/calidad" replace />
               ) : (
                 <DashboardPage />
               )
@@ -68,13 +78,24 @@ export const AppRoutes = () => {
             />
           </Route>
         </Route>
-        <Route element={<ProtectedRoute roles={["OPERARIO"]} />}>
+        {/* Formato planta (mobile-first, sin sidebar): Operario y Calidad
+            comparten el header con nombre + logout arriba a la derecha. */}
+        <Route element={<ProtectedRoute roles={["OPERARIO", "CALIDAD"]} />}>
           <Route element={<OperarioLayout />}>
-            <Route path="operario" element={<OperarioPage />} />
+            <Route element={<ProtectedRoute roles={["OPERARIO"]} />}>
+              <Route path="operario" element={<OperarioPage />} />
+            </Route>
+            <Route element={<ProtectedRoute roles={["CALIDAD"]} />}>
+              <Route path="calidad" element={<CalidadPage />} />
+              <Route path="calidad/:id" element={<CalidadAuditPage />} />
+            </Route>
           </Route>
         </Route>
       </Route>
-      <Route path="*" element={<Navigate to={user ? home : "/login"} replace />} />
+      <Route
+        path="*"
+        element={<Navigate to={user ? home : "/login"} replace />}
+      />
     </Routes>
   );
 };

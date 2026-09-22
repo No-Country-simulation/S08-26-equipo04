@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import { CotizacionesProvider } from './context/CotizacionesProvider';
 import { OtFasesProvider } from './context/OtFasesProvider';
 import { SolicitudesProvider } from './context/SolicitudesProvider';
+import { AuditoriasProvider } from './context/AuditoriasProvider';
 import { AppRoutes } from './routes';
 
 export default function App() {
@@ -13,7 +14,9 @@ export default function App() {
         <CotizacionesProvider>
           <SolicitudesProvider>
             <OtFasesProvider>
-              <AppRoutes />
+              <AuditoriasProvider>
+                <AppRoutes />
+              </AuditoriasProvider>
               <Toaster position="top-right" richColors />
             </OtFasesProvider>
           </SolicitudesProvider>
