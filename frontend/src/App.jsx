@@ -6,6 +6,7 @@ import { OtFasesProvider } from './context/OtFasesProvider';
 import { SolicitudesProvider } from './context/SolicitudesProvider';
 import { AuditoriasProvider } from './context/AuditoriasProvider';
 import { AppRoutes } from './routes';
+import { OrdenesTrabajoProvider } from "./context/OrdenesTrabajoProvider";
 
 export default function App() {
   return (
@@ -14,9 +15,11 @@ export default function App() {
         <CotizacionesProvider>
           <SolicitudesProvider>
             <OtFasesProvider>
-              <AuditoriasProvider>
-                <AppRoutes />
-              </AuditoriasProvider>
+              <OrdenesTrabajoProvider>
+                <AuditoriasProvider>
+                  <AppRoutes />
+                </AuditoriasProvider>
+              </OrdenesTrabajoProvider>
               <Toaster position="top-right" richColors />
             </OtFasesProvider>
           </SolicitudesProvider>
