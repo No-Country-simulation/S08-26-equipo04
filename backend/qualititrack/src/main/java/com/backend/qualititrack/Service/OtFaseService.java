@@ -43,10 +43,11 @@ public class OtFaseService {
     }
 
     // GET /api/ot-fases (Operario)
+    @Transactional
     public List<OtFaseResponseDTO> listarFasesOperario(String operarioMail) {
         // Validar y obtener el id del operario ingresado desde la BD
         Usuario operario = usuarioRepository.findByEmail(operarioMail)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new EntityNotFoundException(
                         "El operario con email " + operarioMail + " no existe"));
         
         // Retornar las fases que matcheen con el id de dicho operario, mapeadas a DTOs
