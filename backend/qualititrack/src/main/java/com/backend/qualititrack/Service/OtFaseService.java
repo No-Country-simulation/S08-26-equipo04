@@ -21,7 +21,7 @@ import com.backend.qualititrack.repository.UsuarioRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 
-@Service 
+@Service
 public class OtFaseService {
     private final OtFaseRepository otFaseRepository;
     private final UsuarioRepository usuarioRepository;
@@ -58,7 +58,7 @@ public class OtFaseService {
     }
 
     // POST /api/ot-fases/{id}/iniciar
-    @Transactional 
+    @Transactional
     public OtFaseResponseDTO iniciarFase(Long id, String operarioMail) {
         // Validar y obtener el id del operario ingresado desde la BD
         Usuario operario = usuarioRepository.findByEmail(operarioMail)
@@ -70,12 +70,8 @@ public class OtFaseService {
                 .orElseThrow(() -> new EntityNotFoundException(
                         "La fase con ID " + id + " no existe"));
 
-        // Validar que el operario que intenta iniciar la fase sea el mismo que está
-        // asignado a la fase
-        if (otFase.getOperario() == null || !otFase.getOperario().getId().equals(operario.getId())) {
-            throw new AccessDeniedException(
-                    "El operario con email " + operarioMail + " no está asignado a la fase con ID " + id);
-        }
+        // Validar que el operario que intenta iniciar la fase sea el mismo que está asignado a la fase
+        validarOperarioEnFase(otFase, operario.getId());
 
         // Validar que la fase en cuestión esta en estado EN_COLA
         if (otFase.getEstado() != EstadoOtFase.EN_COLA) {
@@ -179,5 +175,24 @@ public class OtFaseService {
                 .createdAt(otFase.getCreatedAt())
                 .updatedAt(otFase.getUpdatedAt())
                 .build();
+    }
+
+    // Valida que el operario con el id pasado por parametro este asignado a la fase pasada como parametro
+    public void validarOperarioEnFase(OtFase otFase, Long operarioId) {
+        if (otFase.getOperario() == null || !otFase.getOperario().getId().equals(operarioId)) {
+            throw new AccessDeniedException(
+                    "El operario de ID " + operarioId + " no está asignado a la fase con ID " + otFase.getId());
+        }
+    }
+
+    // Valida que el operario con el id pasado por parametro este asignado a la fase con el id pasado como parametro
+    public void validarOperarioEnFase(Long otFaseId, Long operarioId) {
+        OtFase otFase = otFaseRepository.findById(otFaseId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "La fase con ID " + otFaseId + " no existe"));
+        if (otFase.getOperario() == null || !otFase.getOperario().getId().equals(operarioId)) {
+            throw new AccessDeniedException(
+                    "El operario de ID " + operarioId + " no está asignado a la fase con ID " + otFase.getId());
+        }
     }
 }
