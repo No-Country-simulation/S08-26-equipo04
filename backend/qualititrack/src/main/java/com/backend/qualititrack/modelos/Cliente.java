@@ -48,7 +48,7 @@ public class Cliente {
     @Column(nullable = false, length = 255)
     private String direccion;
 
-
+    @NotBlank
     @Email(message = "Email invalido")
     @Column(length = 150)
     private String email;
