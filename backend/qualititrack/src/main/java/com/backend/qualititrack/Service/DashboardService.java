@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.backend.qualititrack.DTO.DashboardCalidadResponseDTO;
+import com.backend.qualititrack.DTO.DashboardPlantaDTO;
 import com.backend.qualititrack.modelos.AuditoriaCalidad;
 import com.backend.qualititrack.modelos.OrdenTrabajo;
 import com.backend.qualititrack.modelos.OtFase;
@@ -86,4 +87,44 @@ public class DashboardService {
 
         return response;
     }
+
+    /**
+     * MÉTRICAS DE PLANTA - Dashboard Global para el Gerente (HU-5.3)
+     */
+    @Transactional(readOnly = true)
+    public DashboardPlantaDTO obtenerMetricasPlanta() {
+        List<OrdenTrabajo> todasLasOt = ordenTrabajoRepository.findAll();
+
+        // 1. Contar OTs pendientes y activas
+        long pendientes = todasLasOt.stream()
+                .filter(ot -> ot.getEstado() != null && ot.getEstado().name().equals("PENDIENTE"))
+                .count();
+
+        // Consideramos activas las que están en proceso de producción o en fases (ajusta según tus estados)
+        long activas = todasLasOt.stream()
+                .filter(ot -> ot.getEstado() != null && !ot.getEstado().name().equals("PENDIENTE") 
+                            && !ot.getEstado().name().equals("ENTREGADA") 
+                            && !ot.getEstado().name().equals("CANCELADA"))
+                .count();
+
+        // 2. Agrupar por fases existentes y contar volumen
+        List<OtFase> fases = otFaseRepository.findAll();
+        Map<String, Long> fasesExistentes = new HashMap<>();
+
+        for (OtFase fase : fases) {
+            String nombreFase = (fase.getFaseCatalogo() != null && fase.getFaseCatalogo().getNombre() != null)
+                    ? fase.getFaseCatalogo().getNombre()
+                    : "Fase General";
+            fasesExistentes.put(nombreFase, fasesExistentes.getOrDefault(nombreFase, 0L) + 1L);
+        }
+
+        // 3. Detectar cuello de botella (la fase con más OTs o elementos acumulados)
+        String cuelloDeBotella = fasesExistentes.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(entry -> "Fase con mayor acumulación: " + entry.getKey() + " (" + entry.getValue() + " elementos)")
+                .orElse("No se registran acumulaciones críticas");
+
+        return new DashboardPlantaDTO(pendientes, activas, fasesExistentes, cuelloDeBotella);
+    }
+
 }

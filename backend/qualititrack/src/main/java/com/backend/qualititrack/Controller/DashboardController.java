@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.backend.qualititrack.DTO.DashboardCalidadResponseDTO;
+import com.backend.qualititrack.DTO.DashboardPlantaDTO;
 import com.backend.qualititrack.Service.DashboardService; // O el servicio donde centralices la lógica
 
 @RestController
@@ -27,5 +28,16 @@ public class DashboardController {
     public ResponseEntity<DashboardCalidadResponseDTO> obtenerDashboardCalidad() {
         DashboardCalidadResponseDTO dashboard = dashboardService.obtenerMetricasCalidad();
         return ResponseEntity.ok().body(dashboard);
+    }
+
+    /**
+     * DASHBOARD DE PLANTA - GET /api/dashboard/planta
+     * Accesible exclusivamente para el rol GERENTE (HU-5.3)
+     */
+    @GetMapping("/planta")
+    @PreAuthorize("hasRole('GERENTE')")
+    public ResponseEntity<DashboardPlantaDTO> obtenerMetricasPlanta() {
+        DashboardPlantaDTO metricas = dashboardService.obtenerMetricasPlanta();
+        return ResponseEntity.ok(metricas);
     }
 }
