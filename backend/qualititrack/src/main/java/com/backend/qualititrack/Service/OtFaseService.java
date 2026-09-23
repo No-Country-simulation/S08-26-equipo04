@@ -214,6 +214,7 @@ public class OtFaseService {
     // Endpoint: POST /api/ot-fases/{id}/reasignar
     // Rol: Jefe de producción
     // Se reasigna una OtFase a un nuevo operario, y se crea una entrada en OtFaseReasignaciones para dejar registro. Se valida que el operario cumpla los requisitos necesarios en el proceso.
+    @Transactional
     public OtFaseReasignacionResponseDTO reasignarFase(Long id, OtFaseReasignacionRequestDTO dto, String jefeMail) {
         Long operarioNuevoId = dto.getOperarioNuevoId();
 
@@ -228,13 +229,17 @@ public class OtFaseService {
                     "El usuario con id " + operarioNuevoId + " no está habilitado para desarrollar la tarea");
         }
 
-        // Chequear que la otFase es valida y guardar operarioAnterior para dejar registro
+        // Chequear que la otFase es valida y sin terminar
         OtFase otFase = otFaseRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("La fase con id " + id + " no existe"));
+        if (otFase.getEstado() == EstadoOtFase.TERMINADO) {
+            throw new InvalidStateException("La fase con id " + id + " ya está terminada y no puede ser reasignada");
+        }
+        // Guardar operarioAnterior para dejar registro
         Usuario operarioAnterior = otFase.getOperario();
         
         // Chequear que el operario puede realizar la nueva fase
-        if (faseOperarioHabilitadoRepository.findByFaseCatalogoIdAndOperarioId(otFase.getFaseCatalogo().getId(), operarioNuevoId) == null) {
+        if (faseOperarioHabilitadoRepository.findByFaseCatalogoIdAndOperarioIdAndHabilitadoTrue(otFase.getFaseCatalogo().getId(), operarioNuevoId) == null) {
             throw new InvalidStateException(
                     "El operario con id " + operarioNuevoId + " no puede realizar la fase con id "
                             + otFase.getFaseCatalogo().getId());
@@ -252,8 +257,11 @@ public class OtFaseService {
         reasignacion.setReasignadoPor(jefe);
         reasignacion.setMotivo(dto.getMotivo());
         reasignacion.setFechaReasignacion(OffsetDateTime.now());
-
         otFaseReasignacionRepository.save(reasignacion);
+
+        // Actualizar la OtFase con el nuevo operario
+        otFase.setOperario(operarioNuevo);
+        otFaseRepository.save(otFase);
 
         // Generar respuesta
         OtFaseReasignacionResponseDTO response = new OtFaseReasignacionResponseDTO();
