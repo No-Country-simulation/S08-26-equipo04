@@ -29,7 +29,7 @@ public class AdjuntoController {
         this.adjuntoService = adjuntoService;
     }
 
-    @PostMapping(consumes = "multipart/form-data")
+    @PostMapping(value = "/documentos", consumes = "multipart/form-data")
     @PreAuthorize("hasRole('VENDEDOR')")
     public ResponseEntity<AdjuntoResponseDTO> subirDocumento(
             @RequestParam("archivo") MultipartFile archivo,

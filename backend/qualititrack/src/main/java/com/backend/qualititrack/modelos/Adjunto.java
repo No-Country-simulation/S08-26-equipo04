@@ -2,6 +2,7 @@ package com.backend.qualititrack.modelos;
 
 import java.time.OffsetDateTime;
 
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -59,6 +60,13 @@ public class Adjunto {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = OffsetDateTime.now();
+        }
+    }
 
     public enum TipoArchivo {
         PLANO, CERTIFICADO, ESPECIFICACION, OTRO
