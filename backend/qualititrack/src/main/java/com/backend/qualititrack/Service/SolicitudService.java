@@ -25,19 +25,22 @@ public class SolicitudService {
     private final ClienteRepository clienteRepository;
     private final UsuarioRepository usuarioRepository;
 
-    public SolicitudService(SolicitudRepository solicitudRepository, ClienteRepository clienteRepository, UsuarioRepository usuarioRepository) {
+    public SolicitudService(SolicitudRepository solicitudRepository, ClienteRepository clienteRepository,
+            UsuarioRepository usuarioRepository) {
         this.solicitudRepository = solicitudRepository;
         this.clienteRepository = clienteRepository;
         this.usuarioRepository = usuarioRepository;
     }
 
     private String generarNumeroSolicitud() {
-        // Generador temporal. Para producción, lo ideal es buscar el MAX(id) en BD y sumarle 1.
+        // Generador temporal. Para producción, lo ideal es buscar el MAX(id) en BD y
+        // sumarle 1.
         return "SOL-" + System.currentTimeMillis();
     }
 
-    // Devuelve en una lista los campos faltantes para crear un cliente en un dto de solicitud.
-    private List<String> camposFaltantesNuevoCliente(SolicitudDTO dto){
+    // Devuelve en una lista los campos faltantes para crear un cliente en un dto de
+    // solicitud.
+    private List<String> camposFaltantesNuevoCliente(SolicitudDTO dto) {
         List<String> faltantes = new ArrayList<>();
         if (dto.getRazonSocial() == null || dto.getRazonSocial().isBlank()) {
             faltantes.add("razonSocial");
@@ -64,7 +67,8 @@ public class SolicitudService {
                     .orElseThrow(() -> new EntityNotFoundException(
                             "El cliente con ID " + dto.getClienteId() + " no existe"));
         } else {
-            // si no, verificar que se tengan los datos necesarios para crear un nuevo cliente
+            // si no, verificar que se tengan los datos necesarios para crear un nuevo
+            // cliente
             List<String> faltantes = camposFaltantesNuevoCliente(dto);
             if (!faltantes.isEmpty()) {
                 throw new IllegalArgumentException(
@@ -103,13 +107,21 @@ public class SolicitudService {
         // Retornar nueva solicitud en forma de dto
         return convertirAResponseDTO(guardada);
     }
-
-    // Devuelve la lista de solicitudes pendientes.
-    public List<SolicitudDTO> obtenerLista() {
+        
+    // (Jefe de producción) Devuelve las solicitudes sin cotizar.
+    public List<SolicitudDTO> obtenerPendientes() {
         return solicitudRepository.findByEstado(EstadoSolicitud.PENDIENTE_COTIZACION)
-            .stream()
-            .map(this::convertirADTO)
-            .collect(Collectors.toList());
+                .stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
+    }
+
+    // (Vendedor) Devuelve todas las solicitudes, pendientes y cotizadas.
+    public List<SolicitudDTO> obtenerTodas() {
+        return solicitudRepository.findAll()
+                .stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
     }
 
     // Convierte una entidad Solicitud a un DTO de respuesta

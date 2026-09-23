@@ -26,18 +26,22 @@ public class SolicitudController {
     public SolicitudController(SolicitudService solicitudService) {
         this.solicitudService = solicitudService;
     }
-    
+
     // POST /api/solicitudes
     // Crear una nueva solicitud (y cliente si también es nuevo).
-    // Body (cliente registrado): 
-        // {cliente_id, descripcion_pieza, cantidad, fecha_esperada_entrega, notas_comerciales}
+    // Body (cliente registrado):
+    // {cliente_id, descripcion_pieza, cantidad, fecha_esperada_entrega,
+    // notas_comerciales}
     // Body (cliente nuevo):
-        // {razon_social, contacto_nombre, telefono, email, direccion, descripcion_pieza, cantidad, fecha_esperada_entrega, notas_comerciales}.
-    // Respuesta exitosa: {"id"=x, "numero_solicitud"=SOL-XXXX, "estado"=PENDIENTE_COTIZACION}
+    // {razon_social, contacto_nombre, telefono, email, direccion,
+    // descripcion_pieza, cantidad, fecha_esperada_entrega, notas_comerciales}.
+    // Respuesta exitosa: {"id"=x, "numero_solicitud"=SOL-XXXX,
+    // "estado"=PENDIENTE_COTIZACION}
     // Permisos: Vendedor
     @PostMapping
     @PreAuthorize("hasAnyRole('VENDEDOR')")
-    public ResponseEntity<SolicitudResponseDTO> crear(@RequestBody @Valid SolicitudDTO dto, Authentication authentication) {
+    public ResponseEntity<SolicitudResponseDTO> crear(@RequestBody @Valid SolicitudDTO dto,
+            Authentication authentication) {
 
         // Obtener mail del usuario actual para luego identificar su id en el servicio
         String emailVendedor = authentication.getName();
@@ -47,13 +51,17 @@ public class SolicitudController {
         return ResponseEntity.status(HttpStatus.CREATED).body(creada);
     }
 
-    // GET /api/solicitudes 
-    // Obtener lista de solicitudes pendientes.
-    // solo accesible a roles Vendedor y Jefe de Producción
+    // GET /api/solicitudes
+    // Jefe de producción -> solo PENDIENTE_COTIZACION | Vendedor -> todas.
     @GetMapping
     @PreAuthorize("hasAnyRole('VENDEDOR', 'JEFE_PRODUCCION')")
-    public ResponseEntity<List<SolicitudDTO>> obtenerLista() {
-        List<SolicitudDTO> lista = solicitudService.obtenerLista();
+    public ResponseEntity<List<SolicitudDTO>> obtenerLista(Authentication authentication) {
+        // Verificar si es jefe o no para ver qué método llamar.
+        boolean esJefe = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_JEFE_PRODUCCION"));
+        List<SolicitudDTO> lista = esJefe
+                ? solicitudService.obtenerPendientes()
+                : solicitudService.obtenerTodas();
         return ResponseEntity.ok().body(lista);
     }
 
