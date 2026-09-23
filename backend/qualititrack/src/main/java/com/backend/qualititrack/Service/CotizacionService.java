@@ -261,6 +261,11 @@ public class CotizacionService {
         dto.setMotivoRechazoCliente(cotizacion.getMotivoRechazoCliente());
         dto.setFechaCreacion(cotizacion.getFechaCreacion());
         dto.setFechaActualizacion(cotizacion.getFechaActualizacion());
+        dto.setSolicitudNumero(cotizacion.getSolicitud().getNumeroSolicitud());
+        dto.setCantidad(cotizacion.getSolicitud().getCantidad());
+        dto.setFechaEsperadaEntrega(cotizacion.getSolicitud().getFechaEsperadaEntrega());
+        dto.setDescripcionPieza(cotizacion.getSolicitud().getDescripcionPieza());
+        dto.setClienteRazonSocial(cotizacion.getSolicitud().getCliente().getRazonSocial());
 
         // Incorporar contenido de fases al DTO
         List<CotizacionFaseDTO> fasesDto = cotizacion.getFases().stream().map(f -> {
