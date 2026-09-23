@@ -114,6 +114,7 @@ public class ClienteService {
         dto.setId(cliente.getId());
         dto.setContactoNombre(cliente.getContactoNombre());
         dto.setEmail(cliente.getEmail());
+        dto.setCuit(cliente.getCuit());
         dto.setTelefono(cliente.getTelefono());
         dto.setCreatedAt(cliente.getCreatedAt());
         dto.setUpdatedAt(cliente.getUpdatedAt());
