@@ -76,7 +76,7 @@ public class OtFaseController {
         return ResponseEntity.ok(response);
     }
     
-    @PostMapping("/api/ot-fases/{id}/reasignar")
+    @PostMapping("/{id}/reasignar")
     @PreAuthorize("hasAnyRole('JEFE_PRODUCCION')")
     public ResponseEntity<OtFaseReasignacionResponseDTO> reasignarFase(@PathVariable Long id, @RequestBody OtFaseReasignacionRequestDTO dto, Authentication auth) {
         OtFaseReasignacionResponseDTO response = otFaseService.reasignarFase(id, dto, auth.getName());
