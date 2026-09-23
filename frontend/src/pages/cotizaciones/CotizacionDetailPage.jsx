@@ -170,7 +170,7 @@ export const CotizacionDetailPage = () => {
       </div>
         <div className="flex flex-wrap gap-3">
           {cotizacion.estado === 'LISTA_PARA_ENVIAR' && user?.rol === 'VENDEDOR' && (
-            <Button variant="secondary" onClick={enviar} loading={procesando}>Enviar al cliente</Button>
+            <Button onClick={enviar} loading={procesando}>Enviar al cliente</Button>
           )}
           {cotizacion.estado === 'ENVIADA_A_CLIENTE' && user?.rol === 'VENDEDOR' && (
             <Button onClick={() => setModal('aprobar')}>Registrar respuesta</Button>

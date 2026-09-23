@@ -49,7 +49,13 @@ export const AppRoutes = () => {
               )
             }
           />
-          <Route element={<ProtectedRoute roles={["VENDEDOR"]} />}>
+          {/* Solicitudes: Vendedor gestiona, Jefe cotiza desde el listado (FE-154).
+              /solicitudes/nueva sigue solo Vendedor. */}
+          <Route
+            element={
+              <ProtectedRoute roles={["VENDEDOR", "JEFE_PRODUCCION"]} />
+            }
+          >
             <Route path="solicitudes" element={<SolicitudesPage />} />
           </Route>
           <Route element={<ProtectedRoute roles={["VENDEDOR"]} />}>
