@@ -19,8 +19,11 @@ import com.backend.qualititrack.Service.FaseService;
 import com.backend.qualititrack.modelos.FaseCatalogo;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @RestController
 @RequestMapping("/api/fases")
@@ -80,18 +83,27 @@ public class FaseController {
             @PathVariable Long id,
             @RequestBody HabilitarOperarioDTO dto, Authentication auth) {
 
-        FaseOperarioHabilitadoResponseDTO faseModificada = faseService.gestionarHabilitacionOperario(id, dto.getOperarioId(), dto.getHabilitado(), auth.getName());
+        FaseOperarioHabilitadoResponseDTO faseModificada = faseService.gestionarHabilitacionOperario(id,
+                dto.getOperarioId(), dto.isHabilitado(), auth.getName());
         return ResponseEntity.ok(faseModificada);
     }
 
     /**
      * DTO interno para recibir el payload del endpoint de habilitación.
      */
-    @Data 
-    @Builder 
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class HabilitarOperarioDTO {
+        @NotNull
         private Long operarioId;
+
         @Builder.Default
-        private Boolean habilitado = true;
+        private boolean habilitado = true;
+
+        public void setHabilitado(Boolean habilitado) {
+            this.habilitado = (habilitado != null) ? habilitado : true;
+        }
     }
 }
