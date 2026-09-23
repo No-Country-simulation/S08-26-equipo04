@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { PackageCheck } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useAuth } from "../../context/AuthContext";
 import { useOrdenesTrabajo } from "../../hooks/useOrdenesTrabajo";
 import {
   Badge,
@@ -26,8 +28,14 @@ const estadoLabels = {
 };
 
 export const DespachoPage = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const { ordenesTrabajo, cargando, error, recargar, registrarEntrega } =
     useOrdenesTrabajo();
+
+  // Defensa en profundidad: la ruta ya restringe a VENDEDOR,
+  // pero la acción también se bloquea a nivel de vista (issue #157).
+  const canEntregar = user?.rol === "VENDEDOR";
 
   const [busqueda, setBusqueda] = useState("");
   const [selectedOt, setSelectedOt] = useState(null);
@@ -59,15 +67,20 @@ export const DespachoPage = () => {
       {
         accessorKey: "numero_ot",
         header: "Orden de trabajo",
-        cell: ({ row }) => (
-          <button
-            type="button"
-            className="font-medium text-primary hover:underline"
-            onClick={() => setSelectedOt(row.original)}
-          >
-            {row.original.numero_ot}
-          </button>
-        ),
+        cell: ({ row }) =>
+          canEntregar ? (
+            <button
+              type="button"
+              className="font-medium text-primary hover:underline"
+              onClick={() => setSelectedOt(row.original)}
+            >
+              {row.original.numero_ot}
+            </button>
+          ) : (
+            <span className="font-medium text-ink">
+              {row.original.numero_ot}
+            </span>
+          ),
       },
       {
         accessorKey: "cliente_razon_social",
@@ -112,7 +125,7 @@ export const DespachoPage = () => {
         },
       },
     ],
-    [],
+    [canEntregar],
   );
 
   const handleCloseModal = () => {
@@ -123,6 +136,14 @@ export const DespachoPage = () => {
 
   const handleConfirmEntrega = async (event) => {
     event.preventDefault();
+
+    // RBAC vista: solo VENDEDOR puede gatillar la entrega.
+    // Si otro rol llega aquí (ej. manipulación), se redirige a inicio (/).
+    if (!canEntregar) {
+      toast.error("No tienes permisos para esta acción.");
+      navigate("/", { replace: true });
+      return;
+    }
 
     if (!selectedOt || !receptorNombre.trim()) {
       return;
@@ -142,8 +163,19 @@ export const DespachoPage = () => {
       );
       handleCloseModal();
     } catch (err) {
+      const status = err?.response?.status ?? err?.status;
+      // El backend debe responder 403 para roles no autorizados (issue #157).
+      if (status === 403) {
+        toast.error("No tienes permisos para esta acción.");
+        handleCloseModal();
+        navigate("/", { replace: true });
+        return;
+      }
       const message =
-        err?.message || "No se pudo registrar la entrega. Reintente.";
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "No se pudo registrar la entrega. Reintente.";
       setSubmitError(message);
       toast.error(message);
     } finally {
@@ -153,10 +185,19 @@ export const DespachoPage = () => {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <Title>Entregas</Title>
+      <Title>Despacho</Title>
 
       <div>
-        <h1 className="text-h1 text-ink">Entregas</h1>
+        <h1 className="text-h1 text-ink">Despacho</h1>
+        <p className="mt-1 text-body text-text-secondary">
+          Órdenes listas para entregar.{" "}
+          <Link
+            to="/ordenes-entregadas"
+            className="text-primary hover:underline"
+          >
+            Ver historial de entregadas
+          </Link>
+        </p>
       </div>
 
       <div className="max-w-xl">
@@ -195,11 +236,11 @@ export const DespachoPage = () => {
       </Card>
 
       <Modal
-        open={Boolean(selectedOt)}
+        open={Boolean(selectedOt) && canEntregar}
         onClose={handleCloseModal}
         title="Registrar entrega"
       >
-        {selectedOt && (
+        {selectedOt && canEntregar && (
           <>
             <p className="mt-1 text-body text-text-secondary">
               Confirmar la entrega de la orden{" "}
