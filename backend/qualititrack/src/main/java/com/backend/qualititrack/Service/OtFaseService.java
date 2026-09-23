@@ -36,7 +36,8 @@ public class OtFaseService {
     private final FaseOperarioHabilitadoRepository faseOperarioHabilitadoRepository;
 
     public OtFaseService(OtFaseRepository otFaseRepository, UsuarioRepository usuarioRepository,
-            OrdenTrabajoRepository ordenTrabajoRepository, OtFaseReasignacionRepository otFaseReasignacionRepository, FaseOperarioHabilitadoRepository faseOperarioHabilitadoRepository) {
+            OrdenTrabajoRepository ordenTrabajoRepository, OtFaseReasignacionRepository otFaseReasignacionRepository,
+            FaseOperarioHabilitadoRepository faseOperarioHabilitadoRepository) {
         this.otFaseRepository = otFaseRepository;
         this.usuarioRepository = usuarioRepository;
         this.ordenTrabajoRepository = ordenTrabajoRepository;
@@ -89,6 +90,13 @@ public class OtFaseService {
         if (otFase.getEstado() != EstadoOtFase.EN_COLA) {
             throw new InvalidStateException(
                     "La fase con ID " + id + " no está en estado EN_COLA y no puede ser iniciada");
+        }
+
+        // Validar que la fase anterior (de existir) esté en estado TERMINADO
+        if (!validarFaseAnteriorTerminada(otFase)) {
+            throw new InvalidStateException(
+                    "La fase anterior a la fase con ID " + id
+                            + " no está en estado TERMINADO y no puede iniciarse esta fase");
         }
 
         // Cambiar el estado de la fase a EN_EJECUCION y establecer la fecha de inicio
@@ -213,7 +221,9 @@ public class OtFaseService {
 
     // Endpoint: POST /api/ot-fases/{id}/reasignar
     // Rol: Jefe de producción
-    // Se reasigna una OtFase a un nuevo operario, y se crea una entrada en OtFaseReasignaciones para dejar registro. Se valida que el operario cumpla los requisitos necesarios en el proceso.
+    // Se reasigna una OtFase a un nuevo operario, y se crea una entrada en
+    // OtFaseReasignaciones para dejar registro. Se valida que el operario cumpla
+    // los requisitos necesarios en el proceso.
     @Transactional
     public OtFaseReasignacionResponseDTO reasignarFase(Long id, OtFaseReasignacionRequestDTO dto, String jefeMail) {
         Long operarioNuevoId = dto.getOperarioNuevoId();
@@ -237,9 +247,10 @@ public class OtFaseService {
         }
         // Guardar operarioAnterior para dejar registro
         Usuario operarioAnterior = otFase.getOperario();
-        
+
         // Chequear que el operario puede realizar la nueva fase
-        if (faseOperarioHabilitadoRepository.findByFaseCatalogoIdAndOperarioIdAndHabilitadoTrue(otFase.getFaseCatalogo().getId(), operarioNuevoId) == null) {
+        if (faseOperarioHabilitadoRepository.findByFaseCatalogoIdAndOperarioIdAndHabilitadoTrue(
+                otFase.getFaseCatalogo().getId(), operarioNuevoId) == null) {
             throw new InvalidStateException(
                     "El operario con id " + operarioNuevoId + " no puede realizar la fase con id "
                             + otFase.getFaseCatalogo().getId());
@@ -268,5 +279,24 @@ public class OtFaseService {
         response.setId(id);
         response.setOperarioId(operarioNuevoId);
         return response;
+    }
+
+    private boolean validarFaseAnteriorTerminada(OtFase otFase) {
+        // Si es la primera fase de la secuencia, pasa directo
+        if (otFase.getNumeroSecuencia() <= 1) {
+            return true;
+        }
+        
+        // Buscar la última ejecución (es decir, la de mayor ciclo_iteracion) de la fase anterior
+        int secuenciaAnterior = otFase.getNumeroSecuencia() - 1;
+        OtFase ultimaEjecucionAnterior = otFaseRepository
+                .findFirstByOrdenTrabajoIdAndNumeroSecuenciaOrderByCicloIteracionDesc(
+                        otFase.getOrdenTrabajo().getId(),
+                        secuenciaAnterior)
+                .orElse(null);
+
+        // Debe existir obligatoriamente y su estado más reciente debe ser TERMINADO
+        return ultimaEjecucionAnterior != null
+                && ultimaEjecucionAnterior.getEstado() == EstadoOtFase.TERMINADO;
     }
 }
