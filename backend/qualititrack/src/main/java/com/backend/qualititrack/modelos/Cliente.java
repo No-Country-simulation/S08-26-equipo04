@@ -32,6 +32,10 @@ public class Cliente {
     @Column(name = "razon_social", nullable = false, length = 150)
     private String razonSocial;
 
+    @NotBlank
+    @Column(nullable = false, unique = true)
+    private String Cuit;
+
     @NotBlank(message = "El nombre no puede estar vacio")
     @Column(name = "contacto_nombre", nullable = false, length = 120)
     private String contactoNombre;

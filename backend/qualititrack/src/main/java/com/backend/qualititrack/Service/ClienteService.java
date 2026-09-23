@@ -26,12 +26,21 @@ public class ClienteService {
         if (clienteRepository.findByEmail(clienteDTO.getEmail()).isPresent()) {
             throw new InvalidStateException("El email " + clienteDTO.getEmail() + " ya está registrado");
         }
+        
+        // valida si el cuit ya existe
+        if (clienteRepository.findByCuit(clienteDTO.getCuit()).isPresent()) {
+            throw new InvalidStateException("El cuit " + clienteDTO.getCuit() + " ya está registrado en un cliente existente");
+        }
 
         Cliente cliente = new Cliente();
         cliente.setContactoNombre(clienteDTO.getContactoNombre());
+        cliente.setCuit(clienteDTO.getCuit());
+        cliente.setDireccion(clienteDTO.getDireccion());
         cliente.setEmail(clienteDTO.getEmail());
         cliente.setTelefono(clienteDTO.getTelefono());
+        cliente.setRazonSocial(clienteDTO.getRazonSocial());
         cliente.setCreatedAt(OffsetDateTime.now());
+        cliente.setActivo(true);
 
         Cliente clienteGuardado = clienteRepository.save(cliente);
 
