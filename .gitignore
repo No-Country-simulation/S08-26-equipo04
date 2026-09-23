@@ -47,3 +47,5 @@ Thumbs.db
 
 # Archivos temporales de agentes/herramientas de desarrollo
 .gravity/
+
+uploads/
