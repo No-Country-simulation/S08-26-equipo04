@@ -13,6 +13,7 @@ import com.backend.qualititrack.DTO.CotizacionFaseDTO;
 import com.backend.qualititrack.DTO.CotizacionRequestDTO;
 import com.backend.qualititrack.DTO.CotizacionResponseDTO;
 import com.backend.qualititrack.Enum.EstadoCotizacion;
+import com.backend.qualititrack.Enum.EstadoSolicitud;
 import com.backend.qualititrack.exception.EntityNotFoundException;
 import com.backend.qualititrack.exception.InvalidStateException;
 import com.backend.qualititrack.modelos.Cotizacion;
@@ -109,6 +110,12 @@ public class CotizacionService {
         }
 
         Cotizacion guardada = cotizacionRepository.save(cotizacion);
+        
+        // Actualizar solicitud para reflejar que ahora está cotizada
+        solicitud.setEstado(EstadoSolicitud.COTIZADA);
+        solicitud.setUpdatedAt(OffsetDateTime.now());
+        solicitudRepository.save(solicitud);
+
         return convertirADTO(guardada);
     }
 

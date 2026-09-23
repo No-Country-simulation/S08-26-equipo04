@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import com.backend.qualititrack.DTO.FaseOperarioHabilitadoResponseDTO;
 import com.backend.qualititrack.Enum.NivelRol;
 import com.backend.qualititrack.exception.EntityNotFoundException;
 import com.backend.qualititrack.modelos.FaseCatalogo;
@@ -14,6 +15,8 @@ import com.backend.qualititrack.modelos.Usuario;
 import com.backend.qualititrack.repository.FaseOperarioHabilitadoRepository;
 import com.backend.qualititrack.repository.FaseRepository;
 import com.backend.qualititrack.repository.UsuarioRepository;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class FaseService {
@@ -47,8 +50,12 @@ public class FaseService {
         return faseRepository.save(fase);
     }
 
-    // Habilitar o deshabilitar operarios sobre una fase específica
-    public FaseOperarioHabilitado gestionarHabilitacionOperario(Long faseId, Long operarioId, boolean habilitar, String emailGerenteAutenticado) {
+    /**
+     * POST /api/fases/{id}/habilitar
+     * Habilita o deshabilita operarios sobre una fase específica
+     */
+    @Transactional
+    public FaseOperarioHabilitadoResponseDTO gestionarHabilitacionOperario(Long faseId, Long operarioId, boolean habilitar, String emailGerenteAutenticado) {
         // Validar fase
         FaseCatalogo fase = faseRepository.findById(faseId)
                 .orElseThrow(() -> new EntityNotFoundException("Fase no encontrada con ID: " + faseId));
@@ -84,6 +91,20 @@ public class FaseService {
                     .build();
         }
 
-        return faseOperarioRepository.save(relacion);
+        FaseOperarioHabilitado saved = faseOperarioRepository.save(relacion);
+        
+        return convertirADTO(saved);
+    }
+
+    private FaseOperarioHabilitadoResponseDTO convertirADTO(FaseOperarioHabilitado faseOperacion) {
+        FaseOperarioHabilitadoResponseDTO dto = new FaseOperarioHabilitadoResponseDTO();
+        dto.setId(faseOperacion.getId());
+        dto.setFaseCatalogoId(faseOperacion.getFaseCatalogo().getId());
+        dto.setOperarioId(faseOperacion.getOperario().getId());
+        dto.setHabilitado(faseOperacion.getHabilitado());
+        dto.setAsignadoPorId(faseOperacion.getAsignadoPor().getId());
+        dto.setNombreOperario(faseOperacion.getOperario().getNombre());
+        dto.setCreatedAt(faseOperacion.getCreatedAt());
+        return dto;
     }
 }
