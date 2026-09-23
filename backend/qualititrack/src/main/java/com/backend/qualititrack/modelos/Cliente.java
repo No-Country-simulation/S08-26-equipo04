@@ -50,7 +50,7 @@ public class Cliente {
 
     @NotBlank
     @Email(message = "Email invalido")
-    @Column(length = 150)
+    @Column(length = 150) // no se pone nullable = false para evitar inconsistencias con la base, not blank igual cubre los casos que necesitamos
     private String email;
 
     @Column(nullable = false)
