@@ -13,10 +13,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.backend.qualititrack.DTO.EntregaOtRequestDTO;
+import com.backend.qualititrack.DTO.ExpedienteCompletoDTO;
 import com.backend.qualititrack.DTO.OrdenTrabajoDTO;
+import com.backend.qualititrack.DTO.OrdenTrabajoResumenDTO;
 import com.backend.qualititrack.Enum.EstadoOT;
 import com.backend.qualititrack.Service.OrdenTrabajoService;
 import com.backend.qualititrack.modelos.OrdenTrabajo;
+
+import com.backend.qualititrack.DTO.OrdenTrabajoResumenDTO;
+import com.backend.qualititrack.DTO.ExpedienteCompletoDTO;
+import java.util.List;
 
 import jakarta.validation.Valid;
 
@@ -129,4 +135,29 @@ public class OrdenTrabajoController {
         OrdenTrabajoDTO orden = ordenTrabajoService.marcarComoEntregada(id, request);
         return ResponseEntity.ok().body(orden);
     }
+
+    /**
+     * LISTAR CON FILTROS - GET /api/ordenes-trabajo/filtrar?cliente=X&numeroOt=Y
+     * JEFE_PRODUCCION, VENDEDOR, OPERARIO, CALIDAD
+     */
+    @GetMapping("/filtrar")
+    @PreAuthorize("hasAnyRole('JEFE_PRODUCCION', 'VENDEDOR', 'OPERARIO', 'CALIDAD')")
+    public ResponseEntity<List<OrdenTrabajoResumenDTO>> listarConFiltros(
+            @RequestParam(required = false) String cliente,
+            @RequestParam(required = false) String numeroOt) {
+        List<OrdenTrabajoResumenDTO> resultado = ordenTrabajoService.listarConFiltros(cliente, numeroOt);
+        return ResponseEntity.ok().body(resultado);
+    }
+
+    /**
+     * OBTENER EXPEDIENTE COMPLETO - GET /api/ordenes-trabajo/{id}/expediente
+     * JEFE_PRODUCCION, VENDEDOR, CALIDAD
+     */
+    @GetMapping("/{id}/expediente")
+    @PreAuthorize("hasAnyRole('JEFE_PRODUCCION', 'VENDEDOR', 'CALIDAD')")
+    public ResponseEntity<ExpedienteCompletoDTO> obtenerExpedienteCompleto(@PathVariable Long id) {
+        ExpedienteCompletoDTO expediente = ordenTrabajoService.obtenerExpedienteCompleto(id);
+        return ResponseEntity.ok().body(expediente);
+    }
+
 }

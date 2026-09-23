@@ -8,7 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.backend.qualititrack.DTO.EntregaOtRequestDTO;
+import com.backend.qualititrack.DTO.ExpedienteCompletoDTO;
 import com.backend.qualititrack.DTO.OrdenTrabajoDTO;
+import com.backend.qualititrack.DTO.OrdenTrabajoResumenDTO;
 import com.backend.qualititrack.Enum.EstadoOT;
 import com.backend.qualititrack.modelos.Cotizacion;
 import com.backend.qualititrack.modelos.OrdenTrabajo;
@@ -171,5 +173,72 @@ public class OrdenTrabajoService {
         
         // Retornar convertido a DTO (según el método de mapeo que use tu servicio)
         return convertirADTO(otGuardada); // Asegúrate de usar el método de mapeo a DTO que ya tengas en tu servicio
+    }
+
+    /**
+     * 1. LISTAR O FILTRAR ORDENES DE TRABAJO (Para que el vendedor elija el expediente)
+     */
+    @Transactional()
+    public List<OrdenTrabajoResumenDTO> listarConFiltros(String cliente, String numeroOt) {
+        List<OrdenTrabajo> ordenes = ordenTrabajoRepository.findAll();
+
+        return ordenes.stream()
+            .filter(ot -> {
+                boolean coincideCliente = (cliente == null || cliente.isBlank()) || 
+                    (ot.getCliente() != null && ot.getCliente().getRazonSocial().toLowerCase().contains(cliente.toLowerCase()));
+                
+                boolean coincideNumero = (numeroOt == null || numeroOt.isBlank()) || 
+                    (ot.getNumeroOt() != null && ot.getNumeroOt().toLowerCase().contains(numeroOt.toLowerCase()));
+                
+                return coincideCliente && coincideNumero;
+            })
+            .map(ot -> {
+                OrdenTrabajoResumenDTO dto = new OrdenTrabajoResumenDTO();
+                dto.setId(ot.getId());
+                dto.setNumeroOt(ot.getNumeroOt());
+                dto.setCliente(ot.getCliente() != null ? ot.getCliente().getRazonSocial() : "Sin cliente");
+                dto.setEstado(ot.getEstado());
+                dto.setFecha(ot.getFechaCreacion());
+                return dto;
+            })
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * OBTENER EXPEDIENTE COMPLETO (Trazabilidad detallada de la OT)
+     */
+    @Transactional()
+    public ExpedienteCompletoDTO obtenerExpedienteCompleto(Long id) {
+        OrdenTrabajo ot = ordenTrabajoRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("La Orden de Trabajo con ID " + id + " no existe"));
+
+        ExpedienteCompletoDTO expediente = new ExpedienteCompletoDTO();
+        
+        // Asignar datos básicos
+        expediente.setId(ot.getId());
+        expediente.setNumeroOt(ot.getNumeroOt());
+        expediente.setEstado(ot.getEstado());
+        expediente.setFechaCreacion(ot.getFechaCreacion());
+        expediente.setFechaEntrega(ot.getFechaEntrega());
+        expediente.setReceptorNombre(ot.getReceptorNombre());
+
+        // Mapear cotización y solicitud de forma segura
+        if (ot.getCotizacion() != null) {
+            expediente.getCotizacionId(); // o cotizacion.getId()
+            expediente.setMontoTotal(ot.getCotizacion().getPrecioFinal().doubleValue());
+            
+            if (ot.getCotizacion().getSolicitud() != null) {
+                expediente.setSolicitudId(ot.getCotizacion().getSolicitud().getId());
+                if (ot.getCotizacion().getSolicitud().getCliente() != null) {
+                    expediente.setClienteNombre(ot.getCotizacion().getSolicitud().getCliente().getRazonSocial());
+                }
+            }
+        }
+
+        // Manejo de secciones futuras/vacías sin inventar datos (criterio de aceptación)
+        expediente.setHistorialFases(List.of()); // Lista vacía si aún no hay fases registradas
+        expediente.setResultadoCalidad("Pendiente"); // Indicador claro de estado pendiente
+
+        return expediente;
     }
 }
