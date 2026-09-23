@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Users } from 'lucide-react';
+import { Plus, Pencil, Users, Inbox } from 'lucide-react';
 import { mocks } from '../../mocks';
-import { Button, Card, CardHeader, CardTitle, DataTable, Toggle, Title } from '../../components/ui';
+import { Button, Card, CardHeader, CardTitle, DataTable, EmptyState, Toggle, Title } from '../../components/ui';
 import { FaseFormModal } from '../../components/FaseFormModal';
 import { toast } from 'sonner';
 
@@ -141,9 +141,11 @@ export const CatalogoFasesPage = () => {
           <CardTitle>Fases registradas</CardTitle>
         </CardHeader>
         {fases.length === 0 ? (
-          <p className="py-8 text-center text-body text-text-muted">
-            No hay fases configuradas
-          </p>
+          <EmptyState
+            icon={Inbox}
+            title="Sin fases configuradas"
+            description="Cuando se creen fases de producción, aparecerán aquí."
+          />
         ) : (
           <DataTable
             columns={columns}
