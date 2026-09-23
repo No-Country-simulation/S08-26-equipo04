@@ -1,10 +1,11 @@
-import { BrowserRouter } from "react-router-dom";
-import { Toaster } from "sonner";
-import { AuthProvider } from "./context/AuthContext";
-import { CotizacionesProvider } from "./context/CotizacionesProvider";
-import { OtFasesProvider } from "./context/OtFasesProvider";
-import { SolicitudesProvider } from "./context/SolicitudesProvider";
-import { AppRoutes } from "./routes";
+import { BrowserRouter } from 'react-router-dom';
+import { Toaster } from 'sonner';
+import { AuthProvider } from './context/AuthContext';
+import { CotizacionesProvider } from './context/CotizacionesProvider';
+import { OtFasesProvider } from './context/OtFasesProvider';
+import { SolicitudesProvider } from './context/SolicitudesProvider';
+import { AuditoriasProvider } from './context/AuditoriasProvider';
+import { AppRoutes } from './routes';
 import { OrdenesTrabajoProvider } from "./context/OrdenesTrabajoProvider";
 
 export default function App() {
@@ -15,7 +16,9 @@ export default function App() {
           <SolicitudesProvider>
             <OtFasesProvider>
               <OrdenesTrabajoProvider>
-                <AppRoutes />
+                <AuditoriasProvider>
+                  <AppRoutes />
+                </AuditoriasProvider>
               </OrdenesTrabajoProvider>
               <Toaster position="top-right" richColors />
             </OtFasesProvider>
