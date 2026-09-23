@@ -104,10 +104,9 @@ public class ClienteService {
         Cliente cliente = clienteRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cliente con ID " + id + " no encontrado"));
 
-        // Borrado lógico - se puede implementar con un campo 'activo' si es necesario
-        // Por ahora, hacemos borrado físico ya que Cliente no tiene solicitudes
-        // críticas
-        clienteRepository.delete(cliente);
+        // Borrado lógico mediante campo "activo"
+        cliente.setActivo(false);
+        clienteRepository.save(cliente);
     }
 
     private ClienteDTO convertirADTO(Cliente cliente) {
