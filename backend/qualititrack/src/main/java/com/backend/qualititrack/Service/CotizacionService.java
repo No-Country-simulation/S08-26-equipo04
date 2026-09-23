@@ -13,6 +13,7 @@ import com.backend.qualititrack.DTO.CotizacionFaseDTO;
 import com.backend.qualititrack.DTO.CotizacionRequestDTO;
 import com.backend.qualititrack.DTO.CotizacionResponseDTO;
 import com.backend.qualititrack.Enum.EstadoCotizacion;
+import com.backend.qualititrack.Enum.EstadoSolicitud;
 import com.backend.qualititrack.exception.EntityNotFoundException;
 import com.backend.qualititrack.exception.InvalidStateException;
 import com.backend.qualititrack.modelos.Cotizacion;
@@ -109,6 +110,12 @@ public class CotizacionService {
         }
 
         Cotizacion guardada = cotizacionRepository.save(cotizacion);
+        
+        // Actualizar solicitud para reflejar que ahora está cotizada
+        solicitud.setEstado(EstadoSolicitud.COTIZADA);
+        solicitud.setUpdatedAt(OffsetDateTime.now());
+        solicitudRepository.save(solicitud);
+
         return convertirADTO(guardada);
     }
 
@@ -254,6 +261,11 @@ public class CotizacionService {
         dto.setMotivoRechazoCliente(cotizacion.getMotivoRechazoCliente());
         dto.setFechaCreacion(cotizacion.getFechaCreacion());
         dto.setFechaActualizacion(cotizacion.getFechaActualizacion());
+        dto.setSolicitudNumero(cotizacion.getSolicitud().getNumeroSolicitud());
+        dto.setCantidad(cotizacion.getSolicitud().getCantidad());
+        dto.setFechaEsperadaEntrega(cotizacion.getSolicitud().getFechaEsperadaEntrega());
+        dto.setDescripcionPieza(cotizacion.getSolicitud().getDescripcionPieza());
+        dto.setClienteRazonSocial(cotizacion.getSolicitud().getCliente().getRazonSocial());
 
         // Incorporar contenido de fases al DTO
         List<CotizacionFaseDTO> fasesDto = cotizacion.getFases().stream().map(f -> {

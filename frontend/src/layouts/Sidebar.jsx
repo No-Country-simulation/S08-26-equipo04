@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  PackageCheck,
   PanelLeftClose,
   Settings,
   Truck,
@@ -37,9 +38,15 @@ const items = [
     roles: ["VENDEDOR"],
   },
   {
-    label: "Entregas",
+    label: "Despacho",
     to: "/despacho",
     icon: Truck,
+    roles: ["VENDEDOR"],
+  },
+  {
+    label: "Órdenes entregadas",
+    to: "/ordenes-entregadas",
+    icon: PackageCheck,
     roles: ["VENDEDOR", "JEFE_PRODUCCION"],
   },
   {

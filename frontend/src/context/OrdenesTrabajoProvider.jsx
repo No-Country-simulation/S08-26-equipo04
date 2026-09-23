@@ -55,6 +55,19 @@ export const OrdenesTrabajoProvider = ({ children }) => {
 
   const registrarEntrega = useCallback(
     async ({ id, receptor_nombre }) => {
+      // RBAC espejo del backend (issue #157): solo VENDEDOR ejecuta entregas.
+      // El backend debe exponer POST /api/ordenes-trabajo/{id}/entrega con
+      // @PreAuthorize("hasRole('VENDEDOR')") y retornar 403 para otros roles.
+      if (user?.rol !== "VENDEDOR") {
+        const forbidden = new Error("No tienes permisos para esta acción.");
+        forbidden.status = 403;
+        forbidden.response = {
+          status: 403,
+          data: { error: "No tienes permisos para esta acción." },
+        };
+        throw forbidden;
+      }
+
       const orden = ordenesTrabajo.find((item) => item.id === Number(id));
 
       if (!orden) {
@@ -83,7 +96,7 @@ export const OrdenesTrabajoProvider = ({ children }) => {
 
       return fusionar(respuestaMock);
     },
-    [ordenesTrabajo, fusionar],
+    [ordenesTrabajo, fusionar, user?.rol],
   );
 
   const obtenerOrdenTrabajo = useCallback(

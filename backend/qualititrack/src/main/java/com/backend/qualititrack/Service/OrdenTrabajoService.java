@@ -1,42 +1,63 @@
 package com.backend.qualititrack.Service;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.backend.qualititrack.DTO.OrdenTrabajoDTO;
 import com.backend.qualititrack.Enum.EstadoOT;
+import com.backend.qualititrack.Enum.EstadoOtFase;
+import com.backend.qualititrack.exception.EntityNotFoundException;
+import com.backend.qualititrack.exception.InvalidStateException;
 import com.backend.qualititrack.modelos.Cotizacion;
+import com.backend.qualititrack.modelos.CotizacionFase;
 import com.backend.qualititrack.modelos.OrdenTrabajo;
+import com.backend.qualititrack.modelos.OtFase;
+import com.backend.qualititrack.modelos.Usuario;
+import com.backend.qualititrack.repository.CotizacionFaseRepository;
 import com.backend.qualititrack.repository.CotizacionRepository;
 import com.backend.qualititrack.repository.OrdenTrabajoRepository;
+import com.backend.qualititrack.repository.OtFaseRepository;
 
 import jakarta.transaction.Transactional;
 
 @Service
 @Transactional
 public class OrdenTrabajoService {
-    @Autowired
-    private OrdenTrabajoRepository ordenTrabajoRepository;
+    private final OrdenTrabajoRepository ordenTrabajoRepository;
+    private final CotizacionRepository cotizacionRepository;
+    private final CotizacionFaseRepository cotizacionFaseRepository;
+    private final OtFaseRepository otFaseRepository;
+    private final UsuarioService usuarioService;
 
-    @Autowired
-    private CotizacionRepository cotizacionRepository;
+    public OrdenTrabajoService(OrdenTrabajoRepository ordenTrabajoRepository,
+            CotizacionRepository cotizacionRepository,
+            CotizacionFaseRepository cotizacionFaseRepository,
+            OtFaseRepository otFaseRepository,
+            UsuarioService usuarioService) {
+        this.ordenTrabajoRepository = ordenTrabajoRepository;
+        this.cotizacionRepository = cotizacionRepository;
+        this.cotizacionFaseRepository = cotizacionFaseRepository;
+        this.otFaseRepository = otFaseRepository;
+        this.usuarioService = usuarioService;
+    }
 
     /**
      * GENERAR DESDE COTIZACIÓN (Auto-trigger cuando se aprueba cotización)
      */
+    @Transactional
     public OrdenTrabajoDTO generarDesdeCotizacion(Long cotizacionId) {
         // Validar que la cotización existe
         Cotizacion cotizacion = cotizacionRepository.findById(cotizacionId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new EntityNotFoundException(
                         "La cotización con ID " + cotizacionId + " no existe"));
 
         // Validar que no exista una orden de trabajo para esta cotización
         if (ordenTrabajoRepository.findByCotizacionId(cotizacionId).isPresent()) {
-            throw new IllegalArgumentException(
+            throw new InvalidStateException(
                     "Ya existe una orden de trabajo para esta cotización");
         }
 
@@ -44,13 +65,48 @@ public class OrdenTrabajoService {
         OrdenTrabajo ordenTrabajo = new OrdenTrabajo();
         ordenTrabajo.setNumeroOt(generarNumeroOrden());
         ordenTrabajo.setCotizacion(cotizacion);
+        ordenTrabajo.setCantidad(cotizacion.getSolicitud().getCantidad());
         ordenTrabajo.setEstado(EstadoOT.EN_PRODUCCION);
         ordenTrabajo.setCreatedAt(OffsetDateTime.now());
 
-        // ordenTrabajo.setFechaVencimiento(cotizacion.getFechaVencimiento());  // Copiar desde cotización
-        // ordenTrabajo.setCliente(cotizacion.getSolicitud().getCliente());    //obtenemos el cliente
-
+        // Guardar fase de trabajo
         OrdenTrabajo guardada = ordenTrabajoRepository.save(ordenTrabajo);
+
+        // Obtener fases de cotizacion y pasar para la OT
+        List<CotizacionFase> fasesCotizacion = cotizacionFaseRepository
+                .findByCotizacionIdOrderByNumeroSecuenciaAsc(cotizacionId);
+        List<OtFase> fasesOt = new ArrayList<>();
+
+        // Copiar la secuencia y aplicar la lógica de vencimiento
+        for (CotizacionFase faseCot : fasesCotizacion) {
+            OtFase nuevaFase = new OtFase();
+            nuevaFase.setOrdenTrabajo(guardada);
+            nuevaFase.setFaseCatalogo(faseCot.getFaseCatalogo());
+            nuevaFase.setNumeroSecuencia(faseCot.getNumeroSecuencia());
+            nuevaFase.setTiempoEstimadoMinutos(faseCot.getTiempoEstimadoMinutos());
+            nuevaFase.setEsRehacer(false);
+            nuevaFase.setCicloIteracion(1);
+            nuevaFase.setEstado(EstadoOtFase.EN_COLA);
+
+            // Asignar un operario
+            Usuario operarioAsignado = usuarioService.obtenerOperarioHabilitado(faseCot.getFaseCatalogo().getId());
+            nuevaFase.setOperario(operarioAsignado);
+
+            // Lógica exclusiva para la PRIMERA fase de la secuencia
+            if (faseCot.getNumeroSecuencia() == 1) {
+                // Sumar tiempo estimado a tiempo actual para definir vencimiento de fase 1
+                OffsetDateTime vencimiento = OffsetDateTime.now()
+                        .plusMinutes(faseCot.getTiempoEstimadoMinutos());
+                nuevaFase.setFechaVencimiento(vencimiento);
+                // Marcar el inicio de producción global de la OT
+                guardada.setFechaInicioProduccion(OffsetDateTime.now());
+            } else {
+                // Las fases siguientes no tienen vencimiento calculado aún
+                nuevaFase.setFechaVencimiento(null);
+            }
+            fasesOt.add(nuevaFase);
+        }
+        otFaseRepository.saveAll(fasesOt);
         return convertirADTO(guardada);
     }
 

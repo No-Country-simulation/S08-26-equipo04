@@ -14,11 +14,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.backend.qualititrack.DTO.FaseOperarioHabilitadoResponseDTO;
 import com.backend.qualititrack.Service.FaseService;
 import com.backend.qualititrack.modelos.FaseCatalogo;
-import com.backend.qualititrack.modelos.FaseOperarioHabilitado;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @RestController
 @RequestMapping("/api/fases")
@@ -74,35 +79,31 @@ public class FaseController {
      */
     @PostMapping("/{id}/habilitar")
     @PreAuthorize("hasRole('GERENTE')")
-    public ResponseEntity<FaseOperarioHabilitado> habilitarOperarioEnFase(
+    public ResponseEntity<FaseOperarioHabilitadoResponseDTO> habilitarOperarioEnFase(
             @PathVariable Long id,
             @RequestBody HabilitarOperarioDTO dto, Authentication auth) {
 
-        FaseOperarioHabilitado faseModificada = faseService.gestionarHabilitacionOperario(id, dto.getOperarioId(), dto.isHabilitado(), auth.getName());
+        FaseOperarioHabilitadoResponseDTO faseModificada = faseService.gestionarHabilitacionOperario(id,
+                dto.getOperarioId(), dto.isHabilitado(), auth.getName());
         return ResponseEntity.ok(faseModificada);
     }
 
     /**
      * DTO interno para recibir el payload del endpoint de habilitación.
      */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class HabilitarOperarioDTO {
+        @NotNull
         private Long operarioId;
-        private boolean habilitado;
 
-        public Long getOperarioId() {
-            return operarioId;
-        }
+        @Builder.Default
+        private boolean habilitado = true;
 
-        public void setOperarioId(Long operarioId) {
-            this.operarioId = operarioId;
-        }
-
-        public boolean isHabilitado() {
-            return habilitado;
-        }
-
-        public void setHabilitado(boolean habilitado) {
-            this.habilitado = habilitado;
+        public void setHabilitado(Boolean habilitado) {
+            this.habilitado = (habilitado != null) ? habilitado : true;
         }
     }
 }
