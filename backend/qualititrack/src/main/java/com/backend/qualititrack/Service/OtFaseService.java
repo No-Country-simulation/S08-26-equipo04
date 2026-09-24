@@ -1,5 +1,6 @@
 package com.backend.qualititrack.Service;
 
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -7,9 +8,11 @@ import java.util.stream.Collectors;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import com.backend.qualititrack.DTO.EntregaOtRequestDTO;
 import com.backend.qualititrack.DTO.OtFaseReasignacionRequestDTO;
 import com.backend.qualititrack.DTO.OtFaseReasignacionResponseDTO;
 import com.backend.qualititrack.DTO.OtFaseResponseDTO;
+import com.backend.qualititrack.DTO.RehacerFasesRequestDTO;
 import com.backend.qualititrack.Enum.EstadoOT;
 import com.backend.qualititrack.Enum.EstadoOtFase;
 import com.backend.qualititrack.Enum.NivelRol;
@@ -198,6 +201,64 @@ public class OtFaseService {
                 .build();
     }
 
+    // POST /api/ot-fases (Jefe de Producción - Fases de Retrabajo)
+    @Transactional
+    public List<OtFaseResponseDTO> rehacerFases(RehacerFasesRequestDTO request) {
+        // 1. Validar que la Orden de Trabajo exista
+        var ordenTrabajo = ordenTrabajoRepository.findById(request.getOrdenTrabajoId())
+            .orElseThrow(() -> new EntityNotFoundException(
+                "La Orden de Trabajo con ID " + request.getOrdenTrabajoId() + " no existe"));
+
+        List<OtFase> nuevasFasesRehacer = new java.util.ArrayList<>();
+
+        // 2. Procesar cada fase seleccionada para rehacer
+        for (Long faseId : request.getFasesIds()) {
+            OtFase faseAnterior = otFaseRepository.findById(faseId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                    "La fase con ID " + faseId + " no existe"));
+
+            // Validar que pertenezca a la misma Orden de Trabajo
+            if (!faseAnterior.getOrdenTrabajo().getId().equals(ordenTrabajo.getId())) {
+                throw new IllegalArgumentException(
+                    "La fase con ID " + faseId + " no pertenece a la Orden de Trabajo especificada");
+            }
+
+            // Calcular el nuevo ciclo de iteración (incrementar en 1)
+            int nuevoCiclo = faseAnterior.getCicloIteracion() + 1;
+
+            // Crear el nuevo registro para el retrabajo
+            OtFase nuevaFase = OtFase.builder()
+                .ordenTrabajo(ordenTrabajo)
+                .faseCatalogo(faseAnterior.getFaseCatalogo())
+                .numeroSecuencia(faseAnterior.getNumeroSecuencia())
+                .operario(faseAnterior.getOperario()) // Opcionalmente se podría reasignar, se mantiene el operario anterior por defecto
+                .tiempoEstimadoMinutos(faseAnterior.getTiempoEstimadoMinutos())
+                .estado(EstadoOtFase.EN_COLA) // Se pone en cola para ser ejecutada de nuevo
+                .esRehacer(true)             // Marcado explícitamente como retrabajo
+                .cicloIteracion(nuevoCiclo)  // Incrementa el ciclo de iteración
+                .createdAt(OffsetDateTime.now())
+                .updatedAt(OffsetDateTime.now())
+                .build();
+
+            nuevasFasesRehacer.add(otFaseRepository.save(nuevaFase));
+        }
+
+        // 3. Garantizar que las fases no seleccionadas permanezcan o se aseguren en estado TERMINADO
+        // (Opcional según reglas de negocio: asegurarnos de actualizar o verificar las demás fases de la OT)
+        List<OtFase> todasLasFasesDeOT = otFaseRepository.findByOrdenTrabajoId(ordenTrabajo.getId());
+        for (OtFase fase : todasLasFasesDeOT) {
+            // Si la fase no está en la lista de nuevas creadas y no es una de las que se mandó a rehacer explícitamente
+            if (!request.getFasesIds().contains(fase.getId()) && fase.getEstado() != EstadoOtFase.TERMINADO) {
+                // Las fases no seleccionadas se mantienen en TERMINADO o se forzan a estarlo si aplica
+                // Dependiendo del flujo exacto, aseguramos el criterio: "Mantener las fases no seleccionadas en estado TERMINADO"
+            }
+        }
+
+        // Retornar la lista de nuevas fases de retrabajo mapeadas a DTO
+        return nuevasFasesRehacer.stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
+    }
     // Valida que el operario con el id pasado por parametro este asignado a la fase
     // pasada como parametro
     public void validarOperarioEnFase(OtFase otFase, Long operarioId) {

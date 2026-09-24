@@ -68,26 +68,19 @@ public class OrdenTrabajo {
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "cotizacion_id", nullable = false)
     private Cotizacion cotizacion;
 
-    @OneToMany(
-            mappedBy = "ordenTrabajo",
-            cascade = CascadeType.REMOVE,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY
-    )
+    @OneToMany(mappedBy = "ordenTrabajo", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<OtFase> fases;
 
-    @OneToOne(
-            mappedBy = "ordenTrabajo",
-            cascade = CascadeType.REMOVE,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY
-    )
+    @OneToOne(mappedBy = "ordenTrabajo", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private AuditoriaCalidad calidadChecklist;
+
+    // Atributo añadido para resolver el error de getDocumentos/setDocumentos
+    @OneToMany(mappedBy = "ordenTrabajo", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Adjunto> documentos;
 
     @PrePersist
     protected void onCreate() {
@@ -183,4 +176,11 @@ public class OrdenTrabajo {
         this.calidadChecklist = calidadChecklist;
     }
 
+    public List<Adjunto> getDocumentos() {
+        return documentos;
+    }
+
+    public void setDocumentos(List<Adjunto> documentos) {
+        this.documentos = documentos;
+    }
 }
