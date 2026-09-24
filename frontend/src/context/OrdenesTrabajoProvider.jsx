@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
+import { apiGet } from "../api";
 import { useAuth } from "./AuthContext";
 import { OrdenesTrabajoContext } from "./OrdenesTrabajoContext";
-import ordenesTrabajoMock from "../mocks/ordenes-trabajo.json";
 
 const mapItem = (item) => ({
   ...item,
@@ -19,26 +19,87 @@ export const OrdenesTrabajoProvider = ({ children }) => {
   const puedeConsultar =
     user?.rol === "VENDEDOR" || user?.rol === "JEFE_PRODUCCION";
 
-  const [ordenesTrabajo, setOrdenesTrabajo] = useState(() =>
-    ordenesTrabajoMock.map(mapItem),
-  );
+  const [ordenesTrabajo, setOrdenesTrabajo] = useState([]);
 
   const [error, setError] = useState(null);
   const [cargando, setCargando] = useState(true);
 
-  // Simula la carga inicial del mock hasta que exista endpoint real.
   useEffect(() => {
-    const timer = setTimeout(() => setCargando(false), 400);
+    let cancelado = false;
 
-    return () => clearTimeout(timer);
-  }, []);
+    const cargar = async () => {
+      if (!isAuthenticated || !puedeConsultar) {
+        setOrdenesTrabajo([]);
+        setCargando(false);
+        return;
+      }
+
+      setCargando(true);
+      try {
+        let ordenes = [];
+        if (user?.rol === "VENDEDOR") {
+          const { data: cotizaciones } = await apiGet("/api/cotizaciones");
+          const aprobadas = (cotizaciones ?? []).filter(
+            (cotizacion) => cotizacion.estado === "APROBADA",
+          );
+          const respuestas = await Promise.all(
+            aprobadas.map((cotizacion) =>
+              apiGet(`/api/ordenes-trabajo/cotizacion/${cotizacion.id}`).catch(() => null),
+            ),
+          );
+          ordenes = respuestas
+            .filter(Boolean)
+            .map(({ data }) => data);
+        } else {
+          const estados = [
+            "EN_PRODUCCION",
+            "EN_CALIDAD",
+            "NO_CONFORME",
+            "DESPACHO",
+            "ENTREGADA",
+          ];
+          const respuestas = await Promise.all(
+            estados.map((estado) =>
+              apiGet("/api/ordenes-trabajo", { params: { estado } }),
+            ),
+          );
+          ordenes = respuestas.flatMap(({ data }) =>
+            Array.isArray(data) ? data : [],
+          );
+        }
+
+        if (!cancelado) {
+          const unicas = [...new Map(ordenes.map((orden) => [orden.id, orden])).values()];
+          setOrdenesTrabajo(unicas.map(mapItem));
+          setError(null);
+          setCargando(false);
+        }
+      } catch (err) {
+        if (!cancelado) {
+          setError(
+            err?.response?.data?.message ||
+              err?.response?.data?.error ||
+              "No se pudieron cargar las órdenes de trabajo.",
+          );
+          setCargando(false);
+        }
+      }
+    };
+
+    const manejarRecarga = () => cargar();
+    window.addEventListener("qualitytrack:ordenes-recargar", manejarRecarga);
+    cargar();
+    return () => {
+      cancelado = true;
+      window.removeEventListener("qualitytrack:ordenes-recargar", manejarRecarga);
+    };
+  }, [isAuthenticated, puedeConsultar, user?.rol]);
 
   const recargar = useCallback(() => {
     setError(null);
     setCargando(true);
 
-    setOrdenesTrabajo(ordenesTrabajoMock.map(mapItem));
-    setCargando(false);
+    window.dispatchEvent(new Event("qualitytrack:ordenes-recargar"));
   }, []);
 
   const fusionar = useCallback((item) => {

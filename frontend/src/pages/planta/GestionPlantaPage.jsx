@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ArrowRightLeft, Clock3, Users } from 'lucide-react';
-import { Badge, Button, Card, CardHeader, CardTitle, Modal, Title } from '../../components/ui';
-import { mocks } from '../../mocks';
+import { toast } from 'sonner';
+import { apiGet, apiPost } from '../../api';
+import { Badge, Button, Card, CardHeader, CardTitle, ErrorBanner, LoadingSpinner, Modal, Title } from '../../components/ui';
 
 const estadoVariant = {
   EN_EJECUCION: 'production',
@@ -20,12 +21,38 @@ const estadoLabel = {
 export const GestionPlantaPage = () => {
   const [faseActual, setFaseActual] = useState(null);
   const [operarioDestinoId, setOperarioDestinoId] = useState('');
-  const [otFases, setOtFases] = useState(mocks.otFases);
+  const [motivo, setMotivo] = useState('');
+  const [otFases, setOtFases] = useState([]);
+  const [fasesCatalogo, setFasesCatalogo] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(null);
 
-  const operarios = useMemo(
-    () => mocks.usuarios.filter((usuario) => usuario.rol === 'OPERARIO' && usuario.activo),
-    [],
-  );
+  useEffect(() => {
+    let cancelado = false;
+    Promise.all([apiGet('/api/ot-fases'), apiGet('/api/fases')]).then(([fasesResponse, catalogoResponse]) => {
+      if (cancelado) return;
+      setOtFases(fasesResponse.data ?? []);
+      setFasesCatalogo(catalogoResponse.data ?? []);
+      setCargando(false);
+    }).catch((err) => {
+      if (cancelado) return;
+      setError(err?.response?.data?.message || err?.response?.data?.error || 'No se pudo cargar la gestión de planta.');
+      setCargando(false);
+    });
+    return () => { cancelado = true; };
+  }, []);
+
+  const operarios = useMemo(() => {
+    const ids = [...new Set(otFases.map((fase) => fase.operarioId ?? fase.operario_id).filter(Boolean))];
+    return ids.map((id) => ({ id, nombre: `Operario #${id}` }));
+  }, [otFases]);
+
+  const fasesNormalizadas = useMemo(() => otFases.map((fase) => ({
+    ...fase,
+    operario_id: fase.operarioId ?? fase.operario_id,
+    fase_nombre: fase.fase_nombre ?? fasesCatalogo.find((item) => item.id === (fase.faseCatalogoId ?? fase.fase_catalogo_id))?.nombre ?? `Fase #${fase.faseCatalogoId ?? fase.fase_catalogo_id}`,
+    ot_numero: fase.ot_numero ?? `OT #${fase.ordenTrabajoId ?? fase.orden_trabajo_id}`,
+  })), [fasesCatalogo, otFases]);
 
   const cargaPorOperario = useMemo(() => {
     const grupos = new Map(
@@ -39,48 +66,49 @@ export const GestionPlantaPage = () => {
       ]),
     );
 
-    otFases.forEach((fase) => {
-      const grupo = grupos.get(fase.operario_id);
+    fasesNormalizadas.forEach((fase) => {
+      const grupo = grupos.get(fase.operarioId ?? fase.operario_id);
       if (!grupo) return;
       grupo.fases.push(fase);
       grupo.total += 1;
     });
 
     return Array.from(grupos.values()).filter((grupo) => grupo.fases.length > 0);
-  }, [operarios, otFases]);
+  }, [fasesNormalizadas, operarios]);
 
-  const totalPendientes = otFases.filter((fase) => fase.estado !== 'TERMINADO').length;
+  const totalPendientes = fasesNormalizadas.filter((fase) => fase.estado !== 'TERMINADO').length;
 
   const openReasignacion = (fase) => {
     setFaseActual(fase);
-    setOperarioDestinoId(String(fase.operario_id));
+    setOperarioDestinoId(String(fase.operarioId ?? fase.operario_id));
+    setMotivo('');
   };
 
-  const handleReasignar = () => {
-    if (!faseActual || !operarioDestinoId) return;
+  const handleReasignar = async () => {
+    if (!faseActual || !operarioDestinoId || !motivo.trim()) return;
 
-    const destino = operarios.find((operario) => operario.id === Number(operarioDestinoId));
-    if (!destino || destino.id === faseActual.operario_id) {
+    const operarioActualId = faseActual.operarioId ?? faseActual.operario_id;
+    if (Number(operarioDestinoId) === Number(operarioActualId)) {
       setFaseActual(null);
       setOperarioDestinoId('');
       return;
     }
 
-    setOtFases((prev) =>
-      prev.map((fase) =>
-        fase.id === faseActual.id
-          ? {
-              ...fase,
-              operario_id: destino.id,
-              operario_nombre: destino.nombre,
-              updated_at: new Date().toISOString(),
-            }
-          : fase,
-      ),
-    );
-
-    setFaseActual(null);
-    setOperarioDestinoId('');
+    try {
+      await apiPost(`/api/ot-fases/${faseActual.id}/reasignar`, {
+        operarioNuevoId: Number(operarioDestinoId),
+        motivo: motivo.trim(),
+      });
+      setOtFases((prev) => prev.map((fase) => fase.id === faseActual.id
+        ? { ...fase, operarioId: Number(operarioDestinoId), operario_id: Number(operarioDestinoId) }
+        : fase));
+      toast.success('Fase reasignada correctamente.');
+      setFaseActual(null);
+      setOperarioDestinoId('');
+      setMotivo('');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || err?.response?.data?.error || 'No se pudo reasignar la fase.');
+    }
   };
 
   const formatDate = (value) => {
@@ -95,6 +123,9 @@ export const GestionPlantaPage = () => {
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <Title>Gestión de planta</Title>
+
+      {cargando && <LoadingSpinner label="Cargando fases de planta" />}
+      {error && <ErrorBanner message={error} />}
 
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -133,16 +164,16 @@ export const GestionPlantaPage = () => {
           </span>
           <div>
             <p className="text-metadata text-text-muted">OTs en curso</p>
-            <p className="text-2xl font-semibold text-ink">{new Set(otFases.map((fase) => fase.ot_numero)).size}</p>
+            <p className="text-2xl font-semibold text-ink">{new Set(fasesNormalizadas.map((fase) => fase.ot_numero)).size}</p>
           </div>
         </Card>
       </div>
 
-      {cargaPorOperario.length === 0 ? (
+      {!cargando && !error && cargaPorOperario.length === 0 ? (
         <Card>
           <p className="text-body text-text-secondary">No hay operarios activos con carga asignada.</p>
         </Card>
-      ) : (
+      ) : !cargando && !error ? (
         <div className="grid gap-5 xl:grid-cols-2">
           {cargaPorOperario.map((operario) => (
             <Card key={operario.id} className="space-y-4">
@@ -185,7 +216,7 @@ export const GestionPlantaPage = () => {
             </Card>
           ))}
         </div>
-      )}
+      ) : null}
 
       <Modal
         open={Boolean(faseActual)}
@@ -221,6 +252,16 @@ export const GestionPlantaPage = () => {
               </select>
             </label>
 
+            <label className="block space-y-1.5">
+              <span className="text-label text-ink">Motivo</span>
+              <input
+                className="input"
+                value={motivo}
+                onChange={(event) => setMotivo(event.target.value)}
+                placeholder="Indica el motivo de la reasignación"
+              />
+            </label>
+
             <div className="flex justify-end gap-3 pt-2">
               <Button
                 variant="secondary"
@@ -231,7 +272,7 @@ export const GestionPlantaPage = () => {
               >
                 Cancelar
               </Button>
-              <Button onClick={handleReasignar} disabled={!operarioDestinoId}>
+              <Button onClick={handleReasignar} disabled={!operarioDestinoId || !motivo.trim()}>
                 Confirmar reasignación
               </Button>
             </div>
