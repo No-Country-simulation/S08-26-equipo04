@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useMemo } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Badge, Card, DataTable, EmptyState, ErrorBanner, SkeletonTable } from '../../components/ui';
 import { formatDate } from '../../api/helpers';
 import { useOrdenesTrabajo } from '../../hooks/useOrdenesTrabajo';
@@ -22,7 +22,8 @@ const estadoVariant = {
 
 export const OrdenesTrabajoPage = () => {
   const { ordenesTrabajo, cargando, error, recargar } = useOrdenesTrabajo();
-  const [filtroEstado, setFiltroEstado] = useState('todos');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filtroEstado = searchParams.get('estado') || 'todos';
 
   const filasVisibles = useMemo(() => {
     return ordenesTrabajo.filter((ot) => {
@@ -30,6 +31,14 @@ export const OrdenesTrabajoPage = () => {
       return coincideEstado;
     });
   }, [filtroEstado, ordenesTrabajo]);
+
+  const cambiarEstado = (event) => {
+    const value = event.target.value;
+    const next = new URLSearchParams(searchParams);
+    if (value === 'todos') next.delete('estado');
+    else next.set('estado', value);
+    setSearchParams(next);
+  };
 
   const columns = useMemo(() => [
     {
@@ -73,7 +82,7 @@ export const OrdenesTrabajoPage = () => {
     <div className="mb-4 flex flex-wrap items-center gap-2">
       <select
         value={filtroEstado}
-        onChange={(event) => setFiltroEstado(event.target.value)}
+        onChange={cambiarEstado}
         aria-label="Filtrar por estado"
         className="select h-[44px] w-[180px] py-1 text-body"
       >
