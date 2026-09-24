@@ -15,7 +15,7 @@ export const cotizacionSchema = z.object({
     .min(1, 'Agregá al menos una fase'),
   precio_final: z
     .number()
-    .min(0, 'El precio no puede ser negativo'),
+    .min(0.01, 'El precio debe ser mayor a cero'),
   observaciones: z.string().optional().or(z.literal('')),
 });
 

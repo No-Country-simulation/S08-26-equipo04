@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.backend.qualititrack.DTO.SolicitudDTO;
 import com.backend.qualititrack.DTO.SolicitudResponseDTO;
 import com.backend.qualititrack.Enum.EstadoSolicitud;
+import com.backend.qualititrack.exception.InvalidStateException;
 import com.backend.qualititrack.modelos.Cliente;
 import com.backend.qualititrack.modelos.Solicitud;
 import com.backend.qualititrack.modelos.Usuario;
@@ -25,25 +26,34 @@ public class SolicitudService {
     private final ClienteRepository clienteRepository;
     private final UsuarioRepository usuarioRepository;
 
-    public SolicitudService(SolicitudRepository solicitudRepository, ClienteRepository clienteRepository, UsuarioRepository usuarioRepository) {
+    public SolicitudService(SolicitudRepository solicitudRepository, ClienteRepository clienteRepository,
+            UsuarioRepository usuarioRepository) {
         this.solicitudRepository = solicitudRepository;
         this.clienteRepository = clienteRepository;
         this.usuarioRepository = usuarioRepository;
     }
 
     private String generarNumeroSolicitud() {
-        // Generador temporal. Para producción, lo ideal es buscar el MAX(id) en BD y sumarle 1.
+        // Generador temporal. Para producción, lo ideal es buscar el MAX(id) en BD y
+        // sumarle 1.
         return "SOL-" + System.currentTimeMillis();
     }
 
-    // Devuelve en una lista los campos faltantes para crear un cliente en un dto de solicitud.
-    private List<String> camposFaltantesNuevoCliente(SolicitudDTO dto){
+    // Devuelve en una lista los campos faltantes para crear un cliente en un dto de
+    // solicitud.
+    private List<String> camposFaltantesNuevoCliente(SolicitudDTO dto) {
         List<String> faltantes = new ArrayList<>();
         if (dto.getRazonSocial() == null || dto.getRazonSocial().isBlank()) {
             faltantes.add("razonSocial");
         }
         if (dto.getContactoNombre() == null || dto.getContactoNombre().isBlank()) {
             faltantes.add("contactoNombre");
+        }
+        if (dto.getEmail() == null || dto.getEmail().isBlank()) {
+            faltantes.add("email");
+        }
+        if (dto.getCuit() == null || dto.getCuit().isBlank()) {
+            faltantes.add("cuit");
         }
         if (dto.getTelefono() == null || dto.getTelefono().isBlank()) {
             faltantes.add("telefono");
@@ -64,16 +74,23 @@ public class SolicitudService {
                     .orElseThrow(() -> new EntityNotFoundException(
                             "El cliente con ID " + dto.getClienteId() + " no existe"));
         } else {
-            // si no, verificar que se tengan los datos necesarios para crear un nuevo cliente
+            // si no, verificar que se tengan los datos necesarios para crear un nuevo
+            // cliente
             List<String> faltantes = camposFaltantesNuevoCliente(dto);
             if (!faltantes.isEmpty()) {
-                throw new IllegalArgumentException(
+                throw new InvalidStateException(
                         "Faltan datos obligatorios para crear el nuevo cliente: " + String.join(", ", faltantes));
+            }
+            // Chequear que el cuit sea efectivamente único
+            if (clienteRepository.findByCuit(dto.getCuit()).isPresent()) {
+                throw new InvalidStateException(
+                        "El cuit " + dto.getCuit() + " ya está registrado en un cliente existente");
             }
             // si están todos los datos, generar el cliente
             Cliente nuevoCliente = new Cliente();
             nuevoCliente.setRazonSocial(dto.getRazonSocial());
             nuevoCliente.setContactoNombre(dto.getContactoNombre());
+            nuevoCliente.setCuit(dto.getCuit());
             nuevoCliente.setTelefono(dto.getTelefono());
             nuevoCliente.setDireccion(dto.getDireccion());
             nuevoCliente.setEmail(dto.getEmail());
@@ -104,12 +121,20 @@ public class SolicitudService {
         return convertirAResponseDTO(guardada);
     }
 
-    // Devuelve la lista de solicitudes pendientes.
-    public List<SolicitudDTO> obtenerLista() {
+    // (Jefe de producción) Devuelve las solicitudes sin cotizar.
+    public List<SolicitudDTO> obtenerPendientes() {
         return solicitudRepository.findByEstado(EstadoSolicitud.PENDIENTE_COTIZACION)
-            .stream()
-            .map(this::convertirADTO)
-            .collect(Collectors.toList());
+                .stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
+    }
+
+    // (Vendedor) Devuelve todas las solicitudes, pendientes y cotizadas.
+    public List<SolicitudDTO> obtenerTodas() {
+        return solicitudRepository.findAll()
+                .stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
     }
 
     // Convierte una entidad Solicitud a un DTO de respuesta
