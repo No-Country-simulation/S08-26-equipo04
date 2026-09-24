@@ -343,7 +343,7 @@ export const CotizacionFormPage = () => {
             </Card>
           )}
 
-          <Card className="p-0 overflow-hidden">
+          <Card className="p-0">
             <div className="border-b border-border px-4 py-3">
               <CardTitle className="text-label font-medium">
                 Secuencia de fases
