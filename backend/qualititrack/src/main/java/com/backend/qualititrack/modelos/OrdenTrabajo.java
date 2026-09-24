@@ -1,6 +1,6 @@
 package com.backend.qualititrack.modelos;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import com.backend.qualititrack.Enum.EstadoOT;
@@ -22,13 +22,12 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "orden_trabajo")
+@Table(name = "ordenes_trabajo")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -45,69 +44,48 @@ public class OrdenTrabajo {
     @Column(name = "estado", length = 30)
     private EstadoOT estado;
 
-    @Column(name = "fecha_inicio")
-    private LocalDateTime fechaInicio;
+    @Column(name = "cantidad", nullable = false)
+    private Integer cantidad = 1;
 
-    @Column(name ="notas_baja")
-    private String notas;
+    @Column(name = "fecha_inicio_produccion")
+    private OffsetDateTime fechaInicioProduccion;
 
-    public String getNotas() {
-        return notas;
-    }
+    @Column(name = "fecha_entrega")
+    private OffsetDateTime fechaEntrega;
 
-    public void setNotas(String notas) {
-        this.notas = notas;
-    }
+    @Column(name = "fecha_pase_calidad")
+    private OffsetDateTime fechaPaseCalidad;
 
-    @NotNull(message = "La fecha de vencimiento no puede ser nula")
-    @Column(name = "fecha_vencimiento", nullable = false)
-    private LocalDateTime fechaVencimiento;
+    @Column(name = "fecha_pase_despacho")
+    private OffsetDateTime fechaPaseDespacho;
 
-    @Column(name = "fecha_terminacion")
-    private LocalDateTime fechaTerminacion;
+    @Column(name = "receptor_nombre", length = 150)
+    private String receptorNombre;
 
-    @Column(name = "fecha_creacion", nullable = false, updatable = false)
-    private LocalDateTime fechaCreacion;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt;
 
-    @Column(name = "fecha_actualizacion")
-    private LocalDateTime fechaActualizacion;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "cliente_id", nullable = false)
-    private Cliente cliente;
+    @Column(name = "updated_at")
+    private OffsetDateTime updatedAt;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "cotizacion_id", nullable = false)
     private Cotizacion cotizacion;
 
-    @OneToMany(
-            mappedBy = "ordenTrabajo",
-            cascade = CascadeType.REMOVE,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY
-    )
+    @OneToMany(mappedBy = "ordenTrabajo", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<OtFase> fases;
 
-    @OneToMany(
-            mappedBy = "ordenTrabajo",
-            cascade = CascadeType.REMOVE,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY
-    )
-    private List<Adjunto> documentos;
-
-
-    @OneToOne(
-            mappedBy = "ordenTrabajo",
-            cascade = CascadeType.REMOVE,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY
-    )
+    @OneToOne(mappedBy = "ordenTrabajo", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private AuditoriaCalidad calidadChecklist;
+
+    // Atributo añadido para resolver el error de getDocumentos/setDocumentos
+    @OneToMany(mappedBy = "ordenTrabajo", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Adjunto> documentos;
 
     @PrePersist
     protected void onCreate() {
-        fechaCreacion = LocalDateTime.now();
+        createdAt = OffsetDateTime.now();
+        updatedAt = OffsetDateTime.now();
         if (estado == null) {
             estado = EstadoOT.EN_PRODUCCION;
         }
@@ -115,7 +93,7 @@ public class OrdenTrabajo {
 
     @PreUpdate
     protected void onUpdate() {
-        fechaActualizacion = LocalDateTime.now();
+        updatedAt = OffsetDateTime.now();
     }
 
     public Long getId() {
@@ -142,52 +120,36 @@ public class OrdenTrabajo {
         this.estado = estado;
     }
 
-    public LocalDateTime getFechaVencimiento() {
-        return fechaVencimiento;
+    public OffsetDateTime getFechaInicioProduccion() {
+        return fechaInicioProduccion;
     }
 
-    public void setFechaVencimiento(LocalDateTime fechaVencimiento) {
-        this.fechaVencimiento = fechaVencimiento;
+    public void setFechaInicioProduccion(OffsetDateTime fechaInicio) {
+        this.fechaInicioProduccion = fechaInicio;
     }
 
-    public LocalDateTime getFechaInicio() {
-        return fechaInicio;
+    public OffsetDateTime getFechaEntrega() {
+        return fechaEntrega;
     }
 
-    public void setFechaInicio(LocalDateTime fechaInicio) {
-        this.fechaInicio = fechaInicio;
+    public void setFechaEntrega(OffsetDateTime fechaEntrega) {
+        this.fechaEntrega = fechaEntrega;
     }
 
-    public LocalDateTime getFechaTerminacion() {
-        return fechaTerminacion;
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
     }
 
-    public void setFechaTerminacion(LocalDateTime fechaTerminacion) {
-        this.fechaTerminacion = fechaTerminacion;
+    public void setCreatedAt(OffsetDateTime fechaCreacion) {
+        this.createdAt = fechaCreacion;
     }
 
-    public LocalDateTime getFechaCreacion() {
-        return fechaCreacion;
+    public OffsetDateTime getUpdatedAt() {
+        return updatedAt;
     }
 
-    public void setFechaCreacion(LocalDateTime fechaCreacion) {
-        this.fechaCreacion = fechaCreacion;
-    }
-
-    public LocalDateTime getFechaActualizacion() {
-        return fechaActualizacion;
-    }
-
-    public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
-        this.fechaActualizacion = fechaActualizacion;
-    }
-
-    public Cliente getCliente() {
-        return cliente;
-    }
-
-    public void setCliente(Cliente cliente) {
-        this.cliente = cliente;
+    public void setUpdatedAt(OffsetDateTime fechaActualizacion) {
+        this.updatedAt = fechaActualizacion;
     }
 
     public Cotizacion getCotizacion() {
@@ -220,28 +182,5 @@ public class OrdenTrabajo {
 
     public void setDocumentos(List<Adjunto> documentos) {
         this.documentos = documentos;
-    }
-
-    @Column(name = "fecha_entrega")
-    private LocalDateTime fechaEntrega;
-
-    @Column(name = "receptor_nombre")
-    private String receptorNombre;
-
-    // Getters y Setters
-    public LocalDateTime getFechaEntrega() {
-        return fechaEntrega;
-    }
-
-    public void setFechaEntrega(LocalDateTime fechaEntrega) {
-        this.fechaEntrega = fechaEntrega;
-    }
-
-    public String getReceptorNombre() {
-        return receptorNombre;
-    }
-
-    public void setReceptorNombre(String receptorNombre) {
-        this.receptorNombre = receptorNombre;
     }
 }

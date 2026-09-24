@@ -1,6 +1,6 @@
 package com.backend.qualititrack.DTO;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import com.backend.qualititrack.Enum.EstadoOT;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,7 +16,7 @@ public class OrdenTrabajoResumenDTO {
     private String numeroOt;
     private String cliente;
     private EstadoOT estado;
-    private LocalDateTime fecha;
+    private OffsetDateTime fecha;
 
     public Long getId() {
         return id;
@@ -50,11 +50,11 @@ public class OrdenTrabajoResumenDTO {
         this.estado = estado;
     }
 
-    public LocalDateTime getFecha() {
+    public OffsetDateTime getFecha() {
         return fecha;
     }
 
-    public void setFecha(LocalDateTime fecha) {
+    public void setFecha(OffsetDateTime fecha) {
         this.fecha = fecha;
     }
 }

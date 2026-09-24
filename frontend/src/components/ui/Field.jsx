@@ -14,6 +14,7 @@ export const Field = ({
     </label>}
     <input
       id={id}
+      name={props.name ?? id}
       placeholder={placeholder}
       required={required}
       aria-invalid={Boolean(error)}

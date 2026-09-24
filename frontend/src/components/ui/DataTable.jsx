@@ -7,7 +7,7 @@ import {
   getSortedRowModel,
   getPaginationRowModel,
 } from '@tanstack/react-table/legacy';
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 
 export const DataTable = ({
   columns,
@@ -18,6 +18,7 @@ export const DataTable = ({
   searchPlaceholder = 'Buscar...',
   pageSize = 10,
   initialSorting = [],
+  comfortable = false,
 }) => {
   const [globalFilter, setGlobalFilter] = useState('');
   const [sorting, setSorting] = useState(initialSorting);
@@ -70,22 +71,54 @@ export const DataTable = ({
       )}
 
       <div className="table-container">
-        <table className="table">
+        <table className={`table ${comfortable ? 'table-comfortable' : ''}`}>
           <thead>
             {headerGroups.map((headerGroup) => (
               <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className={header.column.getCanSort() ? 'cursor-pointer select-none' : ''}
-                    onClick={header.column.getToggleSortingHandler()}
-                  >
-                    <span className="flex items-center gap-1">
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                      {{ asc: ' \u2191', desc: ' \u2193' }[header.column.getIsSorted()] ?? ''}
-                    </span>
-                  </th>
-                ))}
+                {headerGroup.headers.map((header) => {
+                  const canSort = header.column.getCanSort();
+                  const sorted = header.column.getIsSorted();
+                  return (
+                    <th
+                      key={header.id}
+                      className={canSort ? 'cursor-pointer select-none' : ''}
+                      onClick={header.column.getToggleSortingHandler()}
+                      title={
+                        canSort
+                          ? sorted === 'asc'
+                            ? 'Ordenado ascendente. Clic para orden descendente'
+                            : sorted === 'desc'
+                              ? 'Ordenado descendente. Clic para quitar el orden'
+                              : 'Clic para ordenar'
+                          : undefined
+                      }
+                      aria-sort={
+                        sorted === 'asc'
+                          ? 'ascending'
+                          : sorted === 'desc'
+                            ? 'descending'
+                            : canSort
+                              ? 'none'
+                              : undefined
+                      }
+                    >
+                      <span className="flex items-center gap-1">
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {canSort && (
+                          <span className="inline-flex shrink-0" aria-hidden="true">
+                            {sorted === 'asc' ? (
+                              <ArrowUp className="h-4 w-4 text-text-secondary" />
+                            ) : sorted === 'desc' ? (
+                              <ArrowDown className="h-4 w-4 text-text-secondary" />
+                            ) : (
+                              <ArrowUpDown className="h-4 w-4 text-text-muted opacity-40" />
+                            )}
+                          </span>
+                        )}
+                      </span>
+                    </th>
+                  );
+                })}
               </tr>
             ))}
           </thead>

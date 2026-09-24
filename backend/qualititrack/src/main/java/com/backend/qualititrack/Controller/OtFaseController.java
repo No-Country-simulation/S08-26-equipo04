@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.backend.qualititrack.DTO.OtFaseReasignacionRequestDTO;
+import com.backend.qualititrack.DTO.OtFaseReasignacionResponseDTO;
 import com.backend.qualititrack.DTO.OtFaseResponseDTO;
 import com.backend.qualititrack.DTO.RehacerFasesRequestDTO;
 import com.backend.qualititrack.Service.OtFaseService;
@@ -87,4 +89,11 @@ public class OtFaseController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    
+    @PostMapping("/{id}/reasignar")
+    @PreAuthorize("hasAnyRole('JEFE_PRODUCCION')")
+    public ResponseEntity<OtFaseReasignacionResponseDTO> reasignarFase(@PathVariable Long id, @RequestBody OtFaseReasignacionRequestDTO dto, Authentication auth) {
+        OtFaseReasignacionResponseDTO response = otFaseService.reasignarFase(id, dto, auth.getName());
+        return ResponseEntity.ok(response);
+    }
 }

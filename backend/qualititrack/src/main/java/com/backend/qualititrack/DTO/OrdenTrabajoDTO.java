@@ -1,6 +1,6 @@
 package com.backend.qualititrack.DTO;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import com.backend.qualititrack.Enum.EstadoOT;
 
@@ -33,7 +33,7 @@ public class OrdenTrabajoDTO {
     private String descripcion;
 
     @NotNull(message = "La fecha de vencimiento no puede ser nula")
-    private LocalDateTime fechaVencimiento;
+    private OffsetDateTime fechaVencimiento;
 
     @NotNull(message = "La prioridad no puede ser nula")
     @Min(value = 1, message = "Prioridad mínima: 1")
@@ -42,13 +42,13 @@ public class OrdenTrabajoDTO {
 
     private String observaciones;
 
-    private LocalDateTime fechaCreacion;
+    private OffsetDateTime fechaCreacion;
 
-    private LocalDateTime fechaActualizacion;
+    private OffsetDateTime fechaActualizacion;
 
-    private LocalDateTime fechaInicioReal;
+    private OffsetDateTime fechaInicioReal;
 
-    private LocalDateTime fechaTerminoReal;
+    private OffsetDateTime fechaTerminoReal;
 
     public Long getId() {
         return id;
@@ -90,11 +90,11 @@ public class OrdenTrabajoDTO {
         this.numeroOT = numeroOT;
     }
 
-    public LocalDateTime getFechaVencimiento() {
+    public OffsetDateTime getFechaVencimiento() {
         return fechaVencimiento;
     }
 
-    public void setFechaVencimiento(LocalDateTime fechaVencimiento) {
+    public void setFechaVencimiento(OffsetDateTime fechaVencimiento) {
         this.fechaVencimiento = fechaVencimiento;
     }
 
@@ -114,35 +114,35 @@ public class OrdenTrabajoDTO {
         this.prioridad = prioridad;
     }
 
-    public LocalDateTime getFechaCreacion() {
+    public OffsetDateTime getFechaCreacion() {
         return fechaCreacion;
     }
 
-    public void setFechaCreacion(LocalDateTime fechaCreacion) {
+    public void setFechaCreacion(OffsetDateTime fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
     }
 
-    public LocalDateTime getFechaActualizacion() {
+    public OffsetDateTime getFechaActualizacion() {
         return fechaActualizacion;
     }
 
-    public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
+    public void setFechaActualizacion(OffsetDateTime fechaActualizacion) {
         this.fechaActualizacion = fechaActualizacion;
     }
 
-    public LocalDateTime getFechaTerminoReal() {
+    public OffsetDateTime getFechaTerminoReal() {
         return fechaTerminoReal;
     }
 
-    public void setFechaTerminoReal(LocalDateTime fechaTerminoReal) {
+    public void setFechaTerminoReal(OffsetDateTime fechaTerminoReal) {
         this.fechaTerminoReal = fechaTerminoReal;
     }
 
-    public LocalDateTime getFechaInicioReal() {
+    public OffsetDateTime getFechaInicioReal() {
         return fechaInicioReal;
     }
 
-    public void setFechaInicioReal(LocalDateTime fechaInicioReal) {
+    public void setFechaInicioReal(OffsetDateTime fechaInicioReal) {
         this.fechaInicioReal = fechaInicioReal;
     }
 }

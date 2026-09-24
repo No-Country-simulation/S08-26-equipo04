@@ -10,7 +10,10 @@ import org.springframework.stereotype.Service;
 
 import com.backend.qualititrack.DTO.UsuarioDTO;
 import com.backend.qualititrack.Enum.NivelRol;
+import com.backend.qualititrack.exception.InvalidStateException;
+import com.backend.qualititrack.modelos.FaseOperarioHabilitado;
 import com.backend.qualititrack.modelos.Usuario;
+import com.backend.qualititrack.repository.FaseOperarioHabilitadoRepository;
 import com.backend.qualititrack.repository.UsuarioRepository;
 
 @Service
@@ -20,6 +23,9 @@ public class UsuarioService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private FaseOperarioHabilitadoRepository faseOperarioHabilitadoRepository;
 
     private static final Logger log = LoggerFactory.getLogger(UsuarioService.class);
 
@@ -77,6 +83,30 @@ public class UsuarioService {
                 .stream()
                 .map(this::convertirADTO)
                 .collect(Collectors.toList());
+    }
+
+    /*
+     * Obtiene un operario habilitado para ejecutar una fase específica del catálogo
+     */
+    public Usuario obtenerOperarioHabilitado(Long faseCatalogoId) {
+        // Busca operarios habilitados para la fase especificada
+        List<FaseOperarioHabilitado> habilitaciones = faseOperarioHabilitadoRepository
+                .findByFaseCatalogoIdAndHabilitadoTrue(faseCatalogoId);
+
+        // Devolver excepcion si no hubiera ninguno disponible
+        if (habilitaciones.isEmpty()) {
+            throw new InvalidStateException("No existen operarios habilitados y activos para asignar a esta fase.");
+        }
+
+        // Seleccionamos el primer operario disponible (ver de agregar lógica de selección más adelante)
+        Usuario operarioAsignado = habilitaciones.get(0).getOperario();
+
+        // Validar que el usuario asignado efectivamente es un operario activo
+        if (operarioAsignado.getRol() != NivelRol.OPERARIO || !operarioAsignado.getActivo()) {
+            throw new InvalidStateException("El usuario asignado a la fase no tiene rol OPERARIO o está inactivo.");
+        }
+
+        return operarioAsignado;
     }
 
     /**
@@ -141,7 +171,7 @@ public class UsuarioService {
 
     /**
      * Convierte Entity → DTO
-     * ✅ Incluye: id, nombre, email, rol, activo, fechas
+     * ✅ Incluye: id, nombre, email, rol, activo
      * ❌ NO incluye: password (seguridad)
      */
     private UsuarioDTO convertirADTO(Usuario usuario) {
@@ -151,8 +181,6 @@ public class UsuarioService {
         dto.setEmail(usuario.getEmail());
         dto.setRol(usuario.getRol());
         dto.setActivo(usuario.getActivo());
-        dto.setCreatedAt(usuario.getCreatedAt());
-        dto.setUpdatedAt(usuario.getUpdatedAt());
         return dto;
     }
 

@@ -1,5 +1,6 @@
 package com.backend.qualititrack.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,15 +25,36 @@ public class SolicitudService {
     private final ClienteRepository clienteRepository;
     private final UsuarioRepository usuarioRepository;
 
-    public SolicitudService(SolicitudRepository solicitudRepository, ClienteRepository clienteRepository, UsuarioRepository usuarioRepository) {
+    public SolicitudService(SolicitudRepository solicitudRepository, ClienteRepository clienteRepository,
+            UsuarioRepository usuarioRepository) {
         this.solicitudRepository = solicitudRepository;
         this.clienteRepository = clienteRepository;
         this.usuarioRepository = usuarioRepository;
     }
 
     private String generarNumeroSolicitud() {
-        // Generador temporal. Para producción, lo ideal es buscar el MAX(id) en BD y sumarle 1.
-        return "SOL-" + System.currentTimeMillis(); 
+        // Generador temporal. Para producción, lo ideal es buscar el MAX(id) en BD y
+        // sumarle 1.
+        return "SOL-" + System.currentTimeMillis();
+    }
+
+    // Devuelve en una lista los campos faltantes para crear un cliente en un dto de
+    // solicitud.
+    private List<String> camposFaltantesNuevoCliente(SolicitudDTO dto) {
+        List<String> faltantes = new ArrayList<>();
+        if (dto.getRazonSocial() == null || dto.getRazonSocial().isBlank()) {
+            faltantes.add("razonSocial");
+        }
+        if (dto.getContactoNombre() == null || dto.getContactoNombre().isBlank()) {
+            faltantes.add("contactoNombre");
+        }
+        if (dto.getTelefono() == null || dto.getTelefono().isBlank()) {
+            faltantes.add("telefono");
+        }
+        if (dto.getDireccion() == null || dto.getDireccion().isBlank()) {
+            faltantes.add("direccion");
+        }
+        return faltantes;
     }
 
     // Crea una nueva
@@ -42,9 +64,17 @@ public class SolicitudService {
         // Si el cliente existe, se utiliza
         if (dto.getClienteId() != null) {
             cliente = clienteRepository.findById(dto.getClienteId())
-                    .orElseThrow(() -> new EntityNotFoundException("El cliente con ID " + dto.getClienteId() + " no existe"));
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "El cliente con ID " + dto.getClienteId() + " no existe"));
         } else {
-            // si no, se utilizan los datos del DTO para crear un nuevo cliente
+            // si no, verificar que se tengan los datos necesarios para crear un nuevo
+            // cliente
+            List<String> faltantes = camposFaltantesNuevoCliente(dto);
+            if (!faltantes.isEmpty()) {
+                throw new IllegalArgumentException(
+                        "Faltan datos obligatorios para crear el nuevo cliente: " + String.join(", ", faltantes));
+            }
+            // si están todos los datos, generar el cliente
             Cliente nuevoCliente = new Cliente();
             nuevoCliente.setRazonSocial(dto.getRazonSocial());
             nuevoCliente.setContactoNombre(dto.getContactoNombre());
@@ -77,13 +107,21 @@ public class SolicitudService {
         // Retornar nueva solicitud en forma de dto
         return convertirAResponseDTO(guardada);
     }
-
-    // Devuelve la lista de solicitudes pendientes.
-    public List<SolicitudDTO> obtenerLista() {
+        
+    // (Jefe de producción) Devuelve las solicitudes sin cotizar.
+    public List<SolicitudDTO> obtenerPendientes() {
         return solicitudRepository.findByEstado(EstadoSolicitud.PENDIENTE_COTIZACION)
-            .stream()
-            .map(this::convertirADTO)
-            .collect(Collectors.toList());
+                .stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
+    }
+
+    // (Vendedor) Devuelve todas las solicitudes, pendientes y cotizadas.
+    public List<SolicitudDTO> obtenerTodas() {
+        return solicitudRepository.findAll()
+                .stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
     }
 
     // Convierte una entidad Solicitud a un DTO de respuesta

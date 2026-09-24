@@ -1,6 +1,6 @@
 package com.backend.qualititrack.DTO;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import com.backend.qualititrack.Enum.EstadoOT;
 import lombok.AllArgsConstructor;
@@ -17,8 +17,8 @@ public class ExpedienteCompletoDTO {
     private Long id;
     private String numeroOt;
     private EstadoOT estado;
-    private LocalDateTime fechaCreacion;
-    private LocalDateTime fechaEntrega;
+    private OffsetDateTime fechaCreacion;
+    private OffsetDateTime fechaEntrega;
     private String receptorNombre;
 
     // Solicitud y Cotización
@@ -33,7 +33,7 @@ public class ExpedienteCompletoDTO {
     // Resultados de Calidad
     private String resultadoCalidad; // "Aprobado", "Rechazado", "Pendiente"
 
-    // Getters y Setters explícitos por si no usas Lombok activo
+    // Getters y Setters explícitos
     public Long getId() {
         return id;
     }
@@ -58,12 +58,60 @@ public class ExpedienteCompletoDTO {
         this.estado = estado;
     }
 
-    public LocalDateTime getFechaCreacion() {
+    public OffsetDateTime getFechaCreacion() {
         return fechaCreacion;
     }
 
-    public void setFechaCreacion(LocalDateTime fechaCreacion) {
+    public void setFechaCreacion(OffsetDateTime fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
+    }
+
+    public OffsetDateTime getFechaEntrega() {
+        return fechaEntrega;
+    }
+
+    public void setFechaEntrega(OffsetDateTime fechaEntrega) {
+        this.fechaEntrega = fechaEntrega;
+    }
+
+    public String getReceptorNombre() {
+        return receptorNombre;
+    }
+
+    public void setReceptorNombre(String receptorNombre) {
+        this.receptorNombre = receptorNombre;
+    }
+
+    public Long getSolicitudId() {
+        return solicitudId;
+    }
+
+    public void setSolicitudId(Long solicitudId) {
+        this.solicitudId = solicitudId;
+    }
+
+    public Long getCotizacionId() {
+        return cotizacionId;
+    }
+
+    public void setCotizacionId(Long cotizacionId) {
+        this.cotizacionId = cotizacionId;
+    }
+
+    public String getClienteNombre() {
+        return clienteNombre;
+    }
+
+    public void setClienteNombre(String clienteNombre) {
+        this.clienteNombre = clienteNombre;
+    }
+
+    public Double getMontoTotal() {
+        return montoTotal;
+    }
+
+    public void setMontoTotal(Double montoTotal) {
+        this.montoTotal = montoTotal;
     }
 
     public List<FaseDetalleExpedienteDTO> getHistorialFases() {
@@ -73,6 +121,12 @@ public class ExpedienteCompletoDTO {
     public void setHistorialFases(List<FaseDetalleExpedienteDTO> historialFases) {
         this.historialFases = historialFases;
     }
-    // (Puedes agregar el resto de getters/setters o dejar que Lombok los genere con
-    // @Data)
+
+    public String getResultadoCalidad() {
+        return resultadoCalidad;
+    }
+
+    public void setResultadoCalidad(String resultadoCalidad) {
+        this.resultadoCalidad = resultadoCalidad;
+    }
 }
