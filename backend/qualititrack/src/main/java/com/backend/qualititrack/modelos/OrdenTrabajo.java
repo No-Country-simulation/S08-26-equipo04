@@ -78,10 +78,6 @@ public class OrdenTrabajo {
     @OneToOne(mappedBy = "ordenTrabajo", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private AuditoriaCalidad calidadChecklist;
 
-    // Atributo añadido para resolver el error de getDocumentos/setDocumentos
-    @OneToMany(mappedBy = "ordenTrabajo", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Adjunto> documentos;
-
     @PrePersist
     protected void onCreate() {
         createdAt = OffsetDateTime.now();
@@ -176,11 +172,4 @@ public class OrdenTrabajo {
         this.calidadChecklist = calidadChecklist;
     }
 
-    public List<Adjunto> getDocumentos() {
-        return documentos;
-    }
-
-    public void setDocumentos(List<Adjunto> documentos) {
-        this.documentos = documentos;
-    }
 }
