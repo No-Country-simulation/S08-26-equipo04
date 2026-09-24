@@ -1,5 +1,5 @@
-import { useMemo, useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useMemo, useEffect } from "react";
+import { useParams, useNavigate, useSearchParams, Navigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DragDropContext, Droppable } from "@hello-pangea/dnd";
@@ -11,7 +11,6 @@ import { useSolicitudes } from "../../hooks/useSolicitudes";
 import {
   Button,
   Card,
-  CardHeader,
   CardTitle,
   Field,
   Title,
@@ -26,13 +25,62 @@ import { useWatch } from "react-hook-form";
 
 const ESTADOS_SOLO_LECTURA = ["ENVIADA_A_CLIENTE", "APROBADA", "NO_APROBADA"];
 
+// Banner informativo con los datos de la solicitud (sin edición).
+const DetalleSolicitud = ({ solicitud }) => (
+  <div className="grid gap-4 sm:grid-cols-2">
+    <div>
+      <p className="text-metadata text-text-muted">Solicitud</p>
+      <p className="text-body font-medium text-ink">
+        {solicitud.numero_solicitud}
+      </p>
+    </div>
+    <div>
+      <p className="text-metadata text-text-muted">Cliente</p>
+      <p className="text-body font-medium text-ink">
+        {solicitud.cliente_razon_social}
+      </p>
+    </div>
+    <div>
+      <p className="text-metadata text-text-muted">Pieza</p>
+      <p className="text-body font-medium text-ink">
+        {solicitud.descripcion_pieza}
+      </p>
+    </div>
+    <div>
+      <p className="text-metadata text-text-muted">Cantidad</p>
+      <p className="text-body font-medium text-ink">
+        {solicitud.cantidad} unidades
+      </p>
+    </div>
+    <div>
+      <p className="text-metadata text-text-muted">Fecha esperada</p>
+      <p className="text-body font-medium text-ink">
+        {solicitud.fecha_esperada_entrega}
+      </p>
+    </div>
+    {solicitud.notas_comerciales && (
+      <div className="sm:col-span-2">
+        <p className="text-metadata text-text-muted">Notas comerciales</p>
+        <p className="text-body text-text-secondary">
+          {solicitud.notas_comerciales}
+        </p>
+      </div>
+    )}
+  </div>
+);
+
 export const CotizacionFormPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const esEdicion = Boolean(id);
   const { cotizaciones, agregarCotizacion, actualizarCotizacion } =
     useCotizaciones();
-  const { solicitudes, obtenerSolicitud } = useSolicitudes();
+  const { obtenerSolicitud, cargando: cargandoSolicitudes } = useSolicitudes();
+
+  // FE-154: la solicitud llega por query (?solicitud=<id>) desde el botón
+  // "Cotizar" del listado. Sin desplegable: entrar sin id redirige.
+  const solicitudIdParam = Number(searchParams.get("solicitud")) || null;
 
   const cotizacionExistente = esEdicion
     ? cotizaciones.find((c) => c.id === Number(id))
@@ -47,25 +95,27 @@ export const CotizacionFormPage = () => {
     }
   }, [cotizacionExistente, navigate]);
 
-  const solicitudesDisponibles = useMemo(
-    () =>
-      solicitudes.filter(
-        (s) =>
-          (s.estado === "PENDIENTE_COTIZACION" || s.estado === "COTIZADA") &&
-          !cotizaciones.some((c) => c.solicitud_id === s.id),
-      ),
-    [solicitudes, cotizaciones],
-  );
-
-  const fasesCatalogo = useMemo(() => mocks.fases.filter((f) => f.activo), []);
-
-  const [solicitudSeleccionada, setSolicitudSeleccionada] = useState(
-    cotizacionExistente?.solicitud_id || null,
-  );
+  // La solicitud queda fijada por la URL (creación) o por la cotización (edición).
+  // Sin estado local: nunca hay lista de opciones para elegir.
+  const solicitudSeleccionada = esEdicion
+    ? (cotizacionExistente?.solicitud_id ?? null)
+    : solicitudIdParam;
 
   const solicitudActual = solicitudSeleccionada
     ? obtenerSolicitud(solicitudSeleccionada)
     : null;
+
+  // Una solicitud deja de estar disponible si ya tiene cotización o su
+  // estado ya no es pendiente (solo se evalúa con datos cargados).
+  const yaCotizada =
+    !esEdicion &&
+    !cargandoSolicitudes &&
+    solicitudSeleccionada != null &&
+    (solicitudActual == null ||
+      solicitudActual.estado !== "PENDIENTE_COTIZACION" ||
+      cotizaciones.some((c) => c.solicitud_id === solicitudSeleccionada));
+
+  const fasesCatalogo = useMemo(() => mocks.fases.filter((f) => f.activo), []);
 
   const {
     register,
@@ -92,11 +142,6 @@ export const CotizacionFormPage = () => {
   });
 
   const fases = useWatch({ control, name: "fases" }) ?? [];
-
-  const handleSeleccionarSolicitud = (e) => {
-    const solicitudId = Number(e.target.value) || null;
-    setSolicitudSeleccionada(solicitudId);
-  };
 
   const handleAgregarFase = (nuevaFase) => {
     const actuales = getValues("fases") ?? [];
@@ -156,21 +201,78 @@ export const CotizacionFormPage = () => {
     }
   };
 
-  return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      <Title>{esEdicion ? "Editar cotización" : "Nueva cotización"}</Title>
-      <div className="flex items-start gap-4">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/cotizaciones")}
-          className="mt-1"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
+  // Sin ?solicitud= no hay nada que cotizar: volver al listado.
+  if (!esEdicion && solicitudIdParam == null) {
+    return <Navigate to="/solicitudes" replace />;
+  }
+
+  // Solicitud ya cotizada: vista informativa sin formulario. No se pueden
+  // definir fases ni precio; solo datos de la solicitud, leyenda y volver.
+  if (!esEdicion && !cargandoSolicitudes && yaCotizada) {
+    return (
+      <div className="mx-auto max-w-4xl space-y-5">
+        <Title>Nueva cotización</Title>
         <div>
-          <p className="text-label text-primary">Cotizaciones</p>
-          <h1 className="mt-1 text-h1 text-ink">
-            {esEdicion ? "Editar cotizacion" : "Nueva cotizacion"}
+          <button
+            type="button"
+            onClick={() => navigate("/solicitudes")}
+            className="inline-flex items-center gap-1 text-label font-medium text-primary hover:underline"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Volver a Solicitudes
+          </button>
+          <div>
+            <h1 className="mt-2 text-h1 text-ink">Nueva cotización</h1>
+          </div>
+        </div>
+
+        <Card className="p-0 overflow-hidden">
+          <div className="border-b border-border px-4 py-3">
+            <CardTitle className="text-label font-medium">Solicitud asociada</CardTitle>
+          </div>
+          <div className="p-4">
+            {solicitudActual ? (
+              <>
+                <DetalleSolicitud solicitud={solicitudActual} />
+                <p role="alert" className="mt-4 text-body text-error">
+                  Esta solicitud ya no está pendiente de cotizar.
+                </p>
+              </>
+            ) : (
+              <p role="alert" className="text-body text-error">
+                No se encontró la solicitud solicitada.
+              </p>
+            )}
+          </div>
+        </Card>
+
+        <div className="flex justify-end">
+          <Button
+            variant="secondary"
+            onClick={() => navigate("/solicitudes")}
+          >
+            Volver a solicitudes
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-4xl space-y-5">
+      <Title>{esEdicion ? "Editar cotización" : "Nueva cotización"}</Title>
+      <div>
+        <button
+          type="button"
+          onClick={() => navigate(esEdicion ? "/cotizaciones" : "/solicitudes")}
+          className="inline-flex items-center gap-1 text-label font-medium text-primary hover:underline"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          {esEdicion ? "Volver a Cotizaciones" : "Volver a Solicitudes"}
+        </button>
+        <div>
+          <h1 className="mt-2 text-h1 text-ink">
+            {esEdicion ? "Editar cotización" : "Nueva cotización"}
           </h1>
           {cotizacionExistente && (
             <p className="mt-1 text-body text-text-secondary">
@@ -183,206 +285,179 @@ export const CotizacionFormPage = () => {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {!esEdicion && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Solicitud asociada</CardTitle>
-            </CardHeader>
-
-            <div className="flex flex-col">
-              <label
-                htmlFor="solicitud_id"
-                className="text-metadata text-text-muted"
-              >
-                Seleccionar solicitud
-              </label>
-              <select
-                id="solicitud_id"
-                name="solicitud_id"
-                value={solicitudSeleccionada || ""}
-                onChange={handleSeleccionarSolicitud}
-                className="input"
-              >
-                <option value="">Seleccionar una solicitud...</option>
-                {solicitudesDisponibles.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.numero_solicitud} — {s.cliente_razon_social} (
-                    {s.descripcion_pieza})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {solicitudActual && (
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <div>
-                  <p className="text-metadata text-text-muted">Cliente</p>
-                  <p className="text-body font-medium text-ink">
-                    {solicitudActual.cliente_razon_social}
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_224px] lg:items-start"
+      >
+        <div className="space-y-5">
+          {!esEdicion && (
+            <Card className="p-0 overflow-hidden">
+              <div className="border-b border-border px-4 py-3">
+                <CardTitle className="text-label font-medium">
+                  Solicitud asociada
+                </CardTitle>
+              </div>
+              <div className="p-4">
+                {cargandoSolicitudes ? (
+                  <p className="text-body text-text-secondary">
+                    Cargando solicitud...
                   </p>
-                </div>
-                <div>
-                  <p className="text-metadata text-text-muted">Pieza</p>
-                  <p className="text-body font-medium text-ink">
-                    {solicitudActual.descripcion_pieza}
+                ) : solicitudActual ? (
+                  <DetalleSolicitud solicitud={solicitudActual} />
+                ) : (
+                  <p role="alert" className="text-body text-error">
+                    No se encontró la solicitud solicitada.
                   </p>
-                </div>
-                <div>
-                  <p className="text-metadata text-text-muted">Cantidad</p>
-                  <p className="text-body font-medium text-ink">
-                    {solicitudActual.cantidad} unidades
-                  </p>
-                </div>
-                <div>
-                  <p className="text-metadata text-text-muted">
-                    Fecha esperada
-                  </p>
-                  <p className="text-body font-medium text-ink">
-                    {solicitudActual.fecha_esperada_entrega}
-                  </p>
-                </div>
-                {solicitudActual.notas_comerciales && (
-                  <div className="sm:col-span-2">
-                    <p className="text-metadata text-text-muted">
-                      Notas comerciales
-                    </p>
-                    <p className="text-body text-text-secondary">
-                      {solicitudActual.notas_comerciales}
-                    </p>
-                  </div>
                 )}
               </div>
-            )}
-          </Card>
-        )}
+            </Card>
+          )}
 
-        {esEdicion && cotizacionExistente && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Informacion de la solicitud</CardTitle>
-            </CardHeader>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <p className="text-metadata text-text-muted">Solicitud</p>
-                <p className="text-body font-medium text-ink">
-                  {cotizacionExistente.solicitud_numero ??
-                    solicitudActual?.numero_solicitud ??
-                    "—"}
-                </p>
+          {esEdicion && cotizacionExistente && (
+            <Card className="p-0 overflow-hidden">
+              <div className="border-b border-border px-4 py-3">
+                <CardTitle className="text-label font-medium">
+                  Información de la solicitud
+                </CardTitle>
               </div>
-              <div>
-                <p className="text-metadata text-text-muted">Cliente</p>
-                <p className="text-body font-medium text-ink">
-                  {cotizacionExistente.cliente_razon_social ??
-                    solicitudActual?.cliente_razon_social ??
-                    "—"}
-                </p>
+              <div className="p-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <p className="text-metadata text-text-muted">Solicitud</p>
+                    <p className="text-body font-medium text-ink">
+                      {cotizacionExistente.solicitud_numero ??
+                        solicitudActual?.numero_solicitud ??
+                        "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-metadata text-text-muted">Cliente</p>
+                    <p className="text-body font-medium text-ink">
+                      {cotizacionExistente.cliente_razon_social ??
+                        solicitudActual?.cliente_razon_social ??
+                        "—"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          <Card className="p-0">
+            <div className="border-b border-border px-4 py-3">
+              <CardTitle className="text-label font-medium">
+                Secuencia de fases
+              </CardTitle>
+            </div>
+            <div className="p-4">
+              <div className="space-y-3">
+                <DragDropContext onDragEnd={handleDragEnd}>
+                  <Droppable droppableId="fases">
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className="space-y-3"
+                      >
+                        {fases.map((fase, index) => (
+                          <SecuenciaFaseRow
+                            key={`${fase.fase_catalogo_id}-${index}`}
+                            fase={fase}
+                            index={index}
+                            onActualizar={handleActualizarFase}
+                            onEliminar={handleEliminarFase}
+                            errors={errors.fases?.[index]}
+                          />
+                        ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
+
+                {errors.fases && (
+                  <p className="text-error text-caption">{errors.fases.message}</p>
+                )}
+
+                <SelectorFases
+                  fasesDisponibles={fasesCatalogo}
+                  onAgregar={handleAgregarFase}
+                />
               </div>
             </div>
           </Card>
-        )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Secuencia de fases</CardTitle>
-          </CardHeader>
+          <Card className="p-0 overflow-hidden">
+            <div className="border-b border-border px-4 py-3">
+              <CardTitle className="text-label font-medium">
+                Precio y observaciones
+              </CardTitle>
+            </div>
+            <div className="p-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field
+                  label="Precio total ($)"
+                  id="precio_final"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  {...register("precio_final", { valueAsNumber: true })}
+                  error={errors.precio_final?.message}
+                />
 
-          <div className="space-y-3">
-            <DragDropContext onDragEnd={handleDragEnd}>
-              <Droppable droppableId="fases">
-                {(provided) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className="space-y-3"
+                <div className="flex flex-col">
+                  <label
+                    htmlFor="observaciones"
+                    className="text-metadata text-text-muted"
                   >
-                    {fases.map((fase, index) => (
-                      <SecuenciaFaseRow
-                        key={`${fase.fase_catalogo_id}-${index}`}
-                        fase={fase}
-                        index={index}
-                        onActualizar={handleActualizarFase}
-                        onEliminar={handleEliminarFase}
-                        errors={errors.fases?.[index]}
-                      />
-                    ))}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </DragDropContext>
-
-            {errors.fases && (
-              <p className="text-error text-caption">{errors.fases.message}</p>
-            )}
-
-            <SelectorFases
-              fasesDisponibles={fasesCatalogo}
-              onAgregar={handleAgregarFase}
-            />
-          </div>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Precio y observaciones</CardTitle>
-          </CardHeader>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field
-              label="Precio total ($)"
-              id="precio_final"
-              type="number"
-              min="0"
-              step="0.01"
-              {...register("precio_final", { valueAsNumber: true })}
-              error={errors.precio_final?.message}
-            />
-
-            <div className="flex flex-col">
-              <label
-                htmlFor="observaciones"
-                className="text-metadata text-text-muted"
-              >
-                Observaciones
-              </label>
-              <textarea
-                id="observaciones"
-                {...register("observaciones")}
-                rows={3}
-                className="input resize-none"
-                placeholder="Notas adicionales..."
-              />
+                    Observaciones
+                  </label>
+                  <textarea
+                    id="observaciones"
+                    {...register("observaciones")}
+                    rows={3}
+                    className="input resize-none"
+                    placeholder="Notas adicionales..."
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
 
-        <div className="flex justify-end gap-3">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => navigate("/cotizaciones")}
-          >
-            Cancelar
-          </Button>
+        <div className="order-first rounded-xl border border-border bg-surface p-3 shadow-card lg:order-none lg:sticky lg:top-6">
+          {errors.root && (
+            <p
+              role="alert"
+              className="mb-3 rounded-lg bg-error-light p-3 text-label text-error"
+            >
+              {errors.root.message}
+            </p>
+          )}
           <Button
             type="submit"
             loading={isSubmitting}
-            disabled={!esEdicion && !solicitudSeleccionada}
+            disabled={
+              !esEdicion &&
+              (solicitudSeleccionada == null ||
+                cargandoSolicitudes ||
+                yaCotizada ||
+                solicitudActual == null)
+            }
+            className="w-full"
           >
             <Save className="h-4 w-4" />
-            {esEdicion ? "Guardar cambios" : "Crear cotizacion"}
+            {esEdicion ? "Guardar cambios" : "Crear cotización"}
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => navigate(esEdicion ? "/cotizaciones" : "/solicitudes")}
+            className="mt-2 w-full"
+          >
+            Cancelar
           </Button>
         </div>
-        {errors.root && (
-          <p
-            role="alert"
-            className="rounded-lg bg-error-light p-3 text-label text-error"
-          >
-            {errors.root.message}
-          </p>
-        )}
       </form>
     </div>
   );
