@@ -78,11 +78,11 @@ export const CotizacionesProvider = ({ children }) => {
     };
   }, [isAuthenticated, puedeConsultar, version]);
 
-  const recargar = () => {
+  const recargar = useCallback(() => {
     setCargando(true);
     setError(null);
     setVersion((v) => v + 1);
-  };
+  }, []);
 
   // Fusiona la respuesta del backend conservando los datos desnormalizados
   // locales (solicitud_numero, cliente) que el DTO no trae.

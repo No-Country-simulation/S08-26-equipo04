@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calculator, Inbox, Plus } from "lucide-react";
+import { Calculator, Inbox, Plus, RefreshCw } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useSolicitudes } from "../../hooks/useSolicitudes";
 import {
@@ -39,6 +39,12 @@ export const SolicitudesPage = () => {
   const { solicitudes, cargando, error, recargar } = useSolicitudes();
   const esJefe = user?.rol === "JEFE_PRODUCCION";
   const esVendedor = user?.rol === "VENDEDOR";
+
+  // La lista puede cambiar fuera de esta pantalla (otro vendedor o el jefe
+  // cotizando): se vuelve a pedir cada vez que se entra (FE-4).
+  useEffect(() => {
+    recargar();
+  }, [recargar]);
 
   // Orden inicial por rol (el header sigue permitiendo reordenar a mano):
   // Jefe: FIFO, la más antigua primero (más tiempo esperando).
@@ -137,12 +143,26 @@ export const SolicitudesPage = () => {
           <h1 className="text-h1 text-ink">Solicitudes</h1>
           <p className="mt-1 text-body text-text-secondary">{subtitulo}</p>
         </div>
-        {esVendedor && (
-          <Button onClick={() => navigate("/solicitudes/nueva")}>
-            <Plus className="h-4 w-4" />
-            Nueva solicitud
+        <div className="flex items-center gap-3">
+          <Button
+            variant="secondary"
+            onClick={recargar}
+            loading={cargando}
+            aria-label="Actualizar solicitudes"
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${cargando ? "hidden" : ""}`}
+              aria-hidden={cargando}
+            />
+            Actualizar
           </Button>
-        )}
+          {esVendedor && (
+            <Button onClick={() => navigate("/solicitudes/nueva")}>
+              <Plus className="h-4 w-4" />
+              Nueva solicitud
+            </Button>
+          )}
+        </div>
       </div>
       <Card>
         <CardHeader>

@@ -1,11 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Inbox, Search } from "lucide-react";
+import { Inbox, RefreshCw, Search } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useCotizaciones } from "../../hooks/useCotizaciones";
 import { useSolicitudes } from "../../hooks/useSolicitudes";
 import {
   Badge,
+  Button,
   Card,
   DataTable,
   EmptyState,
@@ -38,6 +39,12 @@ export const CotizacionesPage = () => {
   const { solicitudes } = useSolicitudes();
   const [busqueda, setBusqueda] = useState("");
   const [estado, setEstado] = useState("TODOS");
+
+  // La lista puede cambiar fuera de esta pantalla (el jefe cotiza en otra
+  // pestaña): se vuelve a pedir cada vez que se entra (FE-4).
+  useEffect(() => {
+    recargar();
+  }, [recargar]);
 
   const solicitudPorId = useMemo(
     () => new Map(solicitudes.map((item) => [item.id, item])),
@@ -174,6 +181,18 @@ export const CotizacionesPage = () => {
         </div>
         {/* FE-154: sin botón "Nueva cotización". Se cotiza desde
             Solicitudes con el botón "Cotizar" de cada fila. */}
+        <Button
+          variant="secondary"
+          onClick={recargar}
+          loading={cargando}
+          aria-label="Actualizar cotizaciones"
+        >
+          <RefreshCw
+            className={`h-4 w-4 ${cargando ? "hidden" : ""}`}
+            aria-hidden={cargando}
+          />
+          Actualizar
+        </Button>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
