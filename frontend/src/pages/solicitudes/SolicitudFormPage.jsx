@@ -36,6 +36,15 @@ export const SolicitudFormPage = () => {
     name: "cliente_mode",
   });
 
+  const clienteId = useWatch({
+    control,
+    name: "cliente_id",
+  });
+
+  const clienteSeleccionado = clientes.find(
+    (item) => String(item.id) === String(clienteId),
+  );
+
   const agregarArchivos = (files) => {
     const nuevos = Array.from(files).filter(
       (file) => !archivos.some((item) => item.name === file.name),
@@ -71,6 +80,7 @@ export const SolicitudFormPage = () => {
           ...(clienteMode === "nuevo" && {
             cliente_nuevo: {
               razon_social: data.cliente_razon_social,
+              cuit: data.cliente_cuit.replace(/[\s-]/g, ""),
               contacto_nombre: data.cliente_contacto,
               telefono: data.cliente_telefono,
               email: data.cliente_email,
@@ -83,6 +93,14 @@ export const SolicitudFormPage = () => {
       toast.success("Solicitud creada correctamente");
       navigate("/solicitudes");
     } catch (err) {
+      const esCuitDuplicado = err?.cause?.response?.status === 409;
+      if (esCuitDuplicado && clienteMode === "nuevo") {
+        setError("cliente_cuit", {
+          type: "manual",
+          message: "Ya existe un cliente registrado con ese CUIT.",
+        });
+        return;
+      }
       setError("root", {
         type: "manual",
         message: err.message || "No se pudo crear la solicitud.",
@@ -109,6 +127,7 @@ export const SolicitudFormPage = () => {
 
       <form
         onSubmit={handleSubmit(onSubmit)}
+        noValidate
         className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_224px] lg:items-start"
       >
         <div className="space-y-5">
@@ -173,6 +192,55 @@ export const SolicitudFormPage = () => {
                       {errors.cliente_id.message}
                     </p>
                   )}
+                  {clienteSeleccionado && (
+                    <div className="mt-3 rounded-lg border border-border bg-canvas p-3">
+                      <p className="mb-2 text-label font-medium text-ink">
+                        Cliente seleccionado
+                      </p>
+                      <dl className="grid gap-2 text-body sm:grid-cols-2">
+                        <div>
+                          <dt className="text-metadata text-text-muted">
+                            CUIT
+                          </dt>
+                          <dd className="text-ink">
+                            {clienteSeleccionado.cuit || "—"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-metadata text-text-muted">
+                            Contacto
+                          </dt>
+                          <dd className="text-ink">
+                            {clienteSeleccionado.contacto_nombre || "—"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-metadata text-text-muted">
+                            Correo
+                          </dt>
+                          <dd className="text-ink">
+                            {clienteSeleccionado.email || "—"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-metadata text-text-muted">
+                            Teléfono
+                          </dt>
+                          <dd className="text-ink">
+                            {clienteSeleccionado.telefono || "—"}
+                          </dd>
+                        </div>
+                        <div className="sm:col-span-2">
+                          <dt className="text-metadata text-text-muted">
+                            Dirección
+                          </dt>
+                          <dd className="text-ink">
+                            {clienteSeleccionado.direccion || "—"}
+                          </dd>
+                        </div>
+                      </dl>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -184,8 +252,18 @@ export const SolicitudFormPage = () => {
                     {...register("cliente_razon_social")}
                   />
                   <Field
+                    id="cliente_cuit"
+                    label="CUIT"
+                    placeholder="XX-XXXXXXXX-X"
+                    helperText="11 dígitos o formato XX-XXXXXXXX-X"
+                    required
+                    inputMode="numeric"
+                    error={errors.cliente_cuit?.message}
+                    {...register("cliente_cuit")}
+                  />
+                  <Field
                     id="cliente_contacto"
-                    label="Contacto"
+                    label="Nombre de contacto"
                     {...register("cliente_contacto")}
                   />
                   <Field
@@ -196,7 +274,8 @@ export const SolicitudFormPage = () => {
                   <Field
                     id="cliente_email"
                     type="email"
-                    label="Correo (opcional)"
+                    label="Correo electrónico"
+                    required
                     error={errors.cliente_email?.message}
                     {...register("cliente_email")}
                   />
