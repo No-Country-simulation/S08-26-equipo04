@@ -1,12 +1,11 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Inbox, Plus, Search } from "lucide-react";
+import { Inbox, Search } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useCotizaciones } from "../../hooks/useCotizaciones";
 import { useSolicitudes } from "../../hooks/useSolicitudes";
 import {
   Badge,
-  Button,
   Card,
   DataTable,
   EmptyState,
@@ -58,7 +57,10 @@ export const CotizacionesPage = () => {
             solicitud?.cliente_razon_social ??
             "—",
           pieza_trabajo:
-            cotizacion.pieza_trabajo ?? solicitud?.descripcion_pieza ?? null,
+            cotizacion.descripcion_pieza ??
+            cotizacion.pieza_trabajo ??
+            solicitud?.descripcion_pieza ??
+            null,
         };
       }),
     [cotizaciones, solicitudPorId],
@@ -170,12 +172,8 @@ export const CotizacionesPage = () => {
             </p>
           )}
         </div>
-        {user?.rol === "JEFE_PRODUCCION" && (
-          <Button onClick={() => navigate("/cotizaciones/nueva")}>
-            <Plus className="h-4 w-4" />
-            Nueva cotización
-          </Button>
-        )}
+        {/* FE-154: sin botón "Nueva cotización". Se cotiza desde
+            Solicitudes con el botón "Cotizar" de cada fila. */}
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

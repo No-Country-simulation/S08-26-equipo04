@@ -23,7 +23,7 @@ const items = [
     label: "Solicitudes",
     to: "/solicitudes",
     icon: Clipboard,
-    roles: ["VENDEDOR"],
+    roles: ["VENDEDOR", "JEFE_PRODUCCION"],
   },
   {
     label: "Cotizaciones",
