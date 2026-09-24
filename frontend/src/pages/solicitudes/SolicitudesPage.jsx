@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Calculator, Inbox, Plus, RefreshCw } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useSolicitudes } from "../../hooks/useSolicitudes";
@@ -35,10 +35,13 @@ const TEXTOS_JEFE = {
 
 export const SolicitudesPage = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const { solicitudes, cargando, error, recargar } = useSolicitudes();
   const esJefe = user?.rol === "JEFE_PRODUCCION";
   const esVendedor = user?.rol === "VENDEDOR";
+  const estadoParam = searchParams.get("estado");
+  const estadoFiltro = estadoParam || (esJefe ? "PENDIENTE_COTIZACION" : "TODOS");
 
   // La lista puede cambiar fuera de esta pantalla (otro vendedor o el jefe
   // cotizando): se vuelve a pedir cada vez que se entra (FE-4).
@@ -54,22 +57,20 @@ export const SolicitudesPage = () => {
       const t = Date.parse(item.created_at ?? "");
       return Number.isNaN(t) ? 0 : t;
     };
-    if (esJefe) {
-      return solicitudes
-        .filter((item) => item.estado === "PENDIENTE_COTIZACION")
-        .slice()
-        .sort((a, b) => timestamp(a) - timestamp(b) || a.id - b.id);
-    }
-    if (esVendedor) {
-      return solicitudes
-        .filter(
-          (item) => item.vendedor_id == null || item.vendedor_id === user.id,
-        )
-        .slice()
-        .sort((a, b) => timestamp(b) - timestamp(a) || b.id - a.id);
-    }
-    return solicitudes;
-  }, [solicitudes, esJefe, esVendedor, user]);
+    const propias = esVendedor
+      ? solicitudes.filter((item) => item.vendedor_id == null || Number(item.vendedor_id) === Number(user.id))
+      : solicitudes;
+    const filtradas = estadoFiltro === "TODOS" ? propias : propias.filter((item) => item.estado === estadoFiltro);
+    return filtradas.slice().sort((a, b) => (esJefe ? timestamp(a) - timestamp(b) : timestamp(b) - timestamp(a)) || (esJefe ? a.id - b.id : b.id - a.id));
+  }, [solicitudes, esJefe, esVendedor, user, estadoFiltro]);
+
+  const cambiarEstado = (event) => {
+    const value = event.target.value;
+    const next = new URLSearchParams(searchParams);
+    if (value === "TODOS") next.delete("estado");
+    else next.set("estado", value);
+    setSearchParams(next);
+  };
 
   const columns = useMemo(() => {
     const base = [
@@ -168,6 +169,13 @@ export const SolicitudesPage = () => {
         <CardHeader>
           <CardTitle>{tituloTarjeta}</CardTitle>
         </CardHeader>
+        <div className="mb-4 flex justify-end">
+          <select className="select" value={estadoFiltro} onChange={cambiarEstado} aria-label="Filtrar solicitudes por estado">
+            <option value="TODOS">Todos los estados</option>
+            <option value="PENDIENTE_COTIZACION">Pendiente de cotización</option>
+            <option value="COTIZADA">Cotizada</option>
+          </select>
+        </div>
         {cargando ? (
           <SkeletonTable columns={5} rows={5} />
         ) : error ? (

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Inbox, RefreshCw, Search } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useCotizaciones } from "../../hooks/useCotizaciones";
@@ -32,13 +32,14 @@ const estadoLabels = {
 
 export const CotizacionesPage = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const { cotizaciones, cargando, error, recargar } = useCotizaciones();
   // El DTO de cotización no trae solicitud_numero/cliente: se enriquece
   // con la lista de solicitudes (igual que solicitudes hace con clientes).
   const { solicitudes } = useSolicitudes();
   const [busqueda, setBusqueda] = useState("");
-  const [estado, setEstado] = useState("TODOS");
+  const estado = searchParams.get("estado") || "TODOS";
 
   // La lista puede cambiar fuera de esta pantalla (el jefe cotiza en otra
   // pestaña): se vuelve a pedir cada vez que se entra (FE-4).
@@ -163,6 +164,14 @@ export const CotizacionesPage = () => {
     );
   };
 
+  const cambiarEstado = (event) => {
+    const value = event.target.value;
+    const next = new URLSearchParams(searchParams);
+    if (value === "TODOS") next.delete("estado");
+    else next.set("estado", value);
+    setSearchParams(next);
+  };
+
   return (
     <div className="mx-auto max-w-[1360px] space-y-8">
       <Title>Cotizaciones</Title>
@@ -216,7 +225,7 @@ export const CotizacionesPage = () => {
           name="estado"
           className="select h-11 sm:w-[220px] sm:max-w-none text-body"
           value={estado}
-          onChange={(e) => setEstado(e.target.value)}
+          onChange={cambiarEstado}
           aria-label="Filtrar por estado"
         >
           <option value="TODOS">Todos los estados</option>
