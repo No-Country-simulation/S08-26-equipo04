@@ -34,7 +34,7 @@ public class Cliente {
 
     @NotBlank
     @Column(nullable = false, unique = true)
-    private String Cuit;
+    private String cuit;
 
     @NotBlank(message = "El nombre no puede estar vacio")
     @Column(name = "contacto_nombre", nullable = false, length = 120)
