@@ -57,7 +57,10 @@ export const CotizacionesPage = () => {
             solicitud?.cliente_razon_social ??
             "—",
           pieza_trabajo:
-            cotizacion.pieza_trabajo ?? solicitud?.descripcion_pieza ?? null,
+            cotizacion.descripcion_pieza ??
+            cotizacion.pieza_trabajo ??
+            solicitud?.descripcion_pieza ??
+            null,
         };
       }),
     [cotizaciones, solicitudPorId],
