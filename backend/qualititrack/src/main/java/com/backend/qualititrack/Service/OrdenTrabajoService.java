@@ -85,22 +85,24 @@ public class OrdenTrabajoService {
             OtFase nuevaFase = new OtFase();
             nuevaFase.setOrdenTrabajo(guardada);
             nuevaFase.setFaseCatalogo(faseCot.getFaseCatalogo());
-            nuevaFase.setNumeroSecuencia(faseCot.getNumeroSecuencia());
+            int numeroSecuencia = faseCot.getNumeroSecuencia();
+            nuevaFase.setNumeroSecuencia(numeroSecuencia);
             nuevaFase.setTiempoEstimadoMinutos(faseCot.getTiempoEstimadoMinutos());
             nuevaFase.setEsRehacer(false);
             nuevaFase.setCicloIteracion(1);
-            nuevaFase.setEstado(EstadoOtFase.EN_COLA);
+            nuevaFase.setEstado(EstadoOtFase.PENDIENTE);
 
             // Asignar un operario
             Usuario operarioAsignado = usuarioService.obtenerOperarioHabilitado(faseCot.getFaseCatalogo().getId());
             nuevaFase.setOperario(operarioAsignado);
 
             // Lógica exclusiva para la PRIMERA fase de la secuencia
-            if (faseCot.getNumeroSecuencia() == 1) {
+            if (numeroSecuencia == 1) {
                 OffsetDateTime vencimiento = OffsetDateTime.now()
                         .plusMinutes(faseCot.getTiempoEstimadoMinutos());
                 nuevaFase.setFechaVencimiento(vencimiento);
                 guardada.setFechaInicioProduccion(OffsetDateTime.now());
+                nuevaFase.setEstado(EstadoOtFase.EN_COLA);
             } else {
                 nuevaFase.setFechaVencimiento(null);
             }
