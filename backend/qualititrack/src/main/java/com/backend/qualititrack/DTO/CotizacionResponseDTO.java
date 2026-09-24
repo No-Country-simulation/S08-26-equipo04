@@ -1,6 +1,7 @@
 package com.backend.qualititrack.DTO;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -42,4 +43,13 @@ public class CotizacionResponseDTO {
     private String motivoRechazoCliente;
     private OffsetDateTime fechaCreacion;
     private OffsetDateTime fechaActualizacion;
+
+    // Info asociada a la solicitud, agregada debido a que el jefe solo puede ver solicitudes pendientes ahora
+    private String solicitudNumero;
+    private LocalDate fechaEsperadaEntrega;
+    private String descripcionPieza;
+    private Integer cantidad;
+
+    // Info asociada al cliente, agregada por la misma razón que la info de solicitud
+    private String clienteRazonSocial;
 }
