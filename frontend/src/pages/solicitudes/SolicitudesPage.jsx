@@ -170,11 +170,13 @@ export const SolicitudesPage = () => {
           <CardTitle>{tituloTarjeta}</CardTitle>
         </CardHeader>
         <div className="mb-4 flex justify-end">
-          <select className="select" value={estadoFiltro} onChange={cambiarEstado} aria-label="Filtrar solicitudes por estado">
-            <option value="TODOS">Todos los estados</option>
-            <option value="PENDIENTE_COTIZACION">Pendiente de cotización</option>
-            <option value="COTIZADA">Cotizada</option>
-          </select>
+          {!esJefe && (
+            <select className="select" value={estadoFiltro} onChange={cambiarEstado} aria-label="Filtrar solicitudes por estado">
+              <option value="TODOS">Todos los estados</option>
+              <option value="PENDIENTE_COTIZACION">Pendiente de cotización</option>
+              <option value="COTIZADA">Cotizada</option>
+            </select>
+          )}
         </div>
         {cargando ? (
           <SkeletonTable columns={5} rows={5} />
