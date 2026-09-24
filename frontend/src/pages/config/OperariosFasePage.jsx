@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { mocks } from '../../mocks';
+import { apiGet, apiPost } from '../../api';
 import { Button, Card, CardHeader, CardTitle, DataTable, Toggle, Title } from '../../components/ui';
 import { toast } from 'sonner';
 
@@ -9,27 +9,30 @@ export const OperariosFasePage = () => {
   const { faseId } = useParams();
   const navigate = useNavigate();
 
-  const fase = useMemo(
-    () => mocks.fases.find((f) => f.id === Number(faseId)),
-    [faseId]
-  );
-
-  const operarios = useMemo(
-    () => mocks.usuarios.filter((u) => u.rol === 'OPERARIO'),
-    []
-  );
+  const [fase, setFase] = useState(null);
+  const [operarios, setOperarios] = useState([]);
+  useEffect(() => {
+    Promise.all([apiGet('/api/fases'), apiGet('/api/usuarios')]).then(([fases, usuarios]) => {
+      setFase((fases.data ?? []).find((item) => item.id === Number(faseId)) ?? null);
+      setOperarios(usuarios.data ?? []);
+    }).catch(() => {
+      setFase(null);
+      setOperarios([]);
+    });
+  }, [faseId]);
 
   const [asignaciones, setAsignaciones] = useState(() => {
-    const initial = {};
-    mocks.faseOperarios
-      .filter((fo) => fo.fase_catalogo_id === Number(faseId))
-      .forEach((fo) => {
-        initial[fo.operario_id] = fo.habilitado;
-      });
-    return initial;
+    return {};
   });
 
-  const handleToggle = (operarioId) => {
+  const handleToggle = useCallback(async (operarioId) => {
+    const habilitado = asignaciones[operarioId] !== true;
+    try {
+      await apiPost(`/api/fases/${faseId}/habilitar`, { operarioId, habilitado });
+    } catch (err) {
+      toast.error(err?.response?.data?.message || err?.response?.data?.error || 'No se pudo actualizar la habilitación.');
+      return;
+    }
     setAsignaciones((prev) => {
       const isCurrentlyEnabled = prev[operarioId] === true;
       return { ...prev, [operarioId]: !isCurrentlyEnabled };
@@ -42,7 +45,7 @@ export const OperariosFasePage = () => {
         ? `${operario.nombre} deshabilitado de esta fase`
         : `${operario.nombre} habilitado para esta fase`
     );
-  };
+  }, [asignaciones, faseId, operarios]);
 
   const columns = useMemo(() => [
     {
@@ -76,7 +79,7 @@ export const OperariosFasePage = () => {
         );
       },
     },
-  ], [asignaciones, operarios]);
+  ], [asignaciones, handleToggle]);
 
   if (!fase) {
     return (
