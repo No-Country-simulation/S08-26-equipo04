@@ -21,6 +21,9 @@ public class ClienteDTO {
 
     @Email(message = "Email inválido")
     private String email;
+    
+    @NotBlank(message = "El CUIT no puede estar vacío")
+    private String cuit;
 
     @NotBlank
     private String razonSocial;

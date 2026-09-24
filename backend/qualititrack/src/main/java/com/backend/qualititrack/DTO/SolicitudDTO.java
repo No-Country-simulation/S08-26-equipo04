@@ -42,6 +42,7 @@ public class SolicitudDTO {
     private Long clienteId;
 
     // Para cliente nuevo (Datos crudos)
+    private String cuit;
     private String razonSocial;
     private String contactoNombre;
     private String telefono;
