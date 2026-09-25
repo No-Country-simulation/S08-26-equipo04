@@ -402,6 +402,7 @@ export const CotizacionFormPage = () => {
                   min="0"
                   step="0.01"
                   {...register("precio_final", { valueAsNumber: true })}
+                  onFocus={(event) => event.currentTarget.select()}
                   error={errors.precio_final?.message}
                 />
 

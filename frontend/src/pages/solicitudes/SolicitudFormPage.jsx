@@ -93,7 +93,18 @@ export const SolicitudFormPage = () => {
       toast.success("Solicitud creada correctamente");
       navigate("/solicitudes");
     } catch (err) {
-      const esCuitDuplicado = err?.cause?.response?.status === 409;
+      const response = err?.cause?.response;
+      const mensajeError =
+        err?.message ||
+        response?.data?.mensaje ||
+        response?.data?.message ||
+        response?.data?.error ||
+        response?.data?.detail ||
+        "No se pudo crear la solicitud.";
+      const esCuitDuplicado =
+        response?.status === 409 &&
+        /cuit/i.test(mensajeError) &&
+        /ya está registrado/i.test(mensajeError);
       if (esCuitDuplicado && clienteMode === "nuevo") {
         setError("cliente_cuit", {
           type: "manual",
@@ -103,7 +114,7 @@ export const SolicitudFormPage = () => {
       }
       setError("root", {
         type: "manual",
-        message: err.message || "No se pudo crear la solicitud.",
+        message: mensajeError,
       });
     }
   };
@@ -264,11 +275,15 @@ export const SolicitudFormPage = () => {
                   <Field
                     id="cliente_contacto"
                     label="Nombre de contacto"
+                    required
+                    error={errors.cliente_contacto?.message}
                     {...register("cliente_contacto")}
                   />
                   <Field
                     id="cliente_telefono"
                     label="Teléfono"
+                    required
+                    error={errors.cliente_telefono?.message}
                     {...register("cliente_telefono")}
                   />
                   <Field
@@ -282,6 +297,8 @@ export const SolicitudFormPage = () => {
                   <Field
                     id="cliente_direccion"
                     label="Dirección"
+                    required
+                    error={errors.cliente_direccion?.message}
                     className="sm:col-span-2"
                     {...register("cliente_direccion")}
                   />
