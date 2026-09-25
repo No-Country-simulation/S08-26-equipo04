@@ -235,9 +235,11 @@ export const GestionPlantaPage = () => {
               </p>
             </div>
 
-            <label className="block space-y-1.5">
+            <label className="block space-y-1.5" htmlFor="operario-destino">
               <span className="text-label text-ink">Nuevo operario</span>
               <select
+                id="operario-destino"
+                name="operario_destino_id"
                 className="select"
                 value={operarioDestinoId}
                 onChange={(event) => setOperarioDestinoId(event.target.value)}
@@ -252,9 +254,11 @@ export const GestionPlantaPage = () => {
               </select>
             </label>
 
-            <label className="block space-y-1.5">
+            <label className="block space-y-1.5" htmlFor="motivo-reasignacion">
               <span className="text-label text-ink">Motivo</span>
               <input
+                id="motivo-reasignacion"
+                name="motivo"
                 className="input"
                 value={motivo}
                 onChange={(event) => setMotivo(event.target.value)}

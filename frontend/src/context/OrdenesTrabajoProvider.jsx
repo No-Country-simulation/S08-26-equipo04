@@ -47,9 +47,28 @@ export const OrdenesTrabajoProvider = ({ children }) => {
               apiGet(`/api/ordenes-trabajo/cotizacion/${cotizacion.id}`).catch(() => null),
             ),
           );
+          const cotizacionesPorId = new Map(
+            aprobadas.map((cotizacion) => [cotizacion.id, cotizacion]),
+          );
           ordenes = respuestas
             .filter(Boolean)
-            .map(({ data }) => data);
+            .map(({ data }) => {
+              const cotizacion = cotizacionesPorId.get(
+                data.cotizacionId ?? data.cotizacion_id,
+              );
+              return {
+                ...data,
+                cliente_razon_social:
+                  cotizacion?.cliente_razon_social ?? data.cliente ?? "—",
+                descripcion_pieza:
+                  cotizacion?.descripcion_pieza ?? data.pieza_trabajo ?? "—",
+                cantidad: cotizacion?.cantidad ?? data.cantidad ?? "—",
+                fecha_esperada_entrega:
+                  cotizacion?.fecha_esperada_entrega ??
+                  data.fecha_esperada_entrega ??
+                  null,
+              };
+            });
         } else {
           const estados = [
             "EN_PRODUCCION",
