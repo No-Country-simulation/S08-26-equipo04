@@ -18,6 +18,7 @@ import com.backend.qualititrack.repository.SolicitudRepository;
 import com.backend.qualititrack.repository.UsuarioRepository;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 
 @Service
 public class SolicitudService {
@@ -65,6 +66,7 @@ public class SolicitudService {
     }
 
     // Crea una nueva
+    @Transactional 
     public SolicitudResponseDTO crear(SolicitudDTO dto, String vendedorMail) {
         Cliente cliente;
 
