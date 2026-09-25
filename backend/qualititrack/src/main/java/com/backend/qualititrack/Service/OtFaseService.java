@@ -1,6 +1,5 @@
 package com.backend.qualititrack.Service;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -8,7 +7,6 @@ import java.util.stream.Collectors;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
-import com.backend.qualititrack.DTO.EntregaOtRequestDTO;
 import com.backend.qualititrack.DTO.OtFaseReasignacionRequestDTO;
 import com.backend.qualititrack.DTO.OtFaseReasignacionResponseDTO;
 import com.backend.qualititrack.DTO.OtFaseResponseDTO;
@@ -304,7 +302,10 @@ public class OtFaseService {
         OtFase otFase = otFaseRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("La fase con id " + id + " no existe"));
         if (otFase.getEstado() == EstadoOtFase.TERMINADO) {
-            throw new InvalidStateException("La fase con id " + id + " ya está terminada y no puede ser reasignada");
+            throw new InvalidStateException("La fase con id " + id + " ya está en terminada y no puede ser reasignada");
+        }
+        if (otFase.getEstado() == EstadoOtFase.EN_EJECUCION) {
+            throw new InvalidStateException("La fase con id " + id + " ya está en ejecución y no puede ser reasignada");
         }
         // Guardar operarioAnterior para dejar registro
         Usuario operarioAnterior = otFase.getOperario();
