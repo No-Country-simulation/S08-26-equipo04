@@ -17,6 +17,12 @@ const redirectToLogin = () => {
   }
 };
 
+const getErrorMessage = (data, fallback) => {
+  const mensaje = data?.mensaje || data?.detail || data?.message || data?.error;
+  const detalles = Array.isArray(data?.detalles) ? data.detalles.join(' ') : null;
+  return [mensaje, detalles].filter(Boolean).join(' ') || fallback;
+};
+
 api.interceptors.request.use((config) => {
   const session = readSession();
   const token = session?.token;
@@ -36,7 +42,7 @@ api.interceptors.response.use(
   (error) => {
     const response = error?.response;
     const status = response?.status;
-    const message = response?.data?.message || response?.data?.error || 'No se pudo completar la solicitud.';
+    const message = getErrorMessage(response?.data, 'No se pudo completar la solicitud.');
 
     if (status === 401 && !error?.config?.url?.includes('/api/auth/login')) {
       clearSession();

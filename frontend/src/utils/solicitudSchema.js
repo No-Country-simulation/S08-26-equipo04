@@ -24,18 +24,30 @@ export const solicitudSchema = z.object({
   if (data.cliente_mode === 'nuevo' && !data.cliente_razon_social) {
     context.addIssue({ code: 'custom', path: ['cliente_razon_social'], message: 'Ingresá la razón social' });
   }
+  if (data.cliente_mode === 'nuevo' && !data.cliente_contacto) {
+    context.addIssue({ code: 'custom', path: ['cliente_contacto'], message: 'Ingresá el nombre de contacto' });
+  }
   if (data.cliente_mode === 'nuevo' && !data.cliente_cuit) {
     context.addIssue({ code: 'custom', path: ['cliente_cuit'], message: 'Ingresá el CUIT' });
   }
+  if (data.cliente_mode === 'nuevo' && !data.cliente_telefono) {
+    context.addIssue({ code: 'custom', path: ['cliente_telefono'], message: 'Ingresá el teléfono' });
+  }
   if (data.cliente_mode === 'nuevo' && !data.cliente_email) {
     context.addIssue({ code: 'custom', path: ['cliente_email'], message: 'Ingresá el correo electrónico' });
+  }
+  if (data.cliente_mode === 'nuevo' && !data.cliente_direccion) {
+    context.addIssue({ code: 'custom', path: ['cliente_direccion'], message: 'Ingresá la dirección' });
   }
 });
 
 export const solicitudDefaults = {
   cliente_mode: 'registrado',
   cliente_id: '',
+  cliente_contacto: '',
   cliente_cuit: '',
+  cliente_telefono: '',
+  cliente_direccion: '',
   descripcion_pieza: '',
   cantidad: 1,
   fecha_esperada_entrega: '',

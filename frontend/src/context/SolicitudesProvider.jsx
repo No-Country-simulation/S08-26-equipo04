@@ -16,13 +16,15 @@ const mapItem = (item, listaClientes = []) => ({
     null,
 });
 
-const extractMessage = (error, fallback) =>
-  error?.response?.data?.detail ||
-  error?.response?.data?.message ||
-  error?.response?.data?.error ||
-  (error?.code === 'ECONNABORTED'
-    ? 'El servidor tarda en responder (Render en frio). Reintenta.'
-    : fallback);
+const extractMessage = (error, fallback) => {
+  const data = error?.response?.data;
+  const mensaje = data?.mensaje || data?.detail || data?.message || data?.error;
+  const detalles = Array.isArray(data?.detalles) ? data.detalles.join(' ') : null;
+  return [mensaje, detalles].filter(Boolean).join(' ') ||
+    (error?.code === 'ECONNABORTED'
+      ? 'El servidor tarda en responder (Render en frio). Reintenta.'
+      : fallback);
+};
 
 export const SolicitudesProvider = ({ children }) => {
   const { isAuthenticated, user } = useAuth();
