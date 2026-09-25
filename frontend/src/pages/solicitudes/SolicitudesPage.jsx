@@ -1,6 +1,6 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Calculator, Inbox, Plus, RefreshCw } from "lucide-react";
+import { Calculator, Inbox, Plus, RefreshCw, Search } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useSolicitudes } from "../../hooks/useSolicitudes";
 import {
@@ -42,6 +42,7 @@ export const SolicitudesPage = () => {
   const esVendedor = user?.rol === "VENDEDOR";
   const estadoParam = searchParams.get("estado");
   const estadoFiltro = estadoParam || (esJefe ? "PENDIENTE_COTIZACION" : "TODOS");
+  const [busqueda, setBusqueda] = useState("");
 
   // La lista puede cambiar fuera de esta pantalla (otro vendedor o el jefe
   // cotizando): se vuelve a pedir cada vez que se entra (FE-4).
@@ -61,8 +62,16 @@ export const SolicitudesPage = () => {
       ? solicitudes.filter((item) => item.vendedor_id == null || Number(item.vendedor_id) === Number(user.id))
       : solicitudes;
     const filtradas = estadoFiltro === "TODOS" ? propias : propias.filter((item) => item.estado === estadoFiltro);
-    return filtradas.slice().sort((a, b) => (esJefe ? timestamp(a) - timestamp(b) : timestamp(b) - timestamp(a)) || (esJefe ? a.id - b.id : b.id - a.id));
-  }, [solicitudes, esJefe, esVendedor, user, estadoFiltro]);
+    const texto = busqueda.trim().toLowerCase();
+    const conBusqueda = texto
+      ? filtradas.filter((item) =>
+          [item.numero_solicitud, item.cliente_razon_social, item.descripcion_pieza].some(
+            (value) => value?.toLowerCase().includes(texto),
+          ),
+        )
+      : filtradas;
+    return conBusqueda.slice().sort((a, b) => (esJefe ? timestamp(a) - timestamp(b) : timestamp(b) - timestamp(a)) || (esJefe ? a.id - b.id : b.id - a.id));
+  }, [solicitudes, esJefe, esVendedor, user, estadoFiltro, busqueda]);
 
   const cambiarEstado = (event) => {
     const value = event.target.value;
@@ -165,19 +174,35 @@ export const SolicitudesPage = () => {
           )}
         </div>
       </div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <label className="relative flex-1" htmlFor="solicitudes-busqueda">
+          <Search
+            className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted"
+            aria-hidden="true"
+          />
+          <input
+            id="solicitudes-busqueda"
+            name="busqueda"
+            type="search"
+            className="input h-11 w-full pl-10 text-body"
+            value={busqueda}
+            onChange={(event) => setBusqueda(event.target.value)}
+            placeholder="Buscar por número, cliente o pieza"
+            aria-label="Buscar solicitudes"
+          />
+        </label>
+        {!esJefe && (
+          <select id="solicitudes-estado" name="estado" className="select h-11 sm:w-[220px] sm:max-w-none text-body" value={estadoFiltro} onChange={cambiarEstado} aria-label="Filtrar solicitudes por estado">
+            <option value="TODOS">Todos los estados</option>
+            <option value="PENDIENTE_COTIZACION">Pendiente de cotización</option>
+            <option value="COTIZADA">Cotizada</option>
+          </select>
+        )}
+      </div>
       <Card>
         <CardHeader>
           <CardTitle>{tituloTarjeta}</CardTitle>
         </CardHeader>
-        <div className="mb-4 flex justify-end">
-          {!esJefe && (
-            <select className="select" value={estadoFiltro} onChange={cambiarEstado} aria-label="Filtrar solicitudes por estado">
-              <option value="TODOS">Todos los estados</option>
-              <option value="PENDIENTE_COTIZACION">Pendiente de cotización</option>
-              <option value="COTIZADA">Cotizada</option>
-            </select>
-          )}
-        </div>
         {cargando ? (
           <SkeletonTable columns={5} rows={5} />
         ) : error ? (
@@ -203,8 +228,6 @@ export const SolicitudesPage = () => {
           <DataTable
             columns={columns}
             data={solicitudesVisibles}
-            searchable
-            searchPlaceholder="Buscar por numero o cliente..."
             footer={`${solicitudesVisibles.length} ${solicitudesVisibles.length !== 1 ? "solicitudes" : "solicitud"}`}
           />
         )}

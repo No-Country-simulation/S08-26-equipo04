@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { PackageCheck } from "lucide-react";
+import { PackageCheck, Search } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "../../context/AuthContext";
@@ -200,17 +200,23 @@ export const DespachoPage = () => {
         </p>
       </div>
 
-      <div className="max-w-xl">
-        <input
-          id="entregas-busqueda"
-          name="busqueda"
-          type="search"
-          className="input w-full"
-          value={busqueda}
-          onChange={(event) => setBusqueda(event.target.value)}
-          placeholder="Buscar por OT, cliente o pieza"
-          aria-label="Buscar por OT, cliente o pieza"
-        />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <label className="relative flex-1" htmlFor="entregas-busqueda">
+          <Search
+            className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted"
+            aria-hidden="true"
+          />
+          <input
+            id="entregas-busqueda"
+            name="busqueda"
+            type="search"
+            className="input h-11 w-full pl-10 text-body"
+            value={busqueda}
+            onChange={(event) => setBusqueda(event.target.value)}
+            placeholder="Buscar por OT, cliente o pieza"
+            aria-label="Buscar por OT, cliente o pieza"
+          />
+        </label>
       </div>
 
       <Card>
