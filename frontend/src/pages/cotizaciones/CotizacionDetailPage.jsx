@@ -70,6 +70,8 @@ export const CotizacionDetailPage = () => {
     () => (cotizacion ? obtenerSolicitud(cotizacion.solicitud_id) : null),
     [cotizacion, obtenerSolicitud],
   );
+  const fechaEntrega =
+    solicitud?.fecha_esperada_entrega ?? cotizacion.fecha_esperada_entrega;
 
   if (buscando) {
     return (
@@ -198,7 +200,7 @@ export const CotizacionDetailPage = () => {
           </div>
           <div>
             <p className="p-4 pb-1 text-metadata text-text-muted">Fecha de entrega solicitada</p>
-            <p className="px-4 pb-4 text-body font-semibold text-ink">{solicitud?.fecha_esperada_entrega ? new Date(`${solicitud.fecha_esperada_entrega}T12:00:00`).toLocaleDateString('es-AR') : '-'}</p>
+            <p className="px-4 pb-4 text-body font-semibold text-ink">{fechaEntrega ? new Date(`${fechaEntrega}T12:00:00`).toLocaleDateString('es-AR') : '-'}</p>
           </div>
         </div>
       </Card>

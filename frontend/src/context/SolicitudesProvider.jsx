@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { apiGet, apiPost } from '../api';
 import { useAuth } from './AuthContext';
 import { mocks } from '../mocks';
@@ -77,11 +77,11 @@ export const SolicitudesProvider = ({ children }) => {
     };
   }, [isAuthenticated, puedeConsultar, version]);
 
-  const recargar = () => {
+  const recargar = useCallback(() => {
     setCargando(true);
     setError(null);
     setVersion((v) => v + 1);
-  };
+  }, []);
 
   const agregarSolicitud = async ({ solicitud, archivos = [] }) => {
     const base = {
