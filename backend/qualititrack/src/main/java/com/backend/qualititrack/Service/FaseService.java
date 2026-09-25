@@ -55,7 +55,7 @@ public class FaseService {
      * Habilita o deshabilita operarios sobre una fase específica
      */
     @Transactional
-    public FaseOperarioHabilitadoResponseDTO gestionarHabilitacionOperario(Long faseId, Long operarioId, boolean habilitar, String emailGerenteAutenticado) {
+    public FaseOperarioHabilitadoResponseDTO gestionarHabilitacionOperario(Long faseId, Long operarioId, Boolean habilitar, String emailGerenteAutenticado) {
         // Validar fase
         FaseCatalogo fase = faseRepository.findById(faseId)
                 .orElseThrow(() -> new EntityNotFoundException("Fase no encontrada con ID: " + faseId));

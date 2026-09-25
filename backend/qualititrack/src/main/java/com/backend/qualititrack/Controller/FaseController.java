@@ -83,8 +83,7 @@ public class FaseController {
             @PathVariable Long id,
             @RequestBody HabilitarOperarioDTO dto, Authentication auth) {
 
-        FaseOperarioHabilitadoResponseDTO faseModificada = faseService.gestionarHabilitacionOperario(id,
-                dto.getOperarioId(), dto.isHabilitado(), auth.getName());
+        FaseOperarioHabilitadoResponseDTO faseModificada = faseService.gestionarHabilitacionOperario(id, dto.getOperarioId(), dto.getHabilitado(), auth.getName());
         return ResponseEntity.ok(faseModificada);
     }
 
@@ -100,7 +99,11 @@ public class FaseController {
         private Long operarioId;
 
         @Builder.Default
-        private boolean habilitado = true;
+        private Boolean habilitado = true;
+
+        public Boolean getHabilitado() {
+            return (this.habilitado != null) ? this.habilitado : true;
+        }
 
         public void setHabilitado(Boolean habilitado) {
             this.habilitado = (habilitado != null) ? habilitado : true;
