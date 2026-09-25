@@ -144,7 +144,7 @@ public class CotizacionService {
      */
     @Transactional(readOnly = true)
     public List<CotizacionResponseDTO> listarCotizaciones() {
-        return cotizacionRepository.findAll().stream()
+        return cotizacionRepository.findAllWithDetails().stream()
                 .map(this::convertirADTO)
                 .collect(Collectors.toList());
     }
