@@ -311,7 +311,7 @@ public class OtFaseService {
         Usuario operarioAnterior = otFase.getOperario();
 
         // Chequear que el operario puede realizar la nueva fase
-        if (faseOperarioHabilitadoRepository.existsByFaseCatalogoIdAndOperarioIdAndHabilitadoTrue(
+        if (!faseOperarioHabilitadoRepository.existsByFaseCatalogoIdAndOperarioIdAndHabilitadoTrue(
                 otFase.getFaseCatalogo().getId(), operarioNuevoId)) {
             throw new InvalidStateException(
                     "El operario con id " + operarioNuevoId + " no puede realizar la fase con id "
