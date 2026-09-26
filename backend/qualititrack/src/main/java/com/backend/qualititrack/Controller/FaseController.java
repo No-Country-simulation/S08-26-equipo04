@@ -19,6 +19,7 @@ import com.backend.qualititrack.DTO.OperarioDTO;
 import com.backend.qualititrack.DTO.UsuarioDTO;
 import com.backend.qualititrack.Service.FaseService;
 import com.backend.qualititrack.modelos.FaseCatalogo;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -84,7 +85,7 @@ public class FaseController {
     @PreAuthorize("hasRole('GERENTE')")
     public ResponseEntity<FaseOperarioHabilitadoResponseDTO> habilitarOperarioEnFase(
             @PathVariable Long id,
-            @RequestBody HabilitarOperarioDTO dto, Authentication auth) {
+            @RequestBody @Valid HabilitarOperarioDTO dto, Authentication auth) {
 
         FaseOperarioHabilitadoResponseDTO faseModificada = faseService.gestionarHabilitacionOperario(id, dto.getOperarioId(), dto.getHabilitado(), auth.getName());
         return ResponseEntity.ok(faseModificada);
@@ -110,6 +111,7 @@ public class FaseController {
     @AllArgsConstructor
     public static class HabilitarOperarioDTO {
         @NotNull
+        @JsonAlias("operarioId")
         private Long operarioId;
 
         @Builder.Default
