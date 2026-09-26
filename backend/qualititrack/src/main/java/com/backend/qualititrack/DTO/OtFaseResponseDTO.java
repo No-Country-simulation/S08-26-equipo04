@@ -13,13 +13,17 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-// DTO para la lectura de OtFase, 
+// DTO para la lectura de OtFase,
 public class OtFaseResponseDTO {
     private Long id;
 
     private Long ordenTrabajoId;
+    
+    private String numeroOt;
 
     private Long faseCatalogoId;
+    
+    private String faseNombre;
 
     private Integer numeroSecuencia;
 
