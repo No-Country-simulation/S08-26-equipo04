@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.backend.qualititrack.DTO.FaseOperarioHabilitadoResponseDTO;
+import com.backend.qualititrack.DTO.OperarioDTO;
+import com.backend.qualititrack.DTO.UsuarioDTO;
 import com.backend.qualititrack.Service.FaseService;
 import com.backend.qualititrack.modelos.FaseCatalogo;
 
@@ -24,6 +26,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 
 @RestController
 @RequestMapping("/api/fases")
@@ -83,10 +86,20 @@ public class FaseController {
             @PathVariable Long id,
             @RequestBody HabilitarOperarioDTO dto, Authentication auth) {
 
-        FaseOperarioHabilitadoResponseDTO faseModificada = faseService.gestionarHabilitacionOperario(id,
-                dto.getOperarioId(), dto.isHabilitado(), auth.getName());
+        FaseOperarioHabilitadoResponseDTO faseModificada = faseService.gestionarHabilitacionOperario(id, dto.getOperarioId(), dto.getHabilitado(), auth.getName());
         return ResponseEntity.ok(faseModificada);
     }
+    
+    // GET /api/fases/{id}/operarios
+    // Devuelve la lista de operarios habilitados para una fase específica
+    // Roles: Gerente y Jefe de Producción
+    @GetMapping("{id}/operarios")
+    @PreAuthorize("hasAnyRole('GERENTE', 'JEFE_PRODUCCION')")
+    public ResponseEntity<List<OperarioDTO>> listarOperariosHabilitados(@PathVariable Long id) {
+        List<OperarioDTO> operariosHabilitados = faseService.listarOperariosHabilitados(id);
+        return ResponseEntity.ok(operariosHabilitados);
+    }
+    
 
     /**
      * DTO interno para recibir el payload del endpoint de habilitación.
@@ -100,7 +113,11 @@ public class FaseController {
         private Long operarioId;
 
         @Builder.Default
-        private boolean habilitado = true;
+        private Boolean habilitado = true;
+
+        public Boolean getHabilitado() {
+            return (this.habilitado != null) ? this.habilitado : true;
+        }
 
         public void setHabilitado(Boolean habilitado) {
             this.habilitado = (habilitado != null) ? habilitado : true;

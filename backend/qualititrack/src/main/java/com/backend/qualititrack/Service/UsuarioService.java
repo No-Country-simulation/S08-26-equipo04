@@ -90,8 +90,8 @@ public class UsuarioService {
      */
     public Usuario obtenerOperarioHabilitado(Long faseCatalogoId) {
         // Busca operarios habilitados para la fase especificada
-        List<FaseOperarioHabilitado> habilitaciones = faseOperarioHabilitadoRepository
-                .findByFaseCatalogoIdAndHabilitadoTrue(faseCatalogoId);
+        List<Usuario> habilitaciones = faseOperarioHabilitadoRepository
+                .findOperariosHabilitadosByFaseId(faseCatalogoId);
 
         // Devolver excepcion si no hubiera ninguno disponible
         if (habilitaciones.isEmpty()) {
@@ -99,7 +99,7 @@ public class UsuarioService {
         }
 
         // Seleccionamos el primer operario disponible (ver de agregar lógica de selección más adelante)
-        Usuario operarioAsignado = habilitaciones.get(0).getOperario();
+        Usuario operarioAsignado = habilitaciones.get(0);
 
         // Validar que el usuario asignado efectivamente es un operario activo
         if (operarioAsignado.getRol() != NivelRol.OPERARIO || !operarioAsignado.getActivo()) {
