@@ -10,7 +10,6 @@ import ordenesTrabajo from "./ordenes-trabajo.json";
 import auditorias from "./auditorias.json";
 import dashboardPlanta from "./dashboard-planta.json";
 import dashboardCalidad from "./dashboard-calidad.json";
-import adjuntos from "./adjuntos.json";
 import notas from "./notas.json";
 
 export const mocks = {
@@ -26,7 +25,6 @@ export const mocks = {
   auditorias,
   dashboardPlanta,
   dashboardCalidad,
-  adjuntos,
   notas,
 };
 

@@ -11,14 +11,28 @@ import {
   solicitudDefaults,
   solicitudSchema,
 } from "../../utils/solicitudSchema";
+import {
+  MAX_ADJUNTO_BYTES,
+  TIPOS_ARCHIVO,
+  TIPO_ARCHIVO_POR_DEFECTO,
+  formatBytes,
+  mensajeTamanioMaximo,
+  superaTamanioMaximo,
+} from "../../utils/adjuntos";
 
-const formatBytes = (bytes) => `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+const resumenFallidos = (fallidos) => {
+  const nombres = fallidos.map((item) => item.nombre);
+  const detalle = fallidos[0]?.mensaje ? ` ${fallidos[0].mensaje}` : "";
+  return `La solicitud se creó, pero no se adjuntaron ${nombres.join(", ")}.${detalle}`;
+};
 
 export const SolicitudFormPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { agregarSolicitud, clientes } = useSolicitudes();
+  // Un item por archivo con su tipo, que es lo que pide POST /api/documentos.
   const [archivos, setArchivos] = useState([]);
+  const [rechazados, setRechazados] = useState([]);
   const [arrastrando, setArrastrando] = useState(false);
   const {
     register,
@@ -45,19 +59,52 @@ export const SolicitudFormPage = () => {
     (item) => String(item.id) === String(clienteId),
   );
 
-  const agregarArchivos = (files) => {
-    const nuevos = Array.from(files).filter(
-      (file) => !archivos.some((item) => item.name === file.name),
+  // Archivos rechazados al elegirlos, o el error del schema si alguno
+  // llegara a colarse en la lista.
+  const mensajeArchivos = rechazados.length > 0
+    ? rechazados.join(" ")
+    : errors.adjuntos?.message;
+
+  const sincronizarAdjuntos = (items) => {
+    setArchivos(items);
+    setValue(
+      "adjuntos",
+      items.map((item) => item.archivo),
+      { shouldValidate: true },
     );
-    const total = [...archivos, ...nuevos];
-    setArchivos(total);
-    setValue("adjuntos", total, { shouldValidate: true });
+  };
+
+  const agregarArchivos = (files) => {
+    const seleccionados = Array.from(files);
+    // El backend corta en 10 MB por archivo: se rechaza antes de subir.
+    const validos = seleccionados.filter((file) => !superaTamanioMaximo(file));
+    setRechazados(
+      seleccionados.filter(superaTamanioMaximo).map(mensajeTamanioMaximo),
+    );
+    const nuevos = validos.filter(
+      (file) => !archivos.some((item) => item.archivo.name === file.name),
+    );
+    sincronizarAdjuntos([
+      ...archivos,
+      ...nuevos.map((archivo) => ({
+        archivo,
+        tipoArchivo: TIPO_ARCHIVO_POR_DEFECTO,
+      })),
+    ]);
   };
 
   const quitarArchivo = (name) => {
-    const restantes = archivos.filter((file) => file.name !== name);
-    setArchivos(restantes);
-    setValue("adjuntos", restantes, { shouldValidate: true });
+    sincronizarAdjuntos(
+      archivos.filter((item) => item.archivo.name !== name),
+    );
+  };
+
+  const cambiarTipoArchivo = (name, tipoArchivo) => {
+    setArchivos((prev) =>
+      prev.map((item) =>
+        item.archivo.name === name ? { ...item, tipoArchivo } : item,
+      ),
+    );
   };
 
   const onSubmit = async (data) => {
@@ -66,7 +113,7 @@ export const SolicitudFormPage = () => {
         ? clientes.find((item) => item.id === Number(data.cliente_id))
         : { id: null, razon_social: data.cliente_razon_social };
     try {
-      await agregarSolicitud({
+      const { adjuntosFallidos } = await agregarSolicitud({
         solicitud: {
           cliente_id: cliente?.id ?? null,
           cliente_razon_social: cliente?.razon_social,
@@ -91,6 +138,9 @@ export const SolicitudFormPage = () => {
         archivos,
       });
       toast.success("Solicitud creada correctamente");
+      if (adjuntosFallidos.length > 0) {
+        toast.warning(resumenFallidos(adjuntosFallidos), { duration: 9000 });
+      }
       navigate("/solicitudes");
     } catch (err) {
       const response = err?.cause?.response;
@@ -402,6 +452,10 @@ export const SolicitudFormPage = () => {
                 <span className="mt-2 inline-flex rounded-md border border-border bg-surface px-3 py-1.5 text-label font-medium text-ink">
                   Adjuntar documento
                 </span>
+                <span className="mt-2 block text-metadata text-text-muted">
+                  PDF, imagen o CAD. Hasta {formatBytes(MAX_ADJUNTO_BYTES)} por
+                  archivo.
+                </span>
                 <input
                   id="adjuntos"
                   type="file"
@@ -410,28 +464,56 @@ export const SolicitudFormPage = () => {
                   onChange={(event) => agregarArchivos(event.target.files)}
                 />
               </div>
+              {mensajeArchivos && (
+                <p
+                  role="alert"
+                  className="mt-3 rounded-lg bg-error-light p-3 text-metadata text-error"
+                >
+                  {mensajeArchivos}
+                </p>
+              )}
               {archivos.length > 0 && (
                 <ul
                   className="mt-4 space-y-2"
                   aria-label="Archivos seleccionados"
                 >
-                  {archivos.map((file) => (
+                  {archivos.map(({ archivo, tipoArchivo }, index) => (
                     <li
-                      key={file.name}
-                      className="flex items-center gap-3 rounded-lg bg-canvas px-3 py-2"
+                      key={archivo.name}
+                      className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-canvas px-3 py-2"
                     >
                       <Paperclip className="h-4 w-4 shrink-0 text-primary" />
                       <span className="min-w-0 flex-1 truncate text-body text-ink">
-                        {file.name}
+                        {archivo.name}
                         <span className="ml-2 text-metadata text-text-muted">
-                          {formatBytes(file.size)}
+                          {formatBytes(archivo.size)}
                         </span>
                       </span>
+                      <label
+                        htmlFor={`adjunto-tipo-${index}`}
+                        className="sr-only"
+                      >
+                        Tipo de {archivo.name}
+                      </label>
+                      <select
+                        id={`adjunto-tipo-${index}`}
+                        value={tipoArchivo}
+                        onChange={(event) =>
+                          cambiarTipoArchivo(archivo.name, event.target.value)
+                        }
+                        className="select w-auto py-1.5 text-label"
+                      >
+                        {TIPOS_ARCHIVO.map((tipo) => (
+                          <option key={tipo.value} value={tipo.value}>
+                            {tipo.label}
+                          </option>
+                        ))}
+                      </select>
                       <button
                         type="button"
-                        onClick={() => quitarArchivo(file.name)}
+                        onClick={() => quitarArchivo(archivo.name)}
                         className="rounded p-1 text-text-muted hover:bg-surface hover:text-error"
-                        aria-label={`Quitar ${file.name}`}
+                        aria-label={`Quitar ${archivo.name}`}
                       >
                         <X className="h-4 w-4" />
                       </button>
