@@ -49,7 +49,7 @@ public class OtFaseService {
     // GET /api/ot-fases (Jefe)
     public List<OtFaseResponseDTO> listarFases() {
         // Retornar todas las fases, mapeadas a DTOs
-        return otFaseRepository.findAll()
+        return otFaseRepository.findAllWithRelaciones()
                 .stream()
                 .map(this::convertirADTO)
                 .collect(Collectors.toList());
@@ -177,26 +177,6 @@ public class OtFaseService {
             ordenTrabajoRepository.save(otFase.getOrdenTrabajo());
         }
         return convertirADTO(guardada);
-    }
-
-    private OtFaseResponseDTO convertirADTO(OtFase otFase) {
-        return OtFaseResponseDTO.builder()
-                .id(otFase.getId())
-                .ordenTrabajoId(otFase.getOrdenTrabajo().getId())
-                .faseCatalogoId(otFase.getFaseCatalogo().getId())
-                .numeroSecuencia(otFase.getNumeroSecuencia())
-                .operarioId(otFase.getOperario().getId())
-                .tiempoEstimadoMinutos(otFase.getTiempoEstimadoMinutos())
-                .fechaVencimiento(otFase.getFechaVencimiento())
-                .estado(otFase.getEstado())
-                .fechaInicioReal(otFase.getFechaInicioReal())
-                .fechaFinReal(otFase.getFechaFinReal())
-                .duracionRealMinutos(otFase.getDuracionRealMinutos())
-                .esRehacer(otFase.getEsRehacer())
-                .cicloIteracion(otFase.getCicloIteracion())
-                .createdAt(otFase.getCreatedAt())
-                .updatedAt(otFase.getUpdatedAt())
-                .build();
     }
 
     // POST /api/ot-fases (Jefe de Producción - Fases de Retrabajo)
@@ -360,5 +340,27 @@ public class OtFaseService {
         // Debe existir obligatoriamente y su estado más reciente debe ser TERMINADO
         return ultimaEjecucionAnterior != null
                 && ultimaEjecucionAnterior.getEstado() == EstadoOtFase.TERMINADO;
+    }
+
+    private OtFaseResponseDTO convertirADTO(OtFase otFase) {
+        return OtFaseResponseDTO.builder()
+                .id(otFase.getId())
+                .ordenTrabajoId(otFase.getOrdenTrabajo().getId())
+                .numeroOt(otFase.getOrdenTrabajo().getNumeroOt())
+                .faseCatalogoId(otFase.getFaseCatalogo().getId())
+                .faseNombre(otFase.getFaseCatalogo().getNombre())
+                .numeroSecuencia(otFase.getNumeroSecuencia())
+                .operarioId(otFase.getOperario().getId())
+                .tiempoEstimadoMinutos(otFase.getTiempoEstimadoMinutos())
+                .fechaVencimiento(otFase.getFechaVencimiento())
+                .estado(otFase.getEstado())
+                .fechaInicioReal(otFase.getFechaInicioReal())
+                .fechaFinReal(otFase.getFechaFinReal())
+                .duracionRealMinutos(otFase.getDuracionRealMinutos())
+                .esRehacer(otFase.getEsRehacer())
+                .cicloIteracion(otFase.getCicloIteracion())
+                .createdAt(otFase.getCreatedAt())
+                .updatedAt(otFase.getUpdatedAt())
+                .build();
     }
 }
