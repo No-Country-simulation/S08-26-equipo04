@@ -8,6 +8,8 @@ Sistema de Gestión de Calidad Industrial — flujo unificado del MVP
 
 *Esta versión incorpora 15 definiciones y correcciones que surgieron al construir el esquema de base de datos y contrastarlo contra esta especificación. El detalle de cada una, con su justificación, está en `docs/funcional/QualityTrack-Cambios-PRD-Backlog.md`. Ninguna modifica el flujo cerrado el 01/09 — todas lo precisan.*
 
+*Actualización del 25/09/2026: incorpora 5 decisiones tomadas durante el desarrollo (D-1 a D-5), marcadas en el texto. El detalle está en la sección 08 del mismo documento de cambios.*
+
 ---
 
 ## 01. El problema
@@ -71,7 +73,7 @@ El Gerente define, a nivel global, cuántas fases existen, su nombre y qué oper
 1. La cotización lleva **un único precio final** — no hay precio por fase.
 2. El Jefe de producción sí estima **un tiempo por fase**, para su propia planificación.
 3. El **orden de las fases** se arma pedido por pedido — el catálogo no impone secuencia.
-4. La OT puede **reasignarse** a otro operario en cualquier momento del ciclo, y esa reasignación queda registrada en el historial de la fase.
+4. La OT puede **reasignarse** a otro operario en cualquier momento del ciclo **antes de que el operario comience la fase**, y esa reasignación queda registrada en el historial de la fase. Una fase en ejecución no se reasigna. *(25/09 — D-1)*
 
 ## 07. Dashboards por rol
 
@@ -79,7 +81,7 @@ Detalle funcional de los 5 dashboards del sistema, cerrados con el equipo.
 
 ### Vendedor
 
-- **Levantar pedido (Solicitud)**: adjunta documentación, notas del cliente, datos de contacto (nombre, dirección, teléfono), una **descripción de la pieza o trabajo solicitado**, la **cantidad de unidades** (mismo tipo de pieza, puede ser una o varias) y la fecha esperada de entrega que pide el cliente. *Esta fecha es un dato informativo: no dispara alertas ni condiciona la planificación de fases.*
+- **Levantar pedido (Solicitud)**: adjunta documentación, notas del cliente, datos del cliente (razón social, CUIT, nombre de contacto, dirección, teléfono y email, todos obligatorios; el CUIT no puede repetirse entre clientes *(25/09 — D-4)*), una **descripción de la pieza o trabajo solicitado**, la **cantidad de unidades** (mismo tipo de pieza, puede ser una o varias) y la fecha esperada de entrega que pide el cliente. *Esta fecha es un dato informativo: no dispara alertas ni condiciona la planificación de fases.*
 - **Buscar órdenes (expediente completo)**: encuentra una OT y abre su expediente completo: datos de la solicitud, la cotización (fases, tiempos, precio), el historial de operaciones por fase (operario, momento, notas — incluyendo reasignaciones y retrabajos), el resultado de Calidad (checklist y veredicto), y el estado de entrega. Por ahora esta vista consolidada solo la ve el Vendedor.
 - **Cotizaciones derivadas**: ve las cotizaciones que el Jefe de producción ya armó para sus solicitudes. Marca si ya la envió al cliente y registra la respuesta (aprobada o no) — este estado comercial se guarda en la cotización, es el único lugar del sistema donde vive. Si la aprueba, confirmar esa aprobación es lo que dispara la generación de la OT. Si el cliente no aprueba, la solicitud queda cerrada sin generar OT; para recotizar, se carga una solicitud nueva.
 - **Despacho / Entrega**: ve las OTs que están en estado Despacho y las marca como entregadas, indicando el nombre de la persona a quien se le entrega.
@@ -107,7 +109,7 @@ Detalle funcional de los 5 dashboards del sistema, cerrados con el equipo.
 
 ### Gerente
 
-- **Configuración global**: crea y nombra las fases del catálogo (las guarda), y para cada una define las responsabilidades — qué operario(s) individuales pueden ejecutarla (la habilitación es por operario, no por tipo de tarea general). Los usuarios del sistema —incluidos los operarios— se cargan directamente en la base durante la implementación; el Gerente consulta el listado de operarios existentes y les asigna las fases habilitadas, pero no da de alta usuarios nuevos desde el sistema.
+- **Configuración global**: crea y nombra las fases del catálogo (las guarda), y para cada una define las responsabilidades — qué operario(s) individuales pueden ejecutarla (la habilitación es por operario, no por tipo de tarea general). Los operarios se eligen en el mismo paso en que se crea la fase: no se puede crear una fase sin al menos un operario habilitado, y el Jefe de producción solo ve para cotizar las fases activas que tienen operarios *(25/09 — D-5)*. Los usuarios del sistema —incluidos los operarios— se cargan directamente en la base durante la implementación; el Gerente consulta el listado de operarios existentes y les asigna las fases habilitadas, pero no da de alta usuarios nuevos desde el sistema.
 - **Vista global de planta**: cantidad de OTs pendientes/activas, las fases que existen en el catálogo, y la congestión por fase (cuántas OTs acumuladas en cada una). No incluye desempeño por operario individual — eso queda del lado del Jefe de producción.
 - **Vista global de Calidad**: indicadores de % de OTs conformes vs. no conformes, **retrabajos por fase** (cuántas veces se mandó a rehacer cada fase — si un rechazo deriva en rehacer dos fases, cuenta como dos retrabajos), tiempo promedio en Calidad (medido desde que el operario de la última fase termina hasta el veredicto — no desde que el auditor abre la OT), y últimas auditorías con su resultado.
 
