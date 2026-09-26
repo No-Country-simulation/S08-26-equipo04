@@ -132,18 +132,6 @@ export const CotizacionesProvider = ({ children }) => {
     }
   };
 
-  // Sin endpoint de edición en backend: la edición de una cotización
-  // LISTA_PARA_ENVIAR queda solo en estado local hasta que BE lo agregue.
-  const actualizarCotizacion = (id, datos) => {
-    setCotizaciones((prev) =>
-      prev.map((c) =>
-        c.id === id
-          ? { ...c, ...datos, updated_at: new Date().toISOString() }
-          : c,
-      ),
-    );
-  };
-
   const enviarCotizacion = async (id) => {
     try {
       const { data } = await apiPut(`/api/cotizaciones/${id}`, {});
@@ -216,7 +204,6 @@ export const CotizacionesProvider = ({ children }) => {
         error,
         recargar,
         agregarCotizacion,
-        actualizarCotizacion,
         enviarCotizacion,
         aprobarCotizacion,
         rechazarCotizacion,

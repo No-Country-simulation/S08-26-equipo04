@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ArrowLeft, Check, Pencil, X } from 'lucide-react';
+import { ArrowLeft, Check, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCotizaciones } from '../../hooks/useCotizaciones';
 import { useSolicitudes } from '../../hooks/useSolicitudes';
@@ -247,14 +247,6 @@ export const CotizacionDetailPage = () => {
         >
           Volver
         </Button>
-        {cotizacion.estado === 'LISTA_PARA_ENVIAR' && user?.rol === 'JEFE_PRODUCCION' && (
-          <Button
-            onClick={() => navigate(`/cotizaciones/${cotizacion.id}/editar`)}
-          >
-            <Pencil className="h-4 w-4" />
-            Editar
-          </Button>
-        )}
       </div>
 
       <Modal open={modal === 'aprobar'} onClose={() => setModal(null)} title="Registrar respuesta del cliente">

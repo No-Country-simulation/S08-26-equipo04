@@ -102,15 +102,10 @@ export const CotizacionesPage = () => {
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                navigate(
-                  cot.estado === "LISTA_PARA_ENVIAR" &&
-                    user?.rol === "JEFE_PRODUCCION"
-                    ? `/cotizaciones/${cot.id}/editar`
-                    : `/cotizaciones/${cot.id}`,
-                );
+                navigate(`/cotizaciones/${cot.id}`);
               }}
               className="font-medium text-primary hover:underline"
-              aria-label={`${cot.estado === "LISTA_PARA_ENVIAR" && user?.rol === "JEFE_PRODUCCION" ? "Editar" : "Ver"} ${cot.numero_cotizacion}`}
+              aria-label={`Ver ${cot.numero_cotizacion}`}
             >
               {cot.numero_cotizacion}
             </button>
@@ -153,15 +148,11 @@ export const CotizacionesPage = () => {
         ),
       },
     ],
-    [navigate, user?.rol],
+    [navigate],
   );
 
   const handleRowClick = (row) => {
-    navigate(
-      row.estado === "LISTA_PARA_ENVIAR" && user?.rol === "JEFE_PRODUCCION"
-        ? `/cotizaciones/${row.id}/editar`
-        : `/cotizaciones/${row.id}`,
-    );
+    navigate(`/cotizaciones/${row.id}`);
   };
 
   const cambiarEstado = (event) => {
