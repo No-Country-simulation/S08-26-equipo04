@@ -1,0 +1,231 @@
+package com.qualitytrack.Service;
+
+import com.qualitytrack.DTO.CotizacionDTO;
+import com.qualitytrack.Enum.EstadoCotizacion;
+import com.qualitytrack.modelos.Cotizacion;
+import com.qualitytrack.modelos.Solicitud;
+import com.qualitytrack.modelos.Usuario;
+import com.qualitytrack.repository.CotizacionRepositorio;
+import com.qualitytrack.repository.SolicitudRepositorio;
+import com.qualitytrack.repository.UsuarioRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@Transactional
+public class CotizacionService {
+
+    @Autowired
+    private CotizacionRepositorio cotizacionRepositorio;
+
+    @Autowired
+    private SolicitudRepositorio solicitudRepositorio;
+
+    @Autowired
+    private UsuarioRepository usuarioRepositorio;
+
+    @Autowired
+    private OrdenTrabajoService ordenTrabajoService;  // ← INYECTAR (de ms-common)
+
+    /**
+     * 1. CREAR - JEFE_PRODUCCION crea cotización
+     * Estado inicial: LISTA_PARA_ENVIAR
+     * Fecha vencimiento: hoy + 30 días
+     */
+    public CotizacionDTO crear(CotizacionDTO dto, Long jefeId) {
+
+        // Validar solicitud existe
+        Solicitud solicitud = solicitudRepositorio.findById(dto.getSolicitudId())
+                .orElseThrow(() -> new IllegalArgumentException("Solicitud no encontrada"));
+
+        // Validar que no exista cotización previa (una sola por solicitud)
+        if (cotizacionRepositorio.findBySolicitudId(dto.getSolicitudId()).isPresent()) {
+            throw new IllegalArgumentException("Ya existe cotización para esta solicitud");
+        }
+
+        // Validar precio
+        if (dto.getPrecioTotal().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("El precio debe ser mayor a 0");
+        }
+
+        // Validar que el usuario es JEFE_PRODUCCION
+        Usuario jefe = usuarioRepositorio.findById(jefeId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+
+        if (!jefe.getRol().toString().equals("JEFE_PRODUCCION")) {
+            throw new IllegalArgumentException("Solo Jefe de Producción puede crear cotizaciones");
+        }
+
+        // Crear cotización
+        Cotizacion cotizacion = new Cotizacion();
+        cotizacion.setNumeroCotizacion(generarNumeroCotizacion());
+        cotizacion.setSolicitud(solicitud);
+        cotizacion.setJefeProduccion(jefe);
+        cotizacion.setPrecioFinal(dto.getPrecioTotal());
+        cotizacion.setEstado(EstadoCotizacion.LISTA_PARA_ENVIAR);
+        cotizacion.setObservaciones(dto.getObservaciones());
+
+        // Calcular fecha vencimiento: hoy + 30 días
+        cotizacion.setFechaVencimiento(LocalDateTime.now().plusDays(30));
+
+        cotizacion.setFechaCreacion(LocalDateTime.now());
+        cotizacion.setFechaActualizacion(LocalDateTime.now());
+        Cotizacion guardada = cotizacionRepositorio.save(cotizacion);
+        return convertirADTO(guardada);
+    }
+
+
+
+    /**
+     * 2. OBTENER POR ID
+     */
+    @Transactional(readOnly = true)
+    public CotizacionDTO obtenerPorId(Long id) {
+        Cotizacion cot = cotizacionRepositorio.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Cotización no encontrada"));
+        return convertirADTO(cot);
+    }
+
+    /**
+     * 3. OBTENER POR SOLICITUD (una sola)
+     */
+    @Transactional(readOnly = true)
+    public CotizacionDTO obtenerPorSolicitud(Long solicitudId) {
+        Cotizacion cot = cotizacionRepositorio.findBySolicitudId(solicitudId)
+                .orElseThrow(() -> new IllegalArgumentException("No existe cotización para esta solicitud"));
+        return convertirADTO(cot);
+    }
+
+    /**
+     * 4. LISTAR PENDIENTES (estado LISTA_PARA_ENVIAR)
+     * Para que JEFE_PRODUCCION vea cuáles están listas
+     */
+    @Transactional(readOnly = true)
+    public List<CotizacionDTO> listarPendientes() {
+        return cotizacionRepositorio.findByEstado(EstadoCotizacion.LISTA_PARA_ENVIAR.toString()).stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 5. ENVIAR AL CLIENTE - VENDEDOR envía
+     * Cambia estado: LISTA_PARA_ENVIAR → ENVIADA_A_CLIENTE
+     */
+    @Transactional
+    public CotizacionDTO enviarAlCliente(Long cotizacionId, Long vendedorId) {
+
+        Cotizacion cot = cotizacionRepositorio.findById(cotizacionId)
+                .orElseThrow(() -> new IllegalArgumentException("Cotización no encontrada"));
+
+        Usuario vendedor = usuarioRepositorio.findById(vendedorId)
+                .orElseThrow(() -> new IllegalArgumentException("Vendedor no encontrado"));
+
+        if (!vendedor.getRol().toString().equals("VENDEDOR")) {
+            throw new IllegalArgumentException("Solo vendedores pueden enviar cotizaciones");
+        }
+
+        if (!cot.getEstado().equals(EstadoCotizacion.LISTA_PARA_ENVIAR)) {
+            throw new IllegalArgumentException("Cotización no está lista para enviar");
+        }
+
+        cot.setEstado(EstadoCotizacion.ENVIADA_A_CLIENTE);
+        cot.setFechaEnvioCliente(LocalDateTime.now());
+
+        Cotizacion actualizada = cotizacionRepositorio.save(cot);
+        return convertirADTO(actualizada);
+    }
+
+    /**
+     * 6. APROBAR COTIZACIÓN - VENDEDOR confirma aprobación
+     * Cambia estado: ENVIADA_A_CLIENTE → APROBADA
+     * ⚡ DISPARA: Generación automática de OrdenTrabajo (interna, sin HTTP call)
+     */
+    @Transactional
+    public CotizacionDTO aprobarCotizacion(Long cotizacionId, Long vendedorId) {
+
+        Cotizacion cot = cotizacionRepositorio.findById(cotizacionId)
+                .orElseThrow(() -> new IllegalArgumentException("Cotización no encontrada"));
+
+        Usuario vendedor = usuarioRepositorio.findById(vendedorId)
+                .orElseThrow(() -> new IllegalArgumentException("Vendedor no encontrado"));
+
+        if (!vendedor.getRol().toString().equals("VENDEDOR")) {
+            throw new IllegalArgumentException("Solo vendedores pueden aprobar cotizaciones");
+        }
+
+        if (!cot.getEstado().equals(EstadoCotizacion.ENVIADA_A_CLIENTE)) {
+            throw new IllegalArgumentException("Cotización no está en estado ENVIADA_A_CLIENTE");
+        }
+
+        cot.setEstado(EstadoCotizacion.APROBADA);
+        cot.setFechaRespuestaCliente(LocalDateTime.now());
+
+        Cotizacion actualizada = cotizacionRepositorio.save(cot);
+
+        // ⚡ GENERAR ORDEN DE TRABAJO AUTOMÁTICAMENTE (interna, sin HTTP call)
+        // Inyecta OrdenTrabajoService desde ms-common
+        ordenTrabajoService.generarDesdeCotzacion(actualizada.getId());
+
+        return convertirADTO(actualizada);
+    }
+
+    /**
+     * 7. RECHAZAR COTIZACIÓN - VENDEDOR confirma rechazo
+     * Cambia estado: ENVIADA_A_CLIENTE → NO_APROBADA
+     */
+    @Transactional
+    public CotizacionDTO rechazarCotizacion(Long cotizacionId, String motivo, Long vendedorId) {
+
+        Cotizacion cot = cotizacionRepositorio.findById(cotizacionId)
+                .orElseThrow(() -> new IllegalArgumentException("Cotización no encontrada"));
+
+        Usuario vendedor = usuarioRepositorio.findById(vendedorId)
+                .orElseThrow(() -> new IllegalArgumentException("Vendedor no encontrado"));
+
+        if (!vendedor.getRol().toString().equals("VENDEDOR")) {
+            throw new IllegalArgumentException("Solo vendedores pueden rechazar cotizaciones");
+        }
+
+        if (motivo == null || motivo.isBlank()) {
+            throw new IllegalArgumentException("Debe ingresar motivo del rechazo");
+        }
+
+        if (!cot.getEstado().equals(EstadoCotizacion.ENVIADA_A_CLIENTE)) {
+            throw new IllegalArgumentException("Solo se puede rechazar si está ENVIADA_A_CLIENTE");
+        }
+
+        cot.setEstado(EstadoCotizacion.NO_APROBADA);
+        cot.setFechaRespuestaCliente(LocalDateTime.now());
+        cot.setMotivoRechazo(motivo);
+
+        Cotizacion actualizada = cotizacionRepositorio.save(cot);
+        return convertirADTO(actualizada);
+    }
+
+    private String generarNumeroCotizacion() {
+        int ano = java.time.Year.now().getValue();
+        long timestamp = System.currentTimeMillis() % 10000;
+        return String.format("COT-%d-%04d", ano, timestamp);
+    }
+
+    private CotizacionDTO convertirADTO(Cotizacion cotizacion) {
+        CotizacionDTO dto = new CotizacionDTO();
+        dto.setId(cotizacion.getId());
+        dto.setNumeroCotizacion(cotizacion.getNumeroCotizacion());
+        dto.setSolicitudId(cotizacion.getSolicitud().getId());
+        dto.setPrecioTotal(cotizacion.getPrecioFinal());
+        dto.setEstado(cotizacion.getEstado().toString());
+        dto.setObservaciones(cotizacion.getObservaciones());
+        dto.setFechaVencimiento(cotizacion.getFechaVencimiento());
+        dto.setFechaEnvioCliente(cotizacion.getFechaEnvioCliente());
+        dto.setFechaRespuestaCliente(cotizacion.getFechaRespuestaCliente());
+        dto.setMotivoRechazo(cotizacion.getMotivoRechazo());
+        return dto;
+    }
+}

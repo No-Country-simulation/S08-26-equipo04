@@ -11,6 +11,16 @@
     <groupId>com.backend</groupId>
     <artifactId>qualititrack</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>ms-auth</module>
+        <module>ms-business</module>
+        <module>ms-execution</module>
+        <module>ms-common</module>
+        <module>api-gateway</module>
+        <module>eureka-server</module>
+    </modules>
     <name/>
     <description/>
     <url/>
@@ -35,6 +45,13 @@
                 <groupId>me.paulschwarz</groupId>
                 <artifactId>spring-dotenv-bom</artifactId>
                 <version>5.1.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>2024.0.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -98,20 +115,25 @@
             <version>4.6.0</version>
         </dependency>
 
+        <!--   <dependency>
+               <groupId>org.postgresql</groupId>
+               <artifactId>postgresql</artifactId>
+               <scope>runtime</scope>
+           </dependency>-->
+        <!-- <dependency>
+        <groupId>com.mysql</groupId>
+        <artifactId>mysql-connector-java</artifactId>
+        <version>8.0.33</version>
+        </dependency> -->
         <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>me.paulschwarz</groupId>
             <artifactId>springboot4-dotenv</artifactId>
             <optional>true</optional>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
     </dependencies>
 

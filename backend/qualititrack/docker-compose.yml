@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  eureka-sv:
+    build: ./eureka-server
+    container_name: eureka-sv
+    mem_limit: 512m
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_APPLICATION_NAME=eureka-sv
+      - SERVER_PORT=8761
+    networks:
+      - qualitytrack-network
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    mem_limit: 512m
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_APPLICATION_NAME=apigateway
+      - SERVER_PORT=8080
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-sv:8761/eureka
+      - EUREKA_INSTANCE_HOSTNAME=api-gateway
+    networks:
+      - qualitytrack-network
+    depends_on:
+      - eureka-sv
+
+  ms-auth:
+    build: ./ms-auth
+    container_name: ms-auth
+    mem_limit: 512m
+    ports:
+      - "8081:8081"
+    environment:
+      - PRIVATE_KEY=$${PRIVATE_KEY:MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC7}
+      - USER_GENERATOR=$${USER_GENERATOR:test@qualitytrack.com}
+      - SPRING_APPLICATION_NAME=ms-auth
+      - SERVER_PORT=8081
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-sv:8761/eureka
+      - EUREKA_INSTANCE_HOSTNAME=ms-auth
+    networks:
+      - qualitytrack-network
+    depends_on:
+      - eureka-sv
+
+  ms-business:
+    build: ./ms-business
+    container_name: ms-business
+    mem_limit: 512m
+    ports:
+      - "8082:8082"
+    environment:
+      - MS_EXECUTION_URL=http://ms-execution:8084
+      - PRIVATE_KEY=$${PRIVATE_KEY:MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC7}
+      - USER_GENERATOR=$${USER_GENERATOR:test@qualitytrack.com}
+      - SPRING_APPLICATION_NAME=ms-business
+      - SERVER_PORT=8082
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-sv:8761/eureka
+      - EUREKA_INSTANCE_HOSTNAME=ms-business
+    networks:
+      - qualitytrack-network
+    depends_on:
+      - eureka-sv
+
+  ms-execution:
+    build: ./ms-execution
+    container_name: ms-execution
+    mem_limit: 512m
+    ports:
+      - "8084:8084"
+    environment:
+      - PRIVATE_KEY=$${PRIVATE_KEY:MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC7}
+      - USER_GENERATOR=$${USER_GENERATOR:test@qualitytrack.com}
+      - SPRING_APPLICATION_NAME=ms-execution
+      - SERVER_PORT=8084
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-sv:8761/eureka
+      - EUREKA_INSTANCE_HOSTNAME=ms-execution
+    networks:
+      - qualitytrack-network
+    depends_on:
+      - eureka-sv
+
+networks:
+  qualitytrack-network:
+    driver: bridge
