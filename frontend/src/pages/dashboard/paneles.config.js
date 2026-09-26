@@ -29,8 +29,6 @@ export const PANELES = {
       "Accesos rápidos al estado de tus solicitudes, cotizaciones y órdenes.",
     // El vendedor solo ve las solicitudes y cotizaciones que le pertenecen.
     filtraPorVendedor: true,
-    // Si tiene ruta habilitada para el detalle de una OT.
-    detalleOrdenPath: (numeroOt) => `/ordenes-trabajo/${numeroOt}`,
     cards: [
       {
         key: "solicitudes",
@@ -79,9 +77,6 @@ export const PANELES = {
     // El jefe ve la lista completa: el backend no filtra solicitudes ni
     // cotizaciones por rol, las devuelve todas.
     filtraPorVendedor: false,
-    // El jefe no tiene /ordenes-trabajo ni /despacho habilitadas, asi que las
-    // OTs navegan a /planta, que es su vista de produccion.
-    detalleOrdenPath: () => "/planta",
     cards: [
       {
         key: "solicitudes",
