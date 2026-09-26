@@ -1,10 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { addMinutes, differenceInMinutes, format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { ChevronDown, Clock3, FileText, MessagesSquare } from "lucide-react";
+import {
+  ChevronDown,
+  Clock3,
+  Eye,
+  FileText,
+  MessagesSquare,
+} from "lucide-react";
 import { mocks } from "../../mocks";
+import { extractApiMessage, listarAdjuntos, verAdjunto } from "../../api";
+import { formatBytes, mensajeErrorAdjunto } from "../../utils/adjuntos";
 import {
   Badge,
+  Button,
   EmptyState,
   ErrorBanner,
   LoadingSpinner,
@@ -25,30 +34,28 @@ const formatFecha = (value) => {
   }
 };
 
-const formatBytes = (bytes) => {
-  if (!bytes && bytes !== 0) return "";
-  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
-};
+// Minutos que sigue viva la URL del blob: la pestaña que la abrio ya la
+// cargo, pero revocarla de inmediato la rompe.
+const REVOCACION_MS = 60_000;
 
 /**
  * Detalle de tarea del operario (HU-3.2/3.3/3.4). Solo lectura:
- * adjuntos/planos de la solicitud, vencimiento calculado y notas
+ * adjuntos/planos de la solicitud (API), vencimiento calculado y notas
  * separadas por origen. El operario no puede crear notas.
  */
 export const TaskDetailModal = ({ tarea, open, onClose }) => {
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    if (!open) return undefined;
-    // Los mocks son sincronos; se simula latencia para ejercitar
-    // los estados de UI segun spec §7.1 (reemplazar por GET reales).
-    const timer = setTimeout(() => {
-      setError(null);
-      setCargando(false);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [open, tarea?.id]);
+  // Los adjuntos vienen de la API (GET /api/solicitudes/{id}/documentos).
+  // El estado guarda a que solicitud pertenece cada respuesta para no
+  // necesitar setState dentro del efecto.
+  const [adjuntosState, setAdjuntosState] = useState({
+    solicitudId: null,
+    lista: [],
+    error: null,
+  });
+  const [versionAdjuntos, setVersionAdjuntos] = useState(0);
+  const [abriendoId, setAbriendoId] = useState(null);
+  const [errorDocumento, setErrorDocumento] = useState(null);
+  const blobsAbiertos = useRef([]);
 
   const detalle = useMemo(() => {
     if (!tarea) return null;
@@ -58,20 +65,92 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
     const cotizacion = ot
       ? mocks.cotizaciones.find((item) => item.id === ot.cotizacion_id)
       : null;
-    const solicitudId = cotizacion?.solicitud_id ?? null;
-    const adjuntos =
-      solicitudId == null
-        ? []
-        : mocks.adjuntos.filter((item) => item.solicitud_id === solicitudId);
     const notas = mocks.notas.filter(
       (item) => item.ot_fase_id === tarea.id,
     );
     const notasCalidad = notas.filter((item) => item.origen === "CALIDAD");
-    const notasProduccion = notas.filter(
-      (item) => item.origen !== "CALIDAD",
-    );
-    return { ot, cotizacion, adjuntos, notasCalidad, notasProduccion };
+    const notasProduccion = notas.filter((item) => item.origen !== "CALIDAD");
+    return {
+      ot,
+      cotizacion,
+      solicitudId: cotizacion?.solicitud_id ?? null,
+      notasCalidad,
+      notasProduccion,
+    };
   }, [tarea]);
+
+  const solicitudId = detalle?.solicitudId ?? null;
+  const esDeEstaSolicitud = adjuntosState.solicitudId === solicitudId;
+  const adjuntos = esDeEstaSolicitud ? adjuntosState.lista : [];
+  const errorAdjuntos = esDeEstaSolicitud ? adjuntosState.error : null;
+  const cargandoAdjuntos = open && solicitudId != null && !esDeEstaSolicitud;
+
+  useEffect(() => {
+    if (!open || solicitudId == null) return undefined;
+    let cancelado = false;
+    listarAdjuntos(solicitudId).then(
+      (lista) => {
+        if (cancelado) return;
+        setAdjuntosState({ solicitudId, lista, error: null });
+      },
+      (err) => {
+        if (cancelado) return;
+        setAdjuntosState({
+          solicitudId,
+          lista: [],
+          error: extractApiMessage(err, "No se pudieron cargar los adjuntos."),
+        });
+      },
+    );
+    return () => {
+      cancelado = true;
+    };
+  }, [open, solicitudId, versionAdjuntos]);
+
+  // Libera los object URLs de los documentos que se abrieron.
+  useEffect(
+    () => () => {
+      blobsAbiertos.current.forEach((item) => {
+        clearTimeout(item.timer);
+        URL.revokeObjectURL(item.url);
+      });
+      blobsAbiertos.current = [];
+    },
+    [],
+  );
+
+  const verDocumento = async (adjunto) => {
+    setAbriendoId(adjunto.id);
+    setErrorDocumento(null);
+    try {
+      const blob = await verAdjunto(adjunto.id);
+      const url = URL.createObjectURL(blob);
+      const ventana = window.open(url, "_blank");
+      if (ventana) {
+        ventana.opener = null;
+      } else {
+        // Popup bloqueado: se reintenta con un ancla.
+        const enlace = document.createElement("a");
+        enlace.href = url;
+        enlace.target = "_blank";
+        enlace.rel = "noopener noreferrer";
+        enlace.click();
+      }
+      const timer = setTimeout(() => {
+        URL.revokeObjectURL(url);
+        blobsAbiertos.current = blobsAbiertos.current.filter(
+          (item) => item.url !== url,
+        );
+      }, REVOCACION_MS);
+      blobsAbiertos.current = [...blobsAbiertos.current, { url, timer }];
+    } catch (err) {
+      setErrorDocumento(
+        await mensajeErrorAdjunto(err, "No se pudo abrir el documento."),
+      );
+    } finally {
+      setAbriendoId(null);
+    }
+  };
 
   const vencimiento = useMemo(() => {
     if (!tarea?.tiempo_estimado_minutos) return null;
@@ -86,9 +165,8 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
   }, [tarea]);
 
   const reintentar = () => {
-    setError(null);
-    setCargando(true);
-    setTimeout(() => setCargando(false), 300);
+    setAdjuntosState({ solicitudId: null, lista: [], error: null });
+    setVersionAdjuntos((v) => v + 1);
   };
 
   const estado = tarea
@@ -96,8 +174,6 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
     : null;
 
   const renderContenido = () => {
-    if (cargando) return <LoadingSpinner label="Cargando detalle" />;
-    if (error) return <ErrorBanner message={error} onRetry={reintentar} />;
     if (!tarea || !detalle) {
       return (
         <EmptyState
@@ -157,13 +233,28 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
             <FileText className="h-4 w-4" aria-hidden="true" />
             Adjuntos de la solicitud
           </h3>
-          {detalle.adjuntos.length === 0 ? (
+          {cargandoAdjuntos && (
+            <LoadingSpinner
+              label="Cargando adjuntos"
+              size="sm"
+              className="min-h-0 py-4"
+            />
+          )}
+          {!cargandoAdjuntos && errorAdjuntos && (
+            <ErrorBanner
+              message={errorAdjuntos}
+              onRetry={reintentar}
+              className="mt-2"
+            />
+          )}
+          {!cargandoAdjuntos && !errorAdjuntos && adjuntos.length === 0 && (
             <p className="mt-2 rounded-xl bg-canvas p-3 text-label text-text-secondary">
               Sin adjuntos: esta solicitud no tiene planos ni documentos.
             </p>
-          ) : (
+          )}
+          {!cargandoAdjuntos && !errorAdjuntos && adjuntos.length > 0 && (
             <ul className="mt-2 space-y-2">
-              {detalle.adjuntos.map((adjunto) => (
+              {adjuntos.map((adjunto) => (
                 <li
                   key={adjunto.id}
                   className="flex items-center justify-between gap-3 rounded-xl bg-canvas p-3"
@@ -176,9 +267,28 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
                       {adjunto.tipo_archivo} · {formatBytes(adjunto.tamanio_bytes)}
                     </p>
                   </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="shrink-0"
+                    loading={abriendoId === adjunto.id}
+                    aria-label={`Ver ${adjunto.nombre_original}`}
+                    onClick={() => verDocumento(adjunto)}
+                  >
+                    <Eye className="h-4 w-4" aria-hidden="true" />
+                    Ver
+                  </Button>
                 </li>
               ))}
             </ul>
+          )}
+          {errorDocumento && (
+            <p
+              role="alert"
+              className="mt-2 rounded-lg bg-error-light p-3 text-label text-error"
+            >
+              {errorDocumento}
+            </p>
           )}
         </section>
 

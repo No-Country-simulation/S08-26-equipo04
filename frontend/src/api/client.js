@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { toast } from 'sonner';
+import { extractApiMessage } from './helpers';
 import { clearSession, readSession } from './session';
 
 const api = axios.create({
@@ -15,12 +16,6 @@ const redirectToLogin = () => {
   if (window.location.pathname !== '/login') {
     window.location.replace('/login');
   }
-};
-
-const getErrorMessage = (data, fallback) => {
-  const mensaje = data?.mensaje || data?.detail || data?.message || data?.error;
-  const detalles = Array.isArray(data?.detalles) ? data.detalles.join(' ') : null;
-  return [mensaje, detalles].filter(Boolean).join(' ') || fallback;
 };
 
 api.interceptors.request.use((config) => {
@@ -42,7 +37,10 @@ api.interceptors.response.use(
   (error) => {
     const response = error?.response;
     const status = response?.status;
-    const message = getErrorMessage(response?.data, 'No se pudo completar la solicitud.');
+    const message = extractApiMessage(error);
+    // En las respuestas blob (ver documento) el cuerpo no es un objeto y la
+    // vista responsable muestra su propio mensaje: no se duplica el toast.
+    const esBlob = error?.config?.responseType === 'blob';
 
     if (status === 401 && !error?.config?.url?.includes('/api/auth/login')) {
       clearSession();
@@ -52,7 +50,7 @@ api.interceptors.response.use(
       toast.error('No tienes permisos para esta acción.');
     } else if (status >= 500) {
       toast.error('Error del servidor. Intenta nuevamente.');
-    } else if (status === 400 || status === 404 || status === 409) {
+    } else if ((status === 400 || status === 404 || status === 409) && !esBlob) {
       toast.error(message);
     }
 
