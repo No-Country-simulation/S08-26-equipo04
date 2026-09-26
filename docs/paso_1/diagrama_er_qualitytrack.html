@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QualityTrack - Diagrama ER</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .diagram-wrapper {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow-x: auto;
+        }
+
+        svg {
+            display: block;
+            margin: 0 auto;
+            background: #f8f9fa;
+            border-radius: 10px;
+            width: 100%;
+            height: auto;
+        }
+
+        .legend {
+            margin-top: 40px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .legend h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .legend-icon {
+            width: 30px;
+            height: 30px;
+            margin-right: 15px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 12px;
+        }
+
+        .legend-icon.pk {
+            background: #667eea;
+        }
+
+        .legend-icon.fk {
+            background: #f093fb;
+        }
+
+        .legend-text {
+            color: #555;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 4px;
+            color: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗄️ QualityTrack - Diagrama Entidad-Relación (ER)</h1>
+        <p class="subtitle">Estructura de Base de Datos y Relaciones</p>
+
+        <div class="diagram-wrapper">
+            <svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
+                <!-- Define arrow markers -->
+                <defs>
+                    <marker id="arrowOneToMany" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                        <path d="M0,0 L0,6 M0,3 L9,3" stroke="#667eea" stroke-width="2" fill="none"/>
+                    </marker>
+                    <marker id="arrowOneToOne" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                        <path d="M0,0 L0,6 M0,3 L9,3" stroke="#f093fb" stroke-width="2" fill="none"/>
+                    </marker>
+                </defs>
+
+                <!-- Row 1: USUARIO (top center) -->
+                <rect x="650" y="20" width="280" height="120" fill="#667eea" stroke="#333" stroke-width="2" rx="8"/>
+                <text x="790" y="45" font-size="20" font-weight="bold" fill="white" text-anchor="middle">👤 USUARIO</text>
+                <line x1="660" y1="55" x2="920" y2="55" stroke="white" stroke-width="1"/>
+                <text x="680" y="75" font-size="12" fill="white">🔑 id (PK)</text>
+                <text x="680" y="92" font-size="12" fill="white">username, email</text>
+                <text x="680" y="109" font-size="12" fill="white">nombre, rol</text>
+
+                <!-- Row 2: CLIENTE (left), DOCUMENTO (center-right) -->
+                <rect x="50" y="200" width="280" height="140" fill="#667eea" stroke="#333" stroke-width="2" rx="8"/>
+                <text x="190" y="225" font-size="20" font-weight="bold" fill="white" text-anchor="middle">🏢 CLIENTE</text>
+                <line x1="60" y1="235" x2="320" y2="235" stroke="white" stroke-width="1"/>
+                <text x="70" y="255" font-size="12" fill="white">🔑 id (PK)</text>
+                <text x="70" y="272" font-size="12" fill="white">nombre, email</text>
+                <text x="70" y="289" font-size="12" fill="white">telefono, direccion</text>
+                <text x="70" y="306" font-size="12" fill="white">estado</text>
+
+                <rect x="1040" y="200" width="280" height="140" fill="#f093fb" stroke="#333" stroke-width="2" rx="8"/>
+                <text x="1180" y="225" font-size="20" font-weight="bold" fill="white" text-anchor="middle">📄 DOCUMENTO</text>
+                <line x1="1050" y1="235" x2="1310" y2="235" stroke="white" stroke-width="1"/>
+                <text x="1060" y="255" font-size="12" fill="white">🔑 id (PK)</text>
+                <text x="1060" y="272" font-size="12" fill="white">🔗 uploadPorId (FK→USUARIO)</text>
+                <text x="1060" y="289" font-size="12" fill="white">nombreArchivo, tipo</text>
+                <text x="1060" y="306" font-size="12" fill="white">vinculadoAId, vinculadoATipo</text>
+
+                <!-- Row 3: SOLICITUD_TRABAJO -->
+                <rect x="50" y="400" width="300" height="160" fill="#667eea" stroke="#333" stroke-width="2" rx="8"/>
+                <text x="200" y="425" font-size="18" font-weight="bold" fill="white" text-anchor="middle">📋 SOLICITUD_TRABAJO</text>
+                <line x1="60" y1="435" x2="340" y2="435" stroke="white" stroke-width="1"/>
+                <text x="70" y="455" font-size="12" fill="white">🔑 id (PK)</text>
+                <text x="70" y="472" font-size="12" fill="white">🔗 clienteId (FK→CLIENTE)</text>
+                <text x="70" y="489" font-size="12" fill="white">descripcion</text>
+                <text x="70" y="506" font-size="12" fill="white">especificaciones</text>
+                <text x="70" y="523" font-size="12" fill="white">estado, fechaSolicitud</text>
+                <text x="70" y="540" font-size="12" fill="white">fechaActualizacion</text>
+
+                <!-- Row 3: COTIZACION -->
+                <rect x="450" y="400" width="300" height="160" fill="#667eea" stroke="#333" stroke-width="2" rx="8"/>
+                <text x="600" y="425" font-size="18" font-weight="bold" fill="white" text-anchor="middle">💰 COTIZACION</text>
+                <line x1="460" y1="435" x2="740" y2="435" stroke="white" stroke-width="1"/>
+                <text x="470" y="455" font-size="12" fill="white">🔑 id (PK)</text>
+                <text x="470" y="472" font-size="12" fill="white">🔗 solicitudTrabajoId (FK)</text>
+                <text x="470" y="489" font-size="12" fill="white">numeroQuote</text>
+                <text x="470" y="506" font-size="12" fill="white">precioTotal, tiempoEstimado</text>
+                <text x="470" y="523" font-size="12" fill="white">estado</text>
+                <text x="470" y="540" font-size="12" fill="white">fechaGeneracion, fechaValidez</text>
+
+                <!-- Row 3: ORDEN_TRABAJO -->
+                <rect x="850" y="400" width="320" height="160" fill="#667eea" stroke="#333" stroke-width="2" rx="8"/>
+                <text x="1010" y="425" font-size="18" font-weight="bold" fill="white" text-anchor="middle">🎯 ORDEN_TRABAJO</text>
+                <line x1="860" y1="435" x2="1160" y2="435" stroke="white" stroke-width="1"/>
+                <text x="870" y="455" font-size="12" fill="white">🔑 id (PK)</text>
+                <text x="870" y="472" font-size="12" fill="white">🔗 cotizacionId (FK→COTIZACION)</text>
+                <text x="870" y="489" font-size="12" fill="white">🔗 clienteId (FK→CLIENTE)</text>
+                <text x="870" y="506" font-size="12" fill="white">🔗 responsableId (FK→USUARIO)</text>
+                <text x="870" y="523" font-size="12" fill="white">numeroOT, descripcionPieza</text>
+                <text x="870" y="540" font-size="12" fill="white">estado, fechaVencimiento</text>
+
+                <!-- Row 4: HOJA_RUTA -->
+                <rect x="450" y="630" width="300" height="140" fill="#667eea" stroke="#333" stroke-width="2" rx="8"/>
+                <text x="600" y="655" font-size="18" font-weight="bold" fill="white" text-anchor="middle">📑 HOJA_RUTA</text>
+                <line x1="460" y1="665" x2="740" y2="665" stroke="white" stroke-width="1"/>
+                <text x="470" y="685" font-size="12" fill="white">🔑 id (PK)</text>
+                <text x="470" y="702" font-size="12" fill="white">🔗 ordenTrabajoId (FK→OT)</text>
+                <text x="470" y="719" font-size="12" fill="white">numeroHojaRuta, estado</text>
+                <text x="470" y="736" font-size="12" fill="white">fechaCreacion</text>
+                <text x="470" y="753" font-size="12" fill="white">fechaActualizacion</text>
+
+                <!-- Row 5: OPERACION -->
+                <rect x="450" y="830" width="300" height="160" fill="#667eea" stroke="#333" stroke-width="2" rx="8"/>
+                <text x="600" y="855" font-size="18" font-weight="bold" fill="white" text-anchor="middle">⚙️ OPERACION</text>
+                <line x1="460" y1="865" x2="740" y2="865" stroke="white" stroke-width="1"/>
+                <text x="470" y="885" font-size="12" fill="white">🔑 id (PK)</text>
+                <text x="470" y="902" font-size="12" fill="white">🔗 hojaRutaId (FK→HOJA_RUTA)</text>
+                <text x="470" y="919" font-size="12" fill="white">🔗 responsableId (FK→USUARIO)</text>
+                <text x="470" y="936" font-size="12" fill="white">numeroOperacion, descripcion</text>
+                <text x="470" y="953" font-size="12" fill="white">maquinaRequerida, tiempoEstimado</text>
+                <text x="470" y="970" font-size="12" fill="white">estado, secuencia</text>
+
+                <!-- Row 5: QUALITY_CHECK -->
+                <rect x="850" y="830" width="300" height="140" fill="#f093fb" stroke="#333" stroke-width="2" rx="8"/>
+                <text x="1000" y="855" font-size="18" font-weight="bold" fill="white" text-anchor="middle">✅ QUALITY_CHECK</text>
+                <line x1="860" y1="865" x2="1140" y2="865" stroke="white" stroke-width="1"/>
+                <text x="870" y="885" font-size="12" fill="white">🔑 id (PK)</text>
+                <text x="870" y="902" font-size="12" fill="white">🔗 operacionId (FK→OPERACION)</text>
+                <text x="870" y="919" font-size="12" fill="white">🔗 inspectorId (FK→USUARIO)</text>
+                <text x="870" y="936" font-size="12" fill="white">resultado, detalles, notas</text>
+                <text x="870" y="953" font-size="12" fill="white">fechaControl</text>
+
+                <!-- Row 5: ENTREGA -->
+                <rect x="1240" y="630" width="300" height="140" fill="#f093fb" stroke="#333" stroke-width="2" rx="8"/>
+                <text x="1390" y="655" font-size="18" font-weight="bold" fill="white" text-anchor="middle">📦 ENTREGA</text>
+                <line x1="1250" y1="665" x2="1530" y2="665" stroke="white" stroke-width="1"/>
+                <text x="1260" y="685" font-size="12" fill="white">🔑 id (PK)</text>
+                <text x="1260" y="702" font-size="12" fill="white">🔗 ordenTrabajoId (FK→OT)</text>
+                <text x="1260" y="719" font-size="12" fill="white">cantidadEntregada, estado</text>
+                <text x="1260" y="736" font-size="12" fill="white">fechaEntrega, notas</text>
+
+                <!-- Relationships -->
+                <!-- CLIENTE → SOLICITUD_TRABAJO (1:N) -->
+                <path d="M 190 340 L 190 400" stroke="#667eea" stroke-width="3" fill="none" marker-end="url(#arrowOneToMany)"/>
+                <text x="210" y="370" font-size="11" fill="#667eea" font-weight="bold">1:N</text>
+
+                <!-- SOLICITUD_TRABAJO → COTIZACION (1:N) -->
+                <path d="M 350 480 L 450 480" stroke="#667eea" stroke-width="3" fill="none" marker-end="url(#arrowOneToMany)"/>
+                <text x="395" y="470" font-size="11" fill="#667eea" font-weight="bold">1:N</text>
+
+                <!-- COTIZACION → ORDEN_TRABAJO (1:1) -->
+                <path d="M 750 480 L 850 480" stroke="#f093fb" stroke-width="3" fill="none" marker-end="url(#arrowOneToOne)"/>
+                <text x="795" y="470" font-size="11" fill="#f093fb" font-weight="bold">1:1</text>
+
+                <!-- USUARIO → ORDEN_TRABAJO (M:1) -->
+                <path d="M 790 140 L 1000 400" stroke="#667eea" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+                <text x="870" y="270" font-size="11" fill="#667eea" font-weight="bold">responsable</text>
+
+                <!-- ORDEN_TRABAJO → HOJA_RUTA (1:N) -->
+                <path d="M 850 560 L 600 630" stroke="#667eea" stroke-width="3" fill="none" marker-end="url(#arrowOneToMany)"/>
+                <text x="720" y="595" font-size="11" fill="#667eea" font-weight="bold">1:N</text>
+
+                <!-- HOJA_RUTA → OPERACION (1:N) -->
+                <path d="M 600 770 L 600 830" stroke="#667eea" stroke-width="3" fill="none" marker-end="url(#arrowOneToMany)"/>
+                <text x="620" y="800" font-size="11" fill="#667eea" font-weight="bold">1:N</text>
+
+                <!-- USUARIO → OPERACION (M:1) -->
+                <path d="M 790 140 L 550 830" stroke="#667eea" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+                <text x="650" y="500" font-size="11" fill="#667eea" font-weight="bold">operario</text>
+
+                <!-- OPERACION → QUALITY_CHECK (1:N) -->
+                <path d="M 750 910 L 850 910" stroke="#f093fb" stroke-width="3" fill="none" marker-end="url(#arrowOneToMany)"/>
+                <text x="795" y="900" font-size="11" fill="#f093fb" font-weight="bold">1:N</text>
+
+                <!-- USUARIO → QUALITY_CHECK (M:1) -->
+                <path d="M 790 140 L 950 830" stroke="#667eea" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+                <text x="870" y="500" font-size="11" fill="#667eea" font-weight="bold">inspector</text>
+
+                <!-- ORDEN_TRABAJO → ENTREGA (1:1) -->
+                <path d="M 1170 560 L 1390 630" stroke="#f093fb" stroke-width="3" fill="none" marker-end="url(#arrowOneToOne)"/>
+                <text x="1270" y="595" font-size="11" fill="#f093fb" font-weight="bold">1:1</text>
+
+                <!-- USUARIO → DOCUMENTO (M:1) -->
+                <path d="M 930 80 L 1100 200" stroke="#667eea" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+                <text x="1000" y="140" font-size="11" fill="#667eea" font-weight="bold">uploadPor</text>
+
+                <!-- DOCUMENTO → múltiples (vinculado) -->
+                <path d="M 1040 270 L 750 480" stroke="#999" stroke-width="1" stroke-dasharray="3,3" fill="none"/>
+                <text x="850" y="370" font-size="10" fill="#999">vinculado a</text>
+            </svg>
+
+            <div class="legend">
+                <h3>📌 Leyenda</h3>
+                <div class="legend-item">
+                    <div class="legend-icon pk">🔑</div>
+                    <div class="legend-text"><strong>PK (Primary Key):</strong> Clave Primaria - Identificador único</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-icon fk">🔗</div>
+                    <div class="legend-text"><strong>FK (Foreign Key):</strong> Clave Foránea - Referencia a otra tabla</div>
+                </div>
+                <div class="legend-item">
+                    <div style="width: 30px; height: 30px; margin-right: 15px; border: 2px solid #667eea; border-radius: 4px;"></div>
+                    <div class="legend-text"><strong>Línea sólida 1:N:</strong> Un registro relacionado con Muchos</div>
+                </div>
+                <div class="legend-item">
+                    <div style="width: 30px; height: 30px; margin-right: 15px; border: 2px solid #f093fb; border-radius: 4px;"></div>
+                    <div class="legend-text"><strong>Línea sólida 1:1:</strong> Un registro relacionado con Uno</div>
+                </div>
+                <div class="legend-item">
+                    <div style="width: 30px; height: 30px; margin-right: 15px; border: 2px dashed #667eea; border-radius: 4px;"></div>
+                    <div class="legend-text"><strong>Línea punteada M:1:</strong> Muchos relacionados con Uno (USUARIO)</div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <strong>💡 Punto Importante:</strong> Las líneas con puntos indican que USUARIO aparece en múltiples lugares como "responsable", "operario" o "inspector". Una persona puede tener diferentes roles en diferentes operaciones.
+            </div>
+        </div>
+    </div>
+</body>
+</html>
