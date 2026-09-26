@@ -41,13 +41,15 @@ public class FaseController {
 
     /**
      * GET /api/fases
-     * Obtiene la lista de fases (Accesible por GERENTE y JEFE_PRODUCCION).
+     * Obtiene la lista de fases, ya sea todas (para el gerente) o las que tienen operarios habilitados (para el jefe).
+     * Roles: GERENTE, JEFE_PRODUCCION
      */
     @GetMapping
     @PreAuthorize("hasAnyRole('GERENTE', 'JEFE_PRODUCCION')")
-    public ResponseEntity<List<FaseCatalogo>> listarFases() {
-        List<FaseCatalogo> fases = faseService.listarFases();
-        return ResponseEntity.ok(fases);
+    public ResponseEntity<List<FaseCatalogo>> listarFases(Authentication auth) {
+        boolean esJefe = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_JEFE_PRODUCCION"));
+        return ResponseEntity.ok(faseService.listarFases(esJefe));
     }
 
     /**

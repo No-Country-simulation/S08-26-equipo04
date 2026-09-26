@@ -31,8 +31,11 @@ public class FaseService {
     @Autowired
     private FaseOperarioHabilitadoRepository faseOperarioRepository;
 
-    public List<FaseCatalogo> listarFases() {
-        return faseRepository.findAll();
+    // lista las fases, ya sea todas (para el gerente) o las que tienen operarios habilitados (para el jefe)
+    public List<FaseCatalogo> listarFases(boolean soloConOperarios) {
+        return soloConOperarios
+                ? faseOperarioRepository.findFasesActivasConOperarios()
+                : faseRepository.findAll();
     }
 
     @Transactional
