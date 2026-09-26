@@ -276,4 +276,60 @@ Surgieron en la discusión y el modelo queda preparado para recibirlas sin redis
 
 ---
 
+## 08. Decisiones del 25/09/2026 · desarrollo, semana 4
+
+Surgieron al contrastar el código y las tareas pendientes contra el PRD v2 y el Backlog v2. Igual que las anteriores, ninguna cambia el flujo acordado: dos lo precisan y una confirma un criterio que el desarrollo había simplificado.
+
+### D-1 · Una fase en ejecución no se reasigna
+
+**Dónde impacta:** PRD sección 06 (Regla 4) · HU-2.2
+
+La Regla 4 dice que la OT puede reasignarse *"en cualquier momento del ciclo"*. El backend ya bloquea la reasignación de una fase que el operario comenzó.
+
+**Decisión tomada:** se mantiene el bloqueo. Una fase se puede reasignar en cualquier momento **antes de que el operario la comience**.
+
+**Por qué:** si el operario ya marcó "comenzar", la fase tiene registrado su inicio real. Pasarla a otro operario rompe ese registro y la duración real que usan el expediente (HU-1.2) y la vista de Calidad (HU-5.4). Es coherente con DF-4, que ya describe el balanceo de carga como pasar la tarea *"antes de que empiece"*.
+
+**Qué cambia:** la Regla 4 del PRD pasa a decir "en cualquier momento antes de que el operario comience la fase". HU-2.2 suma ese límite como criterio de aceptación.
+
+---
+
+### D-2 · El checklist se envía completo junto con el veredicto
+
+**Dónde impacta:** HU-4.2 · HU-4.3
+
+La especificación técnica de backend preveía guardar las respuestas del checklist a medida que se completaban, antes del veredicto. El backlog no lo pide.
+
+**Decisión tomada:** no hay guardado parcial. Las 7 respuestas se envían junto con el veredicto y las observaciones, en una sola operación (`POST /api/calidad/{id}/conforme` o `/no-conforme`).
+
+**Por qué:** es lo que pide el backlog y simplifica backend y frontend. Además, una auditoría sin veredicto guardada en la base se contaría en el porcentaje de conformidad de HU-5.4.
+
+**Consecuencia a tener presente:** si el auditor sale de la pantalla antes de confirmar, vuelve a completar el checklist. Son 7 puntos, aceptable para el MVP.
+
+**Qué cambia:** la especificación técnica de backend (endpoint `POST /api/calidad/{id}/checklist`) queda sin uso. PRD y Backlog no cambian.
+
+---
+
+### D-3 · Al rehacer, el Jefe elige operario y tiempo por fase
+
+**Dónde impacta:** HU-2.3
+
+El backlog pide que, al mandar a rehacer, el Jefe *"asigne operario(s) y tiempo a cada una"*. La primera implementación solo recibía qué fases rehacer y copiaba el operario y el tiempo de la ejecución anterior.
+
+**Decisión tomada:** se implementa como pide el backlog. Para cada fase que manda a rehacer, el Jefe elige un operario habilitado para esa fase y un tiempo estimado. Por defecto se precargan los de la ejecución anterior.
+
+**Por qué:** es el centro de la historia. Si la pieza salió mal, muchas veces el Jefe quiere que la rehaga otra persona o con otro tiempo.
+
+**Qué cambia:** nada en PRD ni Backlog; se confirma el criterio existente.
+
+---
+
+| # | Punto | Tipo | Documento a tocar |
+|---|---|---|---|
+| D-1 | Una fase en ejecución no se reasigna | Definición | PRD 06 (Regla 4) · HU-2.2 |
+| D-2 | Checklist completo junto con el veredicto | Definición | Especificación técnica de backend |
+| D-3 | Operario y tiempo por fase al rehacer | Confirmación | — |
+
+---
+
 *QualityTrack · NO-Country 2026. Derivado de la consolidación del esquema de base de datos (`docs/datos/QualityTrack-Esquema-Base-Datos-v2.md`) contra la Especificación Funcional v1 y el Backlog v1.*
