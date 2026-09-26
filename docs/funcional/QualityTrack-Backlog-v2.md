@@ -4,6 +4,8 @@ Versión 2 · 04/09/2026 · Derivado de la Especificación Funcional v2 (`docs/f
 
 *Esta versión aplica las 15 definiciones y correcciones documentadas en `docs/funcional/QualityTrack-Cambios-PRD-Backlog.md`, validadas con el equipo completo el 04/09/2026. Los cambios de criterios de aceptación están marcados con **(v2)**. HU-5.2 se elimina — ver CA-1 en el documento de cambios.*
 
+*Actualización del 25/09/2026: los criterios que surgen de decisiones tomadas durante el desarrollo están marcados con **(25/09 — D-n)**. El detalle está en la sección 08 del documento de cambios.*
+
 ## Cómo leer esto
 
 Cada historia sigue el formato **Como \<rol>, quiero \<acción>, para \<beneficio>**, con criterios de aceptación en Gherkin (Given/When/Then). La lógica de sistema que se dispara automáticamente a partir de una acción de usuario (por ejemplo, generar la OT o derivar a la fase siguiente) se documenta como criterio de aceptación de la historia que la dispara — no como historia aparte — para que cada historia represente valor de punta a punta y no una tarea técnica suelta.
@@ -20,7 +22,9 @@ Como Vendedor, quiero cargar la solicitud de un cliente con su documentación y 
 
 **Criterios de aceptación**
 
-- Dado que el Vendedor completa los datos del cliente (nombre, dirección, teléfono) y adjunta la documentación (plano, notas), cuando guarda la solicitud, entonces el sistema la registra como cotización pendiente.
+- Dado que el Vendedor completa los datos del cliente (razón social, CUIT, nombre de contacto, dirección, teléfono y email) y adjunta la documentación (plano, notas), cuando guarda la solicitud, entonces el sistema la registra como cotización pendiente. **(25/09 — D-4)**
+- Dado que el Vendedor carga un cliente nuevo con un CUIT que ya existe, cuando intenta guardar, entonces el sistema no lo permite y le informa que ese CUIT ya está registrado. **(25/09 — D-4)**
+- Dado que el Vendedor adjunta documentación, cuando guarda la solicitud, entonces los archivos quedan guardados y se pueden abrir después. No se aceptan archivos de más de 10 MB. **(25/09 — D-6)**
 - Dado que el Vendedor no completó todos los datos obligatorios del cliente, cuando intenta guardar, entonces el sistema no permite continuar y señala los campos faltantes.
 - Dado que la solicitud se guardó correctamente, cuando el Vendedor la revisa, entonces puede ver la fecha esperada de entrega que indicó el cliente. Esta fecha es informativa: no dispara alertas ni condiciona la planificación de fases. **(v2 — AR-2)**
 - Dado que el Vendedor carga una solicitud, cuando completa el formulario, entonces debe indicar una descripción de la pieza o trabajo solicitado. **(v2 — CA-3)**
@@ -68,6 +72,7 @@ Como Jefe de producción, quiero armar la cotización de una solicitud eligiendo
 
 - Dado que llega una solicitud nueva, cuando el Jefe de producción la abre, entonces puede ver el plano y la documentación adjunta, la descripción de la pieza y la cantidad solicitada. **(v2 — referencia a CA-2/CA-3)**
 - Dado que elige las fases del catálogo global y las ordena, cuando les carga un tiempo estimado a cada una, entonces el sistema guarda ese orden y esos tiempos asociados a la cotización. Una misma fase puede elegirse más de una vez en la secuencia si el proceso lo requiere (ej. Mecanizado → Soldadura → Mecanizado). **(v2 — D6 del esquema)**
+- Dado que el Jefe de producción arma la secuencia, cuando elige fases del catálogo, entonces solo ve las fases activas que tienen al menos un operario habilitado. **(25/09 — D-5)**
 - Dado que definió un precio final único para toda la cotización, cuando presiona "aceptar", entonces la cotización vuelve al Vendedor lista para enviar.
 
 ### HU-2.2 Gestión de planta
@@ -79,6 +84,8 @@ Como Jefe de producción, quiero ver la carga de trabajo de mis operarios y pode
 - Dado que tiene operarios a cargo, cuando abre la gestión de planta, entonces ve, por operario, las OTs asignadas y la cantidad pendiente.
 - Dado que quiere mover una OT de un operario a otro, cuando hace la reasignación, entonces el operario original deja de verla y el nuevo operario la ve en su cola.
 - Dado que se realiza una reasignación por balanceo de carga, cuando se confirma el cambio, entonces el sistema registra quién tenía la fase, quién la recibe, quién hizo el cambio y cuándo — para que quede disponible en el expediente del Vendedor (HU-1.2). **(v2 — DF-4)**
+- Dado que el Jefe quiere reasignar una fase, cuando elige el nuevo operario, entonces solo puede elegir operarios habilitados para esa fase. **(25/09 — D-5)**
+- Dado que el operario ya comenzó la fase, cuando el Jefe intenta reasignarla, entonces el sistema no lo permite: una fase en ejecución no se reasigna. **(25/09 — D-1)**
 
 ### HU-2.3 No conformidades
 
@@ -87,7 +94,7 @@ Como Jefe de producción, quiero decidir qué fase o fases hay que rehacer cuand
 **Criterios de aceptación**
 
 - Dado que Calidad marcó una OT como no conforme, cuando el Jefe de producción la revisa, entonces ve las observaciones generales cargadas por Calidad sobre el defecto encontrado — Calidad no indica de qué fase provino, esa determinación es del Jefe. **(v2 — aclaración D4)**
-- Dado que decide qué fase(s) puntuales rehacer, cuando las selecciona y asigna operario(s) y tiempo a cada una, entonces el sistema deriva la OT a esos operarios con las notas correspondientes y registra cada fase rehecha como un nuevo intento, conservando la ejecución anterior en el historial. **(v2 — refuerza R8 del esquema)**
+- Dado que decide qué fase(s) puntuales rehacer, cuando las selecciona y asigna operario(s) y tiempo a cada una, entonces el sistema deriva la OT a esos operarios con las notas correspondientes y registra cada fase rehecha como un nuevo intento, conservando la ejecución anterior en el historial. **(v2 — refuerza R8 del esquema)** Solo puede elegir operarios habilitados para cada fase; por defecto se proponen el operario y el tiempo de la ejecución anterior. La primera fase rehecha entra en la cola y las siguientes esperan hasta que termine la anterior. **(25/09 — D-3)**
 - Dado que una OT tiene varias fases, cuando el Jefe de producción rehace solo algunas, entonces las fases no seleccionadas mantienen su estado "terminado" sin cambios.
 - Dado que el Jefe manda a rehacer más de una fase por la misma no conformidad, cuando se registra, entonces cada fase rehecha cuenta como un retrabajo independiente para el indicador del Gerente (HU-5.4). **(v2 — DF-5)**
 
@@ -154,6 +161,8 @@ Como responsable de Calidad, quiero correr el checklist de 8 puntos sobre una OT
 - Dado que responde cualquiera de los primeros 7 puntos, cuando lo hace, entonces puede marcarlo como Cumple, No cumple, o No aplica — este último para puntos que no corresponden al producto evaluado (por ejemplo, prueba funcional en una pieza que no la requiere). **(v2 — C-3, reemplaza el criterio binario original)**
 - Dado que completa los primeros 7 puntos, cuando llega al punto 8, entonces debe indicar Conforme o No conforme.
 - Dado que marca "No conforme", cuando intenta guardar el veredicto, entonces el sistema exige que cargue observaciones antes de confirmar.
+- Dado que alguno de los 7 puntos está marcado como No cumple, cuando intenta confirmar "Conforme", entonces el sistema no lo permite. **(25/09 — D-2)**
+- Dado que Calidad completó el checklist, cuando confirma el veredicto, entonces las 7 respuestas y el veredicto se guardan juntos en un solo paso. No hay guardado parcial: si sale antes de confirmar, vuelve a completar el checklist. **(25/09 — D-2)**
 
 ### HU-4.3 Veredicto
 
@@ -174,7 +183,8 @@ Como Gerente, quiero crear y nombrar las fases del catálogo global y definir qu
 
 **Criterios de aceptación**
 
-- Dado que el Gerente crea una fase nueva con un nombre, cuando la guarda, entonces queda disponible en el catálogo global para que el Jefe de producción la use en cualquier cotización.
+- Dado que el Gerente crea una fase nueva con un nombre y al menos un operario habilitado, cuando la guarda, entonces queda disponible en el catálogo global para que el Jefe de producción la use en cualquier cotización. **(25/09 — D-5)**
+- Dado que el Gerente intenta crear una fase sin operarios, o deshabilitar al último operario de una fase, cuando guarda, entonces el sistema no lo permite. **(25/09 — D-5)**
 - Dado que asigna qué operario(s) pueden ejecutar una fase, cuando guarda esa asignación, entonces solo esos operarios pueden recibir tareas de esa fase. La habilitación es **individual, por operario** — no por tipo de tarea general. **(v2 — DF-2, resuelve la duda abierta en v1)**
 - Dado que el Gerente quiere asignar fases, cuando abre esta pantalla, entonces ve el listado de operarios ya cargados en el sistema — el alta de operarios nuevos no se hace desde acá en este MVP (ver HU-5.2 eliminada). **(v2 — CA-1)**
 
