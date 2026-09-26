@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.backend.qualititrack.DTO.CrearFaseRequestDTO;
 import com.backend.qualititrack.DTO.FaseOperarioHabilitadoResponseDTO;
 import com.backend.qualititrack.DTO.OperarioDTO;
 import com.backend.qualititrack.DTO.UsuarioDTO;
@@ -27,7 +28,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 
 @RestController
 @RequestMapping("/api/fases")
@@ -56,8 +56,9 @@ public class FaseController {
      */
     @PostMapping
     @PreAuthorize("hasRole('GERENTE')")
-    public ResponseEntity<FaseCatalogo> crearFase(@RequestBody @Valid FaseCatalogo fase) {
-        FaseCatalogo nuevaFase = faseService.crearFase(fase);
+    public ResponseEntity<FaseCatalogo> crearFase(
+            @RequestBody @Valid CrearFaseRequestDTO dto, Authentication auth) {
+        FaseCatalogo nuevaFase = faseService.crearFase(dto, auth.getName());
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevaFase);
     }
 
@@ -87,10 +88,11 @@ public class FaseController {
             @PathVariable Long id,
             @RequestBody @Valid HabilitarOperarioDTO dto, Authentication auth) {
 
-        FaseOperarioHabilitadoResponseDTO faseModificada = faseService.gestionarHabilitacionOperario(id, dto.getOperarioId(), dto.getHabilitado(), auth.getName());
+        FaseOperarioHabilitadoResponseDTO faseModificada = faseService.gestionarHabilitacionOperario(id,
+                dto.getOperarioId(), dto.getHabilitado(), auth.getName());
         return ResponseEntity.ok(faseModificada);
     }
-    
+
     // GET /api/fases/{id}/operarios
     // Devuelve la lista de operarios habilitados para una fase específica
     // Roles: Gerente y Jefe de Producción
@@ -100,7 +102,6 @@ public class FaseController {
         List<OperarioDTO> operariosHabilitados = faseService.listarOperariosHabilitados(id);
         return ResponseEntity.ok(operariosHabilitados);
     }
-    
 
     /**
      * DTO interno para recibir el payload del endpoint de habilitación.
