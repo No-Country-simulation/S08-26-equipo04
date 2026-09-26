@@ -48,14 +48,7 @@ export const DashboardPage = () => {
   const ordenes = ordenesState.ordenesTrabajo;
 
   const actividad = useMemo(
-    () =>
-      panel
-        ? buildActividad({
-            solicitudes,
-            ordenes,
-            pathOrden: panel.detalleOrdenPath,
-          })
-        : [],
+    () => (panel ? buildActividad({ solicitudes, ordenes }) : []),
     [solicitudes, ordenes, panel],
   );
 

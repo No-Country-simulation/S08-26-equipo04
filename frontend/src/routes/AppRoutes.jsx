@@ -90,10 +90,6 @@ export const AppRoutes = () => {
           </Route>
           <Route element={<ProtectedRoute roles={["JEFE_PRODUCCION"]} />}>
             <Route path="cotizaciones/nueva" element={<CotizacionFormPage />} />
-            <Route
-              path="cotizaciones/:id/editar"
-              element={<CotizacionFormPage />}
-            />
             <Route path="planta" element={<GestionPlantaPage />} />
           </Route>
           <Route element={<ProtectedRoute roles={["GERENTE"]} />}>

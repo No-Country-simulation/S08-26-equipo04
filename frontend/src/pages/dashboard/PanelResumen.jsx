@@ -14,6 +14,9 @@ import { ActividadReciente } from "./ActividadReciente";
  * `paneles.config.js` y los numeros ya calculados, y solo compone el layout
  * (encabezado + tarjetas + actividad). No debe crecer con condiciones por rol:
  * si un panel necesita otra estructura, se hace su propio componente.
+ *
+ * Las tarjetas de conteo son el unico elemento navegable del panel; la
+ * actividad reciente es solo lectura.
  */
 
 const MetricCard = ({ item, value, onClick }) => {
@@ -22,7 +25,7 @@ const MetricCard = ({ item, value, onClick }) => {
     <button
       type="button"
       onClick={onClick}
-      className="card flex w-full items-center gap-4 text-left hover:shadow-card focus:outline-none focus:ring-2 focus:ring-primary"
+      className="card flex w-full cursor-pointer items-center gap-4 text-left hover:shadow-card focus:outline-none focus:ring-2 focus:ring-primary"
     >
       <span
         className={`rounded-lg bg-${item.tone}-light p-3 text-${item.tone}`}
