@@ -5,8 +5,10 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.backend.qualititrack.DTO.FaseOperarioHabilitadoResponseDTO;
+import com.backend.qualititrack.DTO.OperarioDTO;
 import com.backend.qualititrack.Enum.NivelRol;
 import com.backend.qualititrack.exception.EntityNotFoundException;
 import com.backend.qualititrack.modelos.FaseCatalogo;
@@ -15,8 +17,6 @@ import com.backend.qualititrack.modelos.Usuario;
 import com.backend.qualititrack.repository.FaseOperarioHabilitadoRepository;
 import com.backend.qualititrack.repository.FaseRepository;
 import com.backend.qualititrack.repository.UsuarioRepository;
-
-import jakarta.transaction.Transactional;
 
 @Service
 public class FaseService {
@@ -96,6 +96,25 @@ public class FaseService {
         return convertirADTO(saved);
     }
 
+    // GET /api/fases/{id}/operarios
+    @Transactional(readOnly = true)
+    public List<OperarioDTO> listarOperariosHabilitados(Long faseId) {
+        List<Usuario> operarios = faseOperarioRepository.findOperariosHabilitadosByFaseId(faseId);
+        return operarios.stream()
+                .map(this::convertirAUsuarioDTO)
+                .toList();
+    }
+
+    private OperarioDTO convertirAUsuarioDTO(Usuario operario) {
+        return OperarioDTO.builder()
+                .id(operario.getId())
+                .nombre(operario.getNombre())
+                .email(operario.getEmail())
+                .tipoTarea(operario.getTipoTarea())
+                .activo(operario.getActivo())
+                .build();
+    }
+    
     private FaseOperarioHabilitadoResponseDTO convertirADTO(FaseOperarioHabilitado faseOperacion) {
         FaseOperarioHabilitadoResponseDTO dto = new FaseOperarioHabilitadoResponseDTO();
         dto.setId(faseOperacion.getId());
