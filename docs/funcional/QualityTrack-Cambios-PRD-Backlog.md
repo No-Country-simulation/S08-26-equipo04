@@ -278,7 +278,7 @@ Surgieron en la discusión y el modelo queda preparado para recibirlas sin redis
 
 ## 08. Decisiones del 25/09/2026 · desarrollo, semana 4
 
-Surgieron al contrastar el código y las tareas pendientes contra el PRD v2 y el Backlog v2. Igual que las anteriores, ninguna cambia el flujo acordado: dos lo precisan y una confirma un criterio que el desarrollo había simplificado.
+Surgieron al contrastar el código y las tareas pendientes contra el PRD v2 y el Backlog v2. Igual que las anteriores, ninguna cambia el flujo acordado. D-1 a D-3 lo precisan o confirman un criterio que el desarrollo había simplificado; D-4 a D-6 registran cambios que ya se hicieron en el código y faltaba documentar. Todas están aplicadas en el PRD, el Backlog, el esquema de base y la especificación técnica de backend, marcadas con *(25/09 — D-n)*.
 
 ### D-1 · Una fase en ejecución no se reasigna
 
@@ -324,11 +324,58 @@ El backlog pide que, al mandar a rehacer, el Jefe *"asigne operario(s) y tiempo 
 
 ---
 
+### D-4 · Datos del cliente: CUIT único y todos los campos obligatorios
+
+**Dónde impacta:** PRD sección 07 (Vendedor, "Levantar pedido") · HU-1.1
+
+El PRD pedía nombre, dirección y teléfono. Durante el desarrollo se sumaron el CUIT y el email, y se hicieron obligatorios (#160, #161, #188).
+
+**Decisión tomada:** el cliente se registra con razón social, CUIT, nombre de contacto, dirección, teléfono y email, todos obligatorios. El CUIT no se repite: si ya existe, el sistema no deja cargar el cliente otra vez.
+
+**Por qué:** evita clientes duplicados y deja el email disponible para enviar la cotización.
+
+**Qué cambia:** PRD 07 y HU-1.1 (datos del cliente y un criterio para el CUIT repetido). Esquema de base: columna `clientes.cuit` única.
+
+---
+
+### D-5 · La fase se crea con sus operarios
+
+**Dónde impacta:** PRD sección 07 (Gerente, "Configuración global") · HU-5.1 · HU-2.1 · HU-2.2
+
+Al aprobar una cotización, el sistema asigna a cada fase un operario habilitado. Si una fase no tenía ninguno, la aprobación fallaba.
+
+**Decisión tomada:** el Gerente elige los operarios en el mismo paso en que crea la fase, y no puede crear una fase sin al menos uno ni deshabilitar al último. El Jefe de producción solo ve para cotizar las fases activas con operarios, y al reasignar solo puede elegir operarios habilitados para esa fase.
+
+**Por qué:** resuelve el problema en el origen con un flujo simple para el MVP.
+
+**Supuesto del MVP:** no se contempla deshabilitar operarios que tienen cotizaciones en curso; queda como mejora.
+
+**Qué cambia:** PRD 07 y HU-5.1, HU-2.1 y HU-2.2 (un criterio cada una).
+
+---
+
+### D-6 · Los adjuntos se guardan en la base de datos
+
+**Dónde impacta:** HU-1.1 · HU-3.2 · Esquema de base
+
+Los archivos se guardaban en el disco del servidor, que en Render se borra en cada despliegue o reinicio.
+
+**Decisión tomada:** el archivo se guarda en la tabla `adjuntos` (columna `contenido`), con un máximo de 10 MB por archivo, y hay un endpoint para verlo desde el navegador (#199).
+
+**Por qué:** es la solución más simple que no pierde archivos con el plan gratuito. Si el producto sigue después del programa, conviene pasar a un servicio de archivos.
+
+**Qué cambia:** HU-1.1 (criterio de archivos guardados y límite de 10 MB). Esquema de base: columna `adjuntos.contenido`.
+
+---
+
 | # | Punto | Tipo | Documento a tocar |
 |---|---|---|---|
 | D-1 | Una fase en ejecución no se reasigna | Definición | PRD 06 (Regla 4) · HU-2.2 |
-| D-2 | Checklist completo junto con el veredicto | Definición | Especificación técnica de backend |
-| D-3 | Operario y tiempo por fase al rehacer | Confirmación | — |
+| D-2 | Checklist completo junto con el veredicto | Definición | HU-4.2 · Especificación técnica de backend |
+| D-3 | Operario y tiempo por fase al rehacer | Confirmación | HU-2.3 · Especificación técnica de backend |
+| D-4 | CUIT único y datos del cliente obligatorios | Alcance | PRD 07 · HU-1.1 · Esquema |
+| D-5 | La fase se crea con sus operarios | Definición | PRD 07 · HU-5.1 · HU-2.1 · HU-2.2 · Especificación técnica de backend |
+| D-6 | Adjuntos guardados en la base | Técnico | HU-1.1 · Esquema · Especificación técnica de backend |
 
 ---
 
