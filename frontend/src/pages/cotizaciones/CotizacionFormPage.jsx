@@ -21,6 +21,7 @@ import {
   cotizacionSchema,
   cotizacionDefaults,
 } from "../../utils/cotizacionSchema";
+import { IMPORTE_EJEMPLO } from "../../utils/importe";
 import { useWatch } from "react-hook-form";
 
 const ESTADOS_SOLO_LECTURA = ["ENVIADA_A_CLIENTE", "APROBADA", "NO_APROBADA"];
@@ -398,10 +399,15 @@ export const CotizacionFormPage = () => {
                 <Field
                   label="Precio total ($)"
                   id="precio_final"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  {...register("precio_final", { valueAsNumber: true })}
+                  // Texto y no number a proposito: `type="number"` descarta los
+                  // separadores de miles y parseaba "10.000" como 10 (#198).
+                  // El texto entra crudo al schema, que lo normaliza con
+                  // `parseImporte`; al backend sigue yendo un numero.
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="24.500,50"
+                  helperText={`Podés escribir ${IMPORTE_EJEMPLO}. El último separador es decimal si tiene 1 o 2 dígitos.`}
+                  {...register("precio_final")}
                   onFocus={(event) => event.currentTarget.select()}
                   error={errors.precio_final?.message}
                 />
