@@ -114,14 +114,21 @@ export const SolicitudesProvider = ({ children }) => {
 
     try {
       const { data } = await apiPost('/api/solicitudes', payload);
-      const now = new Date().toISOString();
+      // La respuesta ya trae las fechas reales (created_at/fecha_creacion):
+      // se usan en vez de fabricarlas en cliente.
+      const ahora = new Date().toISOString();
       const nueva = mapItem({
         ...solicitud,
         id: data.id,
         numero_solicitud: data.numero_solicitud,
         estado: data.estado,
-        created_at: now,
-        updated_at: now,
+        created_at:
+          data.created_at ?? data.createdAt ?? data.fecha_creacion ?? ahora,
+        updated_at:
+          data.updated_at ??
+          data.updatedAt ??
+          data.fecha_actualizacion ??
+          ahora,
       });
       delete nueva.cliente_nuevo;
       setSolicitudes((prev) => [...prev, nueva]);

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowRightLeft, Clock3, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiGet, apiPost } from '../../api';
-import { Badge, Button, Card, CardHeader, CardTitle, ErrorBanner, LoadingSpinner, Modal, Title } from '../../components/ui';
+import { Badge, Button, Card, CardHeader, CardTitle, ErrorBanner, Modal, SkeletonCard, Title } from '../../components/ui';
 
 const estadoVariant = {
   PENDIENTE: 'queue',
@@ -52,7 +52,7 @@ export const GestionPlantaPage = () => {
       setCargando(false);
     }).catch((err) => {
       if (cancelado) return;
-      setError(err?.response?.data?.message || err?.response?.data?.error || 'No se pudo cargar la gestión de planta.');
+      setError(err?.response?.data?.mensaje || err?.response?.data?.message || err?.response?.data?.error || 'No se pudo cargar la gestión de planta.');
       setCargando(false);
     });
     return () => { cancelado = true; };
@@ -204,7 +204,6 @@ export const GestionPlantaPage = () => {
     <div className="mx-auto max-w-7xl space-y-6">
       <Title>Gestión de planta</Title>
 
-      {cargando && <LoadingSpinner label="Cargando fases de planta" />}
       {error && <ErrorBanner message={error} />}
 
       <div className="flex items-start justify-between gap-4">
@@ -217,6 +216,21 @@ export const GestionPlantaPage = () => {
         </div>
       </div>
 
+      {cargando ? (
+        <>
+          <div className="grid gap-4 md:grid-cols-3" aria-busy="true" aria-label="Cargando resumen de planta">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <SkeletonCard key={index} rows={2} />
+            ))}
+          </div>
+          <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3" aria-busy="true" aria-label="Cargando carga por operario">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <SkeletonCard key={index} rows={4} />
+            ))}
+          </div>
+        </>
+      ) : (
+      <>
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="flex items-center gap-4">
           <span className="rounded-lg bg-primary-tint p-3 text-primary">
@@ -249,11 +263,11 @@ export const GestionPlantaPage = () => {
         </Card>
       </div>
 
-      {!cargando && !error && cargaPorOperario.length === 0 ? (
+      {!error && cargaPorOperario.length === 0 ? (
         <Card>
           <p className="text-body text-text-secondary">No hay operarios activos con carga asignada.</p>
         </Card>
-      ) : !cargando && !error ? (
+      ) : !error ? (
         <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
           {cargaPorOperario.map((operario) => {
             const totalPaginas = Math.max(
@@ -337,6 +351,8 @@ export const GestionPlantaPage = () => {
           })}
         </div>
       ) : null}
+      </>
+      )}
 
       <Modal
         open={Boolean(faseActual)}
