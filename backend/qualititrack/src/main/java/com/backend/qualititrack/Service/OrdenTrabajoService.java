@@ -139,6 +139,9 @@ public class OrdenTrabajoService {
      */
     @Transactional()
     public List<OrdenTrabajoDTO> listarPorEstado(EstadoOT estado) {
+        if (estado == null) {
+            throw new IllegalArgumentException("El estado no puede ser nulo");
+        }
         return ordenTrabajoRepository.findAll().stream()
                 .filter(ot -> ot.getEstado() == estado)
                 .map(this::convertirADTO)

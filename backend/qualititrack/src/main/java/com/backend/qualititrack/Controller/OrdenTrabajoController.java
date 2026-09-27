@@ -59,11 +59,8 @@ public class OrdenTrabajoController {
      */
     @GetMapping
     @PreAuthorize("hasAnyRole('JEFE_PRODUCCION', 'OPERARIO', 'CALIDAD')")
-    public ResponseEntity<?> listarPorEstado(@RequestParam(required = false) EstadoOT estado) {
-        if (estado != null) {
-            return ResponseEntity.ok().body(ordenTrabajoService.listarPorEstado(estado));
-        }
-        return ResponseEntity.badRequest().body("El parámetro 'estado' es requerido");
+    public ResponseEntity<List<OrdenTrabajoDTO>> listarPorEstado(@RequestParam(required = false) EstadoOT estado) {
+        return ResponseEntity.ok().body(ordenTrabajoService.listarPorEstado(estado));
     }
 
     /**
