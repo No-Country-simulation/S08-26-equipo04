@@ -137,13 +137,12 @@ public class OrdenTrabajoService {
     /**
      * LISTAR POR ESTADO
      */
-    @Transactional()
+    @Transactional
     public List<OrdenTrabajoDTO> listarPorEstado(EstadoOT estado) {
         if (estado == null) {
             throw new IllegalArgumentException("El estado no puede ser nulo");
         }
-        return ordenTrabajoRepository.findAll().stream()
-                .filter(ot -> ot.getEstado() == estado)
+        return ordenTrabajoRepository.findByEstado(estado).stream()
                 .map(this::convertirADTO)
                 .collect(Collectors.toList());
     }
@@ -159,7 +158,7 @@ public class OrdenTrabajoService {
 
         ordenTrabajo.setEstado(nuevoEstado);
 
-        if (nuevoEstado == EstadoOT.COMPLETADA) {
+        if (nuevoEstado == EstadoOT.ENTREGADA) {
             ordenTrabajo.setFechaEntrega(OffsetDateTime.now());
         }
 

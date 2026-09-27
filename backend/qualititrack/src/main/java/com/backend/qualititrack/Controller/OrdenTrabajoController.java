@@ -27,7 +27,7 @@ import jakarta.validation.Valid;
 public class OrdenTrabajoController {
     private final OrdenTrabajoService ordenTrabajoService;
 
-    OrdenTrabajoController(OrdenTrabajoService ordenTrabajoService) {
+    public OrdenTrabajoController(OrdenTrabajoService ordenTrabajoService) {
         this.ordenTrabajoService = ordenTrabajoService;
     }
 
