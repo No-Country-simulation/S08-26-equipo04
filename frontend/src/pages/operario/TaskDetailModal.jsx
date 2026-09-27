@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { addMinutes, differenceInMinutes, format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
+import { Eye } from "lucide-react";
 import {
   extractApiMessage,
   listarAdjuntos,
@@ -30,15 +31,6 @@ const formatFecha = (value) => {
   } catch {
     return value;
   }
-};
-
-const extensionDe = (nombre, fallback) => {
-  const base = nombre ?? "";
-  const partes = base.split(".");
-  if (partes.length > 1 && partes[partes.length - 1]) {
-    return partes[partes.length - 1].toUpperCase();
-  }
-  return (fallback ?? "").toUpperCase() || "Archivo";
 };
 
 // Minutos que sigue viva la URL del blob: la pestaña que la abrio ya la
@@ -191,33 +183,6 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
     }
   };
 
-  const descargarDocumento = async (adjunto) => {
-    setAbriendoId(adjunto.id);
-    setErrorDocumento(null);
-    try {
-      const blob = await verAdjunto(adjunto.id);
-      const url = URL.createObjectURL(blob);
-      const enlace = document.createElement("a");
-      enlace.href = url;
-      enlace.download = adjunto.nombre_original ?? `documento-${adjunto.id}`;
-      document.body.appendChild(enlace);
-      enlace.click();
-      enlace.remove();
-      const timer = setTimeout(() => {
-        URL.revokeObjectURL(url);
-        blobsAbiertos.current = blobsAbiertos.current.filter(
-          (item) => item.url !== url,
-        );
-      }, REVOCACION_MS);
-      blobsAbiertos.current = [...blobsAbiertos.current, { url, timer }];
-    } catch (err) {
-      setErrorDocumento(
-        await mensajeErrorAdjunto(err, "No se pudo descargar el documento."),
-      );
-    } finally {
-      setAbriendoId(null);
-    }
-  };
   const vencimiento = useMemo(() => {
     if (!tarea?.tiempo_estimado_minutos) return null;
     // El tiempo estimado lo carga el Jefe; corre desde que la tarea
@@ -414,40 +379,22 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
             !cargandoAdjuntos &&
             !errorAdjuntos &&
             adjuntos.length > 0 && (
-            <ul className="mt-2 space-y-4">
+            <ul className="mt-3 space-y-3">
               {adjuntos.map((adjunto) => (
                 <li key={adjunto.id}>
-                  <p className="truncate text-body text-ink">
-                    {adjunto.nombre_original}
-                  </p>
-                  <p className="mt-0.5 text-label uppercase text-text-muted">
-                    {extensionDe(
-                      adjunto.nombre_original,
-                      adjunto.tipo_archivo,
-                    )}
-                  </p>
-                  <div className="mt-1.5 flex items-center gap-6">
-                    <Button
-                      variant="discrete"
-                      size="sm"
-                      className="!px-0"
-                      loading={abriendoId === adjunto.id}
-                      aria-label={`Abrir ${adjunto.nombre_original}`}
-                      onClick={() => verDocumento(adjunto)}
-                    >
-                      Abrir
-                    </Button>
-                    <Button
-                      variant="discrete"
-                      size="sm"
-                      className="!px-0"
-                      loading={abriendoId === adjunto.id}
-                      aria-label={`Descargar ${adjunto.nombre_original}`}
-                      onClick={() => descargarDocumento(adjunto)}
-                    >
-                      Descargar
-                    </Button>
-                  </div>
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="min-h-[56px] w-full text-base font-semibold"
+                    loading={abriendoId === adjunto.id}
+                    aria-label={`Ver ${adjunto.nombre_original ?? "documento"}`}
+                    onClick={() => verDocumento(adjunto)}
+                  >
+                    <Eye className="h-5 w-5 shrink-0" aria-hidden="true" />
+                    <span className="min-w-0 truncate">
+                      Ver {adjunto.nombre_original ?? "documento"}
+                    </span>
+                  </Button>
                 </li>
               ))}
             </ul>
