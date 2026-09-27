@@ -3,8 +3,8 @@ package com.backend.qualititrack.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -36,8 +36,9 @@ public class DashboardService {
         List<OrdenTrabajo> ordenes = ordenTrabajoRepository.findAll();
 
         List<AuditoriaCalidad> auditorias = ordenes.stream()
-                .map(OrdenTrabajo::getCalidadChecklist)
-                .filter(Objects::nonNull)
+                .flatMap(ot -> ot.getAuditorias() == null
+                        ? Stream.<AuditoriaCalidad>empty()
+                        : ot.getAuditorias().stream())
                 .collect(Collectors.toList());
 
         long totalEvaluadas = auditorias.size();
