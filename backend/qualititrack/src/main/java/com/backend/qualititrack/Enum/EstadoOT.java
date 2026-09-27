@@ -6,14 +6,6 @@ public enum EstadoOT {
     NO_CONFORME, 
     DESPACHO, 
     ENTREGADA,
-    // Las categorias debajo provienen de lo planteado por Abel. Las no comentadas se dejan así porque se utilizan en el código. Habría que plantear el equivalente adecuado con las de la documentación, o agregarlas formalmente si se consideran estados necesarios.
-    CREADA,
-    // INICIADA,
-    // EN_PROGRESO,
-    PENDIENTE,
-    COMPLETADA,
-    // CALIDAD,
-    // APROBADA,
-    // RECHAZADA,
+    // Cancelada no se encuentra formalmente declarada, pero se deja porque se hizo un endpoint cancelar que lo utiliza.
     CANCELADA
 }

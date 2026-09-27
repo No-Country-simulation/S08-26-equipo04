@@ -6,7 +6,6 @@ import com.backend.qualititrack.Enum.ResultadoCalidad;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,7 +22,6 @@ public class CalidadConformidadDTO {
     @Valid
     private List<RespuestaChecklistItemDTO> respuestas;
 
-    @NotNull(message = "El resultado no puede ser nulo")
     private ResultadoCalidad resultado; // CONFORME o NO_CONFORME
 
     private String observacionesGenerales;
