@@ -11,10 +11,20 @@ import com.backend.qualititrack.Enum.EstadoOtFase;
 import com.backend.qualititrack.modelos.OtFase;
 
 public interface OtFaseRepository extends JpaRepository<OtFase, Long> {
-        // Trae en una sola consulta todo lo que usa convertirADTO (OT, cotización, solicitud y fase)
+        // Trae en una sola consulta todo lo que usa convertirADTO (OT, cotización,
+        // solicitud y fase)
         @Query("SELECT f FROM OtFase f " + "JOIN FETCH f.ordenTrabajo ot " + "JOIN FETCH ot.cotizacion c "
                         + "JOIN FETCH c.solicitud " + "JOIN FETCH f.faseCatalogo")
         List<OtFase> findAllWithRelaciones();
+
+        @Query("SELECT f FROM OtFase f " +
+                        "JOIN FETCH f.ordenTrabajo ot " +
+                        "JOIN FETCH ot.cotizacion c " +
+                        "JOIN FETCH c.solicitud " +
+                        "JOIN FETCH f.faseCatalogo " +
+                        "WHERE ot.id = :ordenTrabajoId " +
+                        "ORDER BY f.cicloIteracion, f.numeroSecuencia")
+        List<OtFase> findByOrdenTrabajoIdWithRelaciones(@Param("ordenTrabajoId") Long ordenTrabajoId);
 
         @Query("SELECT f FROM OtFase f " + "JOIN FETCH f.ordenTrabajo ot " + "JOIN FETCH ot.cotizacion c "
                         + "JOIN FETCH c.solicitud " + "JOIN FETCH f.faseCatalogo "
@@ -41,9 +51,10 @@ public interface OtFaseRepository extends JpaRepository<OtFase, Long> {
                         Integer numeroSecuencia,
                         EstadoOtFase estado);
 
-
         // Busca la siguiente, aunque no sea consecutiva (por cuestiones de retrabajo)
-        
-        @Query("SELECT o FROM OtFase o WHERE o.ordenTrabajo.id = :ordenTrabajoId AND o.cicloIteracion = :cicloIteracion AND o.numeroSecuencia > :numeroSecuencia ORDER BY o.numeroSecuencia asc")
-        Optional<OtFase> findNextFase(@Param("ordenTrabajoId") Long ordenTrabajoId, @Param("cicloIteracion") Integer cicloIteracion, @Param("numeroSecuencia") Integer numeroSecuencia);
+
+        @Query("SELECT o FROM OtFase o WHERE o.ordenTrabajo.id = :ordenTrabajoId AND o.numeroSecuencia > :numeroSecuencia AND o.estado != 'TERMINADO' ORDER BY o.numeroSecuencia ASC, o.cicloIteracion DESC LIMIT 1")
+        Optional<OtFase> findNextFase(@Param("ordenTrabajoId") Long ordenTrabajoId,
+                        @Param("cicloIteracion") Integer cicloIteracion,
+                        @Param("numeroSecuencia") Integer numeroSecuencia);
 }
