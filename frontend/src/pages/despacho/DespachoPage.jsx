@@ -172,12 +172,17 @@ export const DespachoPage = () => {
         return;
       }
       const message =
+        err?.response?.data?.mensaje ||
         err?.response?.data?.message ||
         err?.response?.data?.error ||
         err?.message ||
         "No se pudo registrar la entrega. Reintente.";
-      setSubmitError(message);
-      toast.error(message);
+      const detalles = Array.isArray(err?.response?.data?.detalles)
+        ? ` ${err.response.data.detalles.join(" ")}`
+        : "";
+      const fullMessage = `${message}${detalles}`.trim();
+      setSubmitError(fullMessage);
+      toast.error(fullMessage);
     } finally {
       setIsSubmitting(false);
     }
