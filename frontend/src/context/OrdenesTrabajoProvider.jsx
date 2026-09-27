@@ -1,14 +1,20 @@
 import { useCallback, useEffect, useState } from "react";
-import { apiGet } from "../api";
+import { apiGet, apiPost } from "../api";
 import { useAuth } from "./AuthContext";
 import { OrdenesTrabajoContext } from "./OrdenesTrabajoContext";
 
 const mapItem = (item) => ({
   ...item,
-  numero_ot: item.numero_ot ?? item.numeroOT ?? "OT-—",
+  numero_ot: item.numero_ot ?? item.numeroOT ?? item.numero_o_t ?? "OT-—",
   cliente_razon_social: item.cliente_razon_social ?? item.cliente ?? "—",
   descripcion_pieza: item.descripcion_pieza ?? item.pieza_trabajo ?? "—",
-  receptor_nombre: item.receptor_nombre ?? null,
+  receptor_nombre: item.receptor_nombre ?? item.receptorNombre ?? null,
+  fecha_entrega:
+    item.fecha_entrega ??
+    item.fechaEntrega ??
+    item.fecha_termino_real ??
+    item.fechaTerminoReal ??
+    null,
   // El DTO de OT manda fecha_creacion/fecha_actualizacion, no created_at.
   created_at:
     item.created_at ??
@@ -194,17 +200,23 @@ export const OrdenesTrabajoProvider = ({ children }) => {
         throw new Error("Debe indicar el nombre del receptor.");
       }
 
-      const fechaEntrega = new Date().toISOString();
+      const nombreNormalizado = receptor_nombre.trim();
 
-      const respuestaMock = {
+      // Issue #210: la entrega se registra contra la API. El backend
+      // (Jackson SNAKE_CASE) espera `{ receptor_nombre }` y responde un
+      // OrdenTrabajoDTO sin `receptor_nombre` (la fecha de entrega viaja
+      // como `fecha_termino_real`), por eso se fusiona la respuesta con
+      // los datos locales ya enriquecidos (cliente, pieza).
+      const { data } = await apiPost(
+        `/api/ordenes-trabajo/${orden.id}/entrega`,
+        { receptor_nombre: nombreNormalizado },
+      );
+
+      return fusionar({
         ...orden,
-        estado: "ENTREGADA",
-        receptor_nombre: receptor_nombre.trim(),
-        fecha_entrega: fechaEntrega,
-        updated_at: fechaEntrega,
-      };
-
-      return fusionar(respuestaMock);
+        ...data,
+        receptor_nombre: nombreNormalizado,
+      });
     },
     [ordenesTrabajo, fusionar, user?.rol],
   );
