@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { addMinutes, differenceInMinutes, format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import {
-  apiGet,
   extractApiMessage,
   listarAdjuntos,
   listarNotasFase,
@@ -57,16 +56,16 @@ const mapNotas = (data) => {
 /**
  * Detalle de tarea del operario (HU-3.2/3.3/3.4). Solo lectura:
  * vencimiento calculado, adjuntos/planos de la solicitud y notas separadas
- * por origen. Sin mocks: la OT y la cotizacion se resuelven por API
- * (tarea.orden_trabajo_id -> GET /api/ordenes-trabajo/{id} -> cotizacion_id
- * -> GET /api/cotizaciones/{id} -> solicitud_id, los tres permitidos para
- * OPERARIO) y las notas con GET /api/ot-fases/{id}/notas. Un id real jamas
- * debe cruzarse con datos inventados. El operario no puede crear notas.
+ * por origen. Sin mocks y sin cadena OT -> cotizacion: la tarea ya trae
+ * `descripcion_pieza`, `cantidad` y `solicitud_id` en el DTO (BE #219), y
+ * las notas salen de GET /api/ot-fases/{id}/notas. Un id real jamas debe
+ * cruzarse con datos inventados. El operario no puede crear notas.
  */
 export const TaskDetailModal = ({ tarea, open, onClose }) => {
-  // Los adjuntos vienen de la API (GET /api/solicitudes/{id}/documentos).
-  // El estado guarda a que solicitud pertenece cada respuesta para no
-  // necesitar setState dentro del efecto.
+  // Los adjuntos vienen de la API (GET /api/solicitudes/{id}/documentos),
+  // con el solicitud_id que ya trae la tarea. El estado guarda a que
+  // solicitud pertenece cada respuesta para no necesitar setState dentro
+  // del efecto.
   const [adjuntosState, setAdjuntosState] = useState({
     solicitudId: null,
     lista: [],
@@ -75,16 +74,6 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
   const [versionAdjuntos, setVersionAdjuntos] = useState(0);
   const [abriendoId, setAbriendoId] = useState(null);
   const [errorDocumento, setErrorDocumento] = useState(null);
-  // Idem para la resolucion OT -> cotizacion: cada respuesta se guarda
-  // contra la OT a la que pertenece, asi al cambiar de tarea no se muestra
-  // la referencia de la anterior.
-  const [referencia, setReferencia] = useState({
-    ordenTrabajoId: null,
-    orden: null,
-    cotizacion: null,
-    error: null,
-  });
-  const [versionReferencia, setVersionReferencia] = useState(0);
   // Notas de la fase (GET /api/ot-fases/{id}/notas), con la misma proteccion
   // contra respuestas de otra tarea.
   const [notasState, setNotasState] = useState({
@@ -126,77 +115,14 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
     };
   }, [open, otFaseId, versionNotas]);
 
-  const ordenTrabajoId = tarea?.orden_trabajo_id ?? null;
-  const esDeEstaOt = referencia.ordenTrabajoId === ordenTrabajoId;
-  const orden = esDeEstaOt ? referencia.orden : null;
-  const cotizacion = esDeEstaOt ? referencia.cotizacion : null;
-  const errorReferencia = esDeEstaOt ? referencia.error : null;
-  // Mientras la referencia no sea de esta OT se la considera en curso: asi
-  // alcanza con que cada estado guarde el id al que pertenece.
-  const cargandoReferencia = open && ordenTrabajoId != null && !esDeEstaOt;
-
-  // Resuelve OT y cotizacion en cadena. Los setState ocurren en los callbacks
-  // de la promesa, nunca en el cuerpo del efecto.
-  useEffect(() => {
-    if (!open || ordenTrabajoId == null) return undefined;
-    let cancelado = false;
-    const resolver = async () => {
-      const { data: ordenRespuesta } = await apiGet(
-        `/api/ordenes-trabajo/${ordenTrabajoId}`,
-      );
-      const cotizacionId =
-        ordenRespuesta?.cotizacion_id ?? ordenRespuesta?.cotizacionId ?? null;
-      const orden = ordenRespuesta ?? null;
-      if (cotizacionId == null) {
-        return {
-          orden,
-          cotizacion: null,
-          error: "La orden de trabajo no tiene cotizacion asociada.",
-        };
-      }
-      const { data: cotizacionRespuesta } = await apiGet(
-        `/api/cotizaciones/${cotizacionId}`,
-      );
-      return { orden, cotizacion: cotizacionRespuesta ?? null, error: null };
-    };
-    resolver().then(
-      (datos) => {
-        if (cancelado) return;
-        setReferencia({ ordenTrabajoId, ...datos });
-      },
-      (err) => {
-        if (cancelado) return;
-        setReferencia({
-          ordenTrabajoId,
-          orden: null,
-          cotizacion: null,
-          error: extractApiMessage(
-            err,
-            "No se pudo resolver la orden de trabajo.",
-          ),
-        });
-      },
-    );
-    return () => {
-      cancelado = true;
-    };
-  }, [open, ordenTrabajoId, versionReferencia]);
-
-  const detalle = useMemo(() => {
-    if (!tarea) return null;
-    return { ot: orden, cotizacion };
-  }, [tarea, orden, cotizacion]);
-
-  const solicitudId =
-    cotizacion?.solicitud_id ?? cotizacion?.solicitudId ?? null;
+  // BE #219: la tarea ya trae el solicitud_id, sin resolver la cadena
+  // OT -> cotizacion -> solicitud.
+  const solicitudId = tarea?.solicitud_id ?? tarea?.solicitudId ?? null;
   const esDeEstaSolicitud = adjuntosState.solicitudId === solicitudId;
   const adjuntos = esDeEstaSolicitud ? adjuntosState.lista : [];
-  // Si ni siquiera se pudo resolver la OT, ese es el error que hay que
-  // mostrar: los adjuntos no llegaron a consultarse.
-  const errorAdjuntos =
-    errorReferencia ?? (esDeEstaSolicitud ? adjuntosState.error : null);
+  const errorAdjuntos = esDeEstaSolicitud ? adjuntosState.error : null;
   const cargandoAdjuntos =
-    open && (cargandoReferencia || (solicitudId != null && !esDeEstaSolicitud));
+    open && solicitudId != null && !esDeEstaSolicitud;
 
   useEffect(() => {
     if (!open || solicitudId == null) return undefined;
@@ -315,18 +241,6 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
   };
 
   const reintentar = () => {
-    // Reintenta solo lo que fallo: la resolucion de la OT o el listado de
-    // adjuntos.
-    if (errorReferencia) {
-      setReferencia({
-        ordenTrabajoId: null,
-        orden: null,
-        cotizacion: null,
-        error: null,
-      });
-      setVersionReferencia((v) => v + 1);
-      return;
-    }
     setAdjuntosState({ solicitudId: null, lista: [], error: null });
     setVersionAdjuntos((v) => v + 1);
   };
@@ -336,7 +250,7 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
     : null;
 
   const renderContenido = () => {
-    if (!tarea || !detalle) {
+    if (!tarea) {
       return (
         <EmptyState
           title="Sin detalle"
@@ -344,12 +258,10 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
         />
       );
     }
-    // Fuentes de datos (sin mocks): pieza/cantidad de la cotizacion con
-    // fallback a la tarea, vencimiento de la tarea o calculado.
-    const descripcionPieza =
-      detalle.cotizacion?.descripcion_pieza ?? tarea.descripcion_pieza ?? null;
-    const cantidad =
-      detalle.cotizacion?.cantidad ?? tarea.cantidad ?? null;
+    // BE #219: pieza y cantidad ya vienen en la tarea, sin cadena OT ->
+    // cotizacion. Vencimiento de la tarea o calculado.
+    const descripcionPieza = tarea.descripcion_pieza ?? null;
+    const cantidad = tarea.cantidad ?? null;
     const venceTexto =
       tarea.fecha_vencimiento != null
         ? formatFecha(tarea.fecha_vencimiento)
@@ -471,26 +383,37 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
           >
             Documentos
           </h3>
-          {cargandoAdjuntos && (
+          {solicitudId == null && (
+            <p className="mt-2 text-label text-text-secondary">
+              La tarea no trae solicitud asociada: sin documentos para mostrar.
+            </p>
+          )}
+          {solicitudId != null && cargandoAdjuntos && (
             <LoadingSpinner
               label="Cargando documentos"
               size="sm"
               className="min-h-0 py-4"
             />
           )}
-          {!cargandoAdjuntos && errorAdjuntos && (
+          {solicitudId != null && !cargandoAdjuntos && errorAdjuntos && (
             <ErrorBanner
               message={errorAdjuntos}
               onRetry={reintentar}
               className="mt-2"
             />
           )}
-          {!cargandoAdjuntos && !errorAdjuntos && adjuntos.length === 0 && (
-            <p className="mt-2 text-label text-text-secondary">
-              Sin documentos disponibles por el momento.
-            </p>
-          )}
-          {!cargandoAdjuntos && !errorAdjuntos && adjuntos.length > 0 && (
+          {solicitudId != null &&
+            !cargandoAdjuntos &&
+            !errorAdjuntos &&
+            adjuntos.length === 0 && (
+              <p className="mt-2 text-label text-text-secondary">
+                Sin documentos disponibles por el momento.
+              </p>
+            )}
+          {solicitudId != null &&
+            !cargandoAdjuntos &&
+            !errorAdjuntos &&
+            adjuntos.length > 0 && (
             <ul className="mt-2 space-y-4">
               {adjuntos.map((adjunto) => (
                 <li key={adjunto.id}>
