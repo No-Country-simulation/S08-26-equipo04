@@ -1,9 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { addMinutes, differenceInMinutes, format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { ChevronDown, Clock3, FileText, MessagesSquare } from "lucide-react";
+import {
+  ChevronDown,
+  Clock3,
+  Eye,
+  FileText,
+  MessagesSquare,
+} from "lucide-react";
+import { apiGet, extractApiMessage, listarAdjuntos, verAdjunto } from "../../api";
+import { formatBytes, mensajeErrorAdjunto } from "../../utils/adjuntos";
 import {
   Badge,
+  Button,
   EmptyState,
   ErrorBanner,
   LoadingSpinner,
@@ -24,38 +33,185 @@ const formatFecha = (value) => {
   }
 };
 
-const formatBytes = (bytes) => {
-  if (!bytes && bytes !== 0) return "";
-  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
-};
+// Minutos que sigue viva la URL del blob: la pestaña que la abrio ya la
+// cargo, pero revocarla de inmediato la rompe.
+const REVOCACION_MS = 60_000;
 
 /**
  * Detalle de tarea del operario (HU-3.2/3.3/3.4). Solo lectura:
- * vencimiento calculado. Sin mocks: la OT, los adjuntos y las notas quedan
- * como "sin datos" hasta que existan GET /api/ordenes-trabajo (ya usado para
- * ot_numero), GET /api/solicitudes/{id}/documentos (BE #36) y
- * GET /api/ot-fases/{id}/notas (BE #87). El operario no puede crear notas.
+ * vencimiento calculado, adjuntos/planos de la solicitud (API) y notas
+ * separadas por origen. Sin mocks: la OT y la cotizacion se resuelven por
+ * API (tarea.orden_trabajo_id -> GET /api/ordenes-trabajo/{id} ->
+ * cotizacion_id -> GET /api/cotizaciones/{id} -> solicitud_id, los tres
+ * permitidos para OPERARIO) y las notas quedan como "sin datos" hasta que se
+ * conecten. Un id real jamas debe cruzarse con datos inventados. El operario
+ * no puede crear notas.
  */
 export const TaskDetailModal = ({ tarea, open, onClose }) => {
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState(null);
+  // Los adjuntos vienen de la API (GET /api/solicitudes/{id}/documentos).
+  // El estado guarda a que solicitud pertenece cada respuesta para no
+  // necesitar setState dentro del efecto.
+  const [adjuntosState, setAdjuntosState] = useState({
+    solicitudId: null,
+    lista: [],
+    error: null,
+  });
+  const [versionAdjuntos, setVersionAdjuntos] = useState(0);
+  const [abriendoId, setAbriendoId] = useState(null);
+  const [errorDocumento, setErrorDocumento] = useState(null);
+  // Idem para la resolucion OT -> cotizacion: cada respuesta se guarda
+  // contra la OT a la que pertenece, asi al cambiar de tarea no se muestra
+  // la referencia de la anterior.
+  const [referencia, setReferencia] = useState({
+    ordenTrabajoId: null,
+    orden: null,
+    cotizacion: null,
+    error: null,
+    cargando: false,
+  });
+  const [versionReferencia, setVersionReferencia] = useState(0);
+  const blobsAbiertos = useRef([]);
 
+  const ordenTrabajoId = tarea?.orden_trabajo_id ?? null;
+  const esDeEstaOt = referencia.ordenTrabajoId === ordenTrabajoId;
+  const orden = esDeEstaOt ? referencia.orden : null;
+  const cotizacion = esDeEstaOt ? referencia.cotizacion : null;
+  const errorReferencia = esDeEstaOt ? referencia.error : null;
+  const cargandoReferencia =
+    open && ordenTrabajoId != null && (!esDeEstaOt || referencia.cargando);
+
+  // Resuelve OT y cotizacion en cadena. Los setState ocurren en los callbacks
+  // de la promesa, nunca en el cuerpo del efecto.
   useEffect(() => {
-    if (!open) return undefined;
-    // Latencia simulada para ejercitar los estados de UI segun spec §7.1.
-    const timer = setTimeout(() => {
-      setError(null);
-      setCargando(false);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [open, tarea?.id]);
+    if (!open || ordenTrabajoId == null) return undefined;
+    let cancelado = false;
+    const resolver = async () => {
+      const { data: ordenRespuesta } = await apiGet(
+        `/api/ordenes-trabajo/${ordenTrabajoId}`,
+      );
+      const cotizacionId =
+        ordenRespuesta?.cotizacion_id ?? ordenRespuesta?.cotizacionId ?? null;
+      if (cotizacionId == null) {
+        throw new Error("La orden de trabajo no tiene cotizacion asociada.");
+      }
+      const { data: cotizacionRespuesta } = await apiGet(
+        `/api/cotizaciones/${cotizacionId}`,
+      );
+      return { orden: ordenRespuesta ?? null, cotizacion: cotizacionRespuesta ?? null };
+    };
+    resolver().then(
+      (datos) => {
+        if (cancelado) return;
+        setReferencia({ ordenTrabajoId, ...datos, error: null, cargando: false });
+      },
+      (err) => {
+        if (cancelado) return;
+        setReferencia({
+          ordenTrabajoId,
+          orden: null,
+          cotizacion: null,
+          error: extractApiMessage(
+            err,
+            "No se pudo resolver la orden de trabajo.",
+          ),
+          cargando: false,
+        });
+      },
+    );
+    return () => {
+      cancelado = true;
+    };
+  }, [open, ordenTrabajoId, versionReferencia]);
 
   const detalle = useMemo(() => {
     if (!tarea) return null;
-    // Sin mocks: la OT, los adjuntos y las notas quedan vacios hasta BE #36
-    // y #87. Un id real jamas debe cruzarse con datos inventados.
-    return { ot: null, cotizacion: null, adjuntos: [], notasCalidad: [], notasProduccion: [] };
-  }, [tarea]);
+    return {
+      ot: orden,
+      cotizacion,
+      // Las notas siguen sin fuente de datos: se muestran como vacias en
+      // lugar de inventarlas.
+      notasCalidad: [],
+      notasProduccion: [],
+    };
+  }, [tarea, orden, cotizacion]);
+
+  const solicitudId =
+    cotizacion?.solicitud_id ?? cotizacion?.solicitudId ?? null;
+  const esDeEstaSolicitud = adjuntosState.solicitudId === solicitudId;
+  const adjuntos = esDeEstaSolicitud ? adjuntosState.lista : [];
+  // Si ni siquiera se pudo resolver la OT, ese es el error que hay que
+  // mostrar: los adjuntos no llegaron a consultarse.
+  const errorAdjuntos =
+    errorReferencia ?? (esDeEstaSolicitud ? adjuntosState.error : null);
+  const cargandoAdjuntos =
+    open && (cargandoReferencia || (solicitudId != null && !esDeEstaSolicitud));
+
+  useEffect(() => {
+    if (!open || solicitudId == null) return undefined;
+    let cancelado = false;
+    listarAdjuntos(solicitudId).then(
+      (lista) => {
+        if (cancelado) return;
+        setAdjuntosState({ solicitudId, lista, error: null });
+      },
+      (err) => {
+        if (cancelado) return;
+        setAdjuntosState({
+          solicitudId,
+          lista: [],
+          error: extractApiMessage(err, "No se pudieron cargar los adjuntos."),
+        });
+      },
+    );
+    return () => {
+      cancelado = true;
+    };
+  }, [open, solicitudId, versionAdjuntos]);
+
+  // Libera los object URLs de los documentos que se abrieron.
+  useEffect(
+    () => () => {
+      blobsAbiertos.current.forEach((item) => {
+        clearTimeout(item.timer);
+        URL.revokeObjectURL(item.url);
+      });
+      blobsAbiertos.current = [];
+    },
+    [],
+  );
+
+  const verDocumento = async (adjunto) => {
+    setAbriendoId(adjunto.id);
+    setErrorDocumento(null);
+    try {
+      const blob = await verAdjunto(adjunto.id);
+      const url = URL.createObjectURL(blob);
+      const ventana = window.open(url, "_blank");
+      if (ventana) {
+        ventana.opener = null;
+      } else {
+        // Popup bloqueado: se reintenta con un ancla.
+        const enlace = document.createElement("a");
+        enlace.href = url;
+        enlace.target = "_blank";
+        enlace.rel = "noopener noreferrer";
+        enlace.click();
+      }
+      const timer = setTimeout(() => {
+        URL.revokeObjectURL(url);
+        blobsAbiertos.current = blobsAbiertos.current.filter(
+          (item) => item.url !== url,
+        );
+      }, REVOCACION_MS);
+      blobsAbiertos.current = [...blobsAbiertos.current, { url, timer }];
+    } catch (err) {
+      setErrorDocumento(
+        await mensajeErrorAdjunto(err, "No se pudo abrir el documento."),
+      );
+    } finally {
+      setAbriendoId(null);
+    }
+  };
 
   const vencimiento = useMemo(() => {
     if (!tarea?.tiempo_estimado_minutos) return null;
@@ -70,9 +226,21 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
   }, [tarea]);
 
   const reintentar = () => {
-    setError(null);
-    setCargando(true);
-    setTimeout(() => setCargando(false), 300);
+    // Reintenta solo lo que fallo: la resolucion de la OT o el listado de
+    // adjuntos.
+    if (errorReferencia) {
+      setReferencia({
+        ordenTrabajoId: null,
+        orden: null,
+        cotizacion: null,
+        error: null,
+        cargando: false,
+      });
+      setVersionReferencia((v) => v + 1);
+      return;
+    }
+    setAdjuntosState({ solicitudId: null, lista: [], error: null });
+    setVersionAdjuntos((v) => v + 1);
   };
 
   const estado = tarea
@@ -80,8 +248,6 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
     : null;
 
   const renderContenido = () => {
-    if (cargando) return <LoadingSpinner label="Cargando detalle" />;
-    if (error) return <ErrorBanner message={error} onRetry={reintentar} />;
     if (!tarea || !detalle) {
       return (
         <EmptyState
@@ -97,7 +263,9 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
             <p className="text-metadata text-text-muted">{tarea.ot_numero ?? "—"}</p>
             <p className="text-label text-text-secondary">
               Fase {tarea.numero_secuencia}
-              {detalle.ot ? ` · ${detalle.ot.cliente_razon_social}` : ""}
+              {detalle.cotizacion?.cliente_razon_social
+                ? ` · ${detalle.cotizacion.cliente_razon_social}`
+                : ""}
             </p>
           </div>
           <Badge variant={estado.variant} className="shrink-0 whitespace-nowrap">{estado.label}</Badge>
@@ -141,13 +309,28 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
             <FileText className="h-4 w-4" aria-hidden="true" />
             Adjuntos de la solicitud
           </h3>
-          {detalle.adjuntos.length === 0 ? (
+          {cargandoAdjuntos && (
+            <LoadingSpinner
+              label="Cargando adjuntos"
+              size="sm"
+              className="min-h-0 py-4"
+            />
+          )}
+          {!cargandoAdjuntos && errorAdjuntos && (
+            <ErrorBanner
+              message={errorAdjuntos}
+              onRetry={reintentar}
+              className="mt-2"
+            />
+          )}
+          {!cargandoAdjuntos && !errorAdjuntos && adjuntos.length === 0 && (
             <p className="mt-2 rounded-xl bg-canvas p-3 text-label text-text-secondary">
               Sin adjuntos disponibles por el momento.
             </p>
-          ) : (
+          )}
+          {!cargandoAdjuntos && !errorAdjuntos && adjuntos.length > 0 && (
             <ul className="mt-2 space-y-2">
-              {detalle.adjuntos.map((adjunto) => (
+              {adjuntos.map((adjunto) => (
                 <li
                   key={adjunto.id}
                   className="flex items-center justify-between gap-3 rounded-xl bg-canvas p-3"
@@ -160,9 +343,28 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
                       {adjunto.tipo_archivo} · {formatBytes(adjunto.tamanio_bytes)}
                     </p>
                   </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="shrink-0"
+                    loading={abriendoId === adjunto.id}
+                    aria-label={`Ver ${adjunto.nombre_original}`}
+                    onClick={() => verDocumento(adjunto)}
+                  >
+                    <Eye className="h-4 w-4" aria-hidden="true" />
+                    Ver
+                  </Button>
                 </li>
               ))}
             </ul>
+          )}
+          {errorDocumento && (
+            <p
+              role="alert"
+              className="mt-2 rounded-lg bg-error-light p-3 text-label text-error"
+            >
+              {errorDocumento}
+            </p>
           )}
         </section>
 

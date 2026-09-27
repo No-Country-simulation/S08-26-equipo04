@@ -5,15 +5,26 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.backend.qualititrack.DTO.EntregaOtRequestDTO;
+import com.backend.qualititrack.DTO.ExpedienteCompletoDTO;
 import com.backend.qualititrack.DTO.OrdenTrabajoDTO;
+import com.backend.qualititrack.DTO.OrdenTrabajoResumenDTO;
 import com.backend.qualititrack.Enum.EstadoOT;
 import com.backend.qualititrack.Service.OrdenTrabajoService;
+import com.backend.qualititrack.modelos.OrdenTrabajo;
+
+import com.backend.qualititrack.DTO.OrdenTrabajoResumenDTO;
+import com.backend.qualititrack.DTO.ExpedienteCompletoDTO;
+import java.util.List;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/ordenes-trabajo")
@@ -111,4 +122,42 @@ public class OrdenTrabajoController {
             this.motivo = motivo;
         }
     }
+
+    /**
+     * ESTABLECER OT COMO ENTREGADA - POST /api/ordenes-trabajo/{id}/entrega
+     * Solo VENDEDOR
+     */
+    @PostMapping("/{id}/entrega")
+    @PreAuthorize("hasAnyRole('VENDEDOR')")
+    public ResponseEntity<OrdenTrabajoDTO> entregarOrdenTrabajo(
+            @PathVariable Long id,
+            @Valid @RequestBody EntregaOtRequestDTO request) {
+        OrdenTrabajoDTO orden = ordenTrabajoService.marcarComoEntregada(id, request);
+        return ResponseEntity.ok().body(orden);
+    }
+
+    /**
+     * LISTAR CON FILTROS - GET /api/ordenes-trabajo/filtrar?cliente=X&numeroOt=Y
+     * JEFE_PRODUCCION, VENDEDOR, OPERARIO, CALIDAD
+     */
+    @GetMapping("/filtrar")
+    @PreAuthorize("hasAnyRole('JEFE_PRODUCCION', 'VENDEDOR', 'OPERARIO', 'CALIDAD')")
+    public ResponseEntity<List<OrdenTrabajoResumenDTO>> listarConFiltros(
+            @RequestParam(required = false) String cliente,
+            @RequestParam(required = false) String numeroOt) {
+        List<OrdenTrabajoResumenDTO> resultado = ordenTrabajoService.listarConFiltros(cliente, numeroOt);
+        return ResponseEntity.ok().body(resultado);
+    }
+
+    /**
+     * OBTENER EXPEDIENTE COMPLETO - GET /api/ordenes-trabajo/{id}/expediente
+     * JEFE_PRODUCCION, VENDEDOR, CALIDAD
+     */
+    @GetMapping("/{id}/expediente")
+    @PreAuthorize("hasAnyRole('JEFE_PRODUCCION', 'VENDEDOR', 'CALIDAD')")
+    public ResponseEntity<ExpedienteCompletoDTO> obtenerExpedienteCompleto(@PathVariable Long id) {
+        ExpedienteCompletoDTO expediente = ordenTrabajoService.obtenerExpedienteCompleto(id);
+        return ResponseEntity.ok().body(expediente);
+    }
+
 }

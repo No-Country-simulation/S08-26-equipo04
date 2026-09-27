@@ -4,10 +4,11 @@ import { useAuth } from '../context/AuthContext';
 import logoIcon from '../assets/qualitytrack-icon.png';
 
 /**
- * Layout mobile-first exclusivo del Operario (HU-3.1).
+ * Layout mobile-first de planta: lo usan Operario (HU-3.1) y Calidad.
  * Sin sidebar ni menu hamburguesa: header fijo con marca a la izquierda
- * y cierre de sesion arriba a la derecha (patron habitual en apps moviles).
- * El contenido se centra en una columna angosta (max-w-md) tipica de app.
+ * y nombre + cierre de sesion arriba a la derecha (patron habitual en
+ * apps moviles). El contenido se centra en una columna angosta (max-w-md)
+ * tipica de app.
  */
 export const OperarioLayout = () => {
   const { user, logout } = useAuth();
@@ -16,7 +17,7 @@ export const OperarioLayout = () => {
       ?.split(' ')
       .map((part) => part[0])
       .slice(0, 2)
-      .join('') || 'OP';
+      .join('') || 'QT';
 
   return (
     <div className="flex min-h-screen flex-col bg-canvas text-ink">
@@ -27,7 +28,7 @@ export const OperarioLayout = () => {
         </div>
         <div className="flex min-w-0 items-center gap-2">
           <p className="max-w-[120px] truncate text-right text-label font-medium text-ink">
-            {user?.nombre || 'Operario'}
+            {user?.nombre || 'Planta'}
           </p>
           <span
             className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-tint text-label text-primary"

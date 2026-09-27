@@ -14,11 +14,20 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.backend.qualititrack.DTO.CrearFaseRequestDTO;
+import com.backend.qualititrack.DTO.FaseOperarioHabilitadoResponseDTO;
+import com.backend.qualititrack.DTO.OperarioDTO;
+import com.backend.qualititrack.DTO.UsuarioDTO;
 import com.backend.qualititrack.Service.FaseService;
 import com.backend.qualititrack.modelos.FaseCatalogo;
-import com.backend.qualititrack.modelos.FaseOperarioHabilitado;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @RestController
 @RequestMapping("/api/fases")
@@ -32,13 +41,15 @@ public class FaseController {
 
     /**
      * GET /api/fases
-     * Obtiene la lista de fases (Accesible por GERENTE y JEFE_PRODUCCION).
+     * Obtiene la lista de fases, ya sea todas (para el gerente) o las que tienen operarios habilitados (para el jefe).
+     * Roles: GERENTE, JEFE_PRODUCCION
      */
     @GetMapping
     @PreAuthorize("hasAnyRole('GERENTE', 'JEFE_PRODUCCION')")
-    public ResponseEntity<List<FaseCatalogo>> listarFases() {
-        List<FaseCatalogo> fases = faseService.listarFases();
-        return ResponseEntity.ok(fases);
+    public ResponseEntity<List<FaseCatalogo>> listarFases(Authentication auth) {
+        boolean esJefe = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_JEFE_PRODUCCION"));
+        return ResponseEntity.ok(faseService.listarFases(esJefe));
     }
 
     /**
@@ -47,8 +58,9 @@ public class FaseController {
      */
     @PostMapping
     @PreAuthorize("hasRole('GERENTE')")
-    public ResponseEntity<FaseCatalogo> crearFase(@RequestBody @Valid FaseCatalogo fase) {
-        FaseCatalogo nuevaFase = faseService.crearFase(fase);
+    public ResponseEntity<FaseCatalogo> crearFase(
+            @RequestBody @Valid CrearFaseRequestDTO dto, Authentication auth) {
+        FaseCatalogo nuevaFase = faseService.crearFase(dto, auth.getName());
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevaFase);
     }
 
@@ -74,35 +86,46 @@ public class FaseController {
      */
     @PostMapping("/{id}/habilitar")
     @PreAuthorize("hasRole('GERENTE')")
-    public ResponseEntity<FaseOperarioHabilitado> habilitarOperarioEnFase(
+    public ResponseEntity<FaseOperarioHabilitadoResponseDTO> habilitarOperarioEnFase(
             @PathVariable Long id,
-            @RequestBody HabilitarOperarioDTO dto, Authentication auth) {
+            @RequestBody @Valid HabilitarOperarioDTO dto, Authentication auth) {
 
-        FaseOperarioHabilitado faseModificada = faseService.gestionarHabilitacionOperario(id, dto.getOperarioId(), dto.isHabilitado(), auth.getName());
+        FaseOperarioHabilitadoResponseDTO faseModificada = faseService.gestionarHabilitacionOperario(id,
+                dto.getOperarioId(), dto.getHabilitado(), auth.getName());
         return ResponseEntity.ok(faseModificada);
+    }
+
+    // GET /api/fases/{id}/operarios
+    // Devuelve la lista de operarios habilitados para una fase específica
+    // Roles: Gerente y Jefe de Producción
+    @GetMapping("{id}/operarios")
+    @PreAuthorize("hasAnyRole('GERENTE', 'JEFE_PRODUCCION')")
+    public ResponseEntity<List<OperarioDTO>> listarOperariosHabilitados(@PathVariable Long id) {
+        List<OperarioDTO> operariosHabilitados = faseService.listarOperariosHabilitados(id);
+        return ResponseEntity.ok(operariosHabilitados);
     }
 
     /**
      * DTO interno para recibir el payload del endpoint de habilitación.
      */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class HabilitarOperarioDTO {
+        @NotNull
+        @JsonAlias("operarioId")
         private Long operarioId;
-        private boolean habilitado;
 
-        public Long getOperarioId() {
-            return operarioId;
+        @Builder.Default
+        private Boolean habilitado = true;
+
+        public Boolean getHabilitado() {
+            return (this.habilitado != null) ? this.habilitado : true;
         }
 
-        public void setOperarioId(Long operarioId) {
-            this.operarioId = operarioId;
-        }
-
-        public boolean isHabilitado() {
-            return habilitado;
-        }
-
-        public void setHabilitado(boolean habilitado) {
-            this.habilitado = habilitado;
+        public void setHabilitado(Boolean habilitado) {
+            this.habilitado = (habilitado != null) ? habilitado : true;
         }
     }
 }

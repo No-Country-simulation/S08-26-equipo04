@@ -68,25 +68,14 @@ public class OrdenTrabajo {
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "cotizacion_id", nullable = false)
     private Cotizacion cotizacion;
 
-    @OneToMany(
-            mappedBy = "ordenTrabajo",
-            cascade = CascadeType.REMOVE,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY
-    )
+    @OneToMany(mappedBy = "ordenTrabajo", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<OtFase> fases;
 
-    @OneToOne(
-            mappedBy = "ordenTrabajo",
-            cascade = CascadeType.REMOVE,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY
-    )
+    @OneToOne(mappedBy = "ordenTrabajo", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private AuditoriaCalidad calidadChecklist;
 
     @PrePersist

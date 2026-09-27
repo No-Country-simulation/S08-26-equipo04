@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ArrowLeft, Check, Pencil, X } from 'lucide-react';
+import { ArrowLeft, Check, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCotizaciones } from '../../hooks/useCotizaciones';
 import { useSolicitudes } from '../../hooks/useSolicitudes';
@@ -70,6 +70,8 @@ export const CotizacionDetailPage = () => {
     () => (cotizacion ? obtenerSolicitud(cotizacion.solicitud_id) : null),
     [cotizacion, obtenerSolicitud],
   );
+  const fechaEntrega =
+    solicitud?.fecha_esperada_entrega ?? cotizacion.fecha_esperada_entrega;
 
   if (buscando) {
     return (
@@ -170,7 +172,7 @@ export const CotizacionDetailPage = () => {
       </div>
         <div className="flex flex-wrap gap-3">
           {cotizacion.estado === 'LISTA_PARA_ENVIAR' && user?.rol === 'VENDEDOR' && (
-            <Button variant="secondary" onClick={enviar} loading={procesando}>Enviar al cliente</Button>
+            <Button onClick={enviar} loading={procesando}>Enviar al cliente</Button>
           )}
           {cotizacion.estado === 'ENVIADA_A_CLIENTE' && user?.rol === 'VENDEDOR' && (
             <Button onClick={() => setModal('aprobar')}>Registrar respuesta</Button>
@@ -198,7 +200,7 @@ export const CotizacionDetailPage = () => {
           </div>
           <div>
             <p className="p-4 pb-1 text-metadata text-text-muted">Fecha de entrega solicitada</p>
-            <p className="px-4 pb-4 text-body font-semibold text-ink">{solicitud?.fecha_esperada_entrega ? new Date(`${solicitud.fecha_esperada_entrega}T12:00:00`).toLocaleDateString('es-AR') : '-'}</p>
+            <p className="px-4 pb-4 text-body font-semibold text-ink">{fechaEntrega ? new Date(`${fechaEntrega}T12:00:00`).toLocaleDateString('es-AR') : '-'}</p>
           </div>
         </div>
       </Card>
@@ -245,14 +247,6 @@ export const CotizacionDetailPage = () => {
         >
           Volver
         </Button>
-        {cotizacion.estado === 'LISTA_PARA_ENVIAR' && user?.rol === 'JEFE_PRODUCCION' && (
-          <Button
-            onClick={() => navigate(`/cotizaciones/${cotizacion.id}/editar`)}
-          >
-            <Pencil className="h-4 w-4" />
-            Editar
-          </Button>
-        )}
       </div>
 
       <Modal open={modal === 'aprobar'} onClose={() => setModal(null)} title="Registrar respuesta del cliente">

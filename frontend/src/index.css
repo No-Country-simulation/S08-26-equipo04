@@ -35,7 +35,7 @@ button:disabled {
   }
 
   .btn-secondary {
-    @apply border border-border text-ink px-4 py-2 rounded-lg text-label hover:bg-canvas transition-colors;
+    @apply border border-border text-ink px-4 py-2 rounded-lg text-label transition-colors hover:bg-primary-tint hover:border-primary hover:text-primary;
   }
 
   .btn-discrete {
@@ -131,6 +131,12 @@ button:disabled {
     @apply bg-[#EAEAEA] text-text-secondary;
   }
 
+  /* El inline es punto + texto, sin fondo: pisa el bg de la variante
+     (esta regla va después para ganar por cascada). */
+  .badge-inline {
+    background-color: transparent;
+  }
+
   /* Tablas y Listas */
   .table-container {
     @apply border border-border rounded-xl overflow-hidden;
@@ -146,6 +152,14 @@ button:disabled {
 
   .table td {
     @apply px-4 py-3 border-b border-border text-body;
+  }
+
+  .table-comfortable th {
+    @apply px-6 py-4;
+  }
+
+  .table-comfortable td {
+    @apply px-6 py-4;
   }
 
   .table tbody tr:hover {

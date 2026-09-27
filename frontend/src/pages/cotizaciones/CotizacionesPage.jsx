@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Inbox, Plus, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Inbox, RefreshCw, Search } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useCotizaciones } from "../../hooks/useCotizaciones";
 import { useSolicitudes } from "../../hooks/useSolicitudes";
@@ -32,13 +32,20 @@ const estadoLabels = {
 
 export const CotizacionesPage = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const { cotizaciones, cargando, error, recargar } = useCotizaciones();
   // El DTO de cotización no trae solicitud_numero/cliente: se enriquece
   // con la lista de solicitudes (igual que solicitudes hace con clientes).
   const { solicitudes } = useSolicitudes();
   const [busqueda, setBusqueda] = useState("");
-  const [estado, setEstado] = useState("TODOS");
+  const estado = searchParams.get("estado") || "TODOS";
+
+  // La lista puede cambiar fuera de esta pantalla (el jefe cotiza en otra
+  // pestaña): se vuelve a pedir cada vez que se entra (FE-4).
+  useEffect(() => {
+    recargar();
+  }, [recargar]);
 
   const solicitudPorId = useMemo(
     () => new Map(solicitudes.map((item) => [item.id, item])),
@@ -58,7 +65,10 @@ export const CotizacionesPage = () => {
             solicitud?.cliente_razon_social ??
             "—",
           pieza_trabajo:
-            cotizacion.pieza_trabajo ?? solicitud?.descripcion_pieza ?? null,
+            cotizacion.descripcion_pieza ??
+            cotizacion.pieza_trabajo ??
+            solicitud?.descripcion_pieza ??
+            null,
         };
       }),
     [cotizaciones, solicitudPorId],
@@ -92,15 +102,10 @@ export const CotizacionesPage = () => {
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                navigate(
-                  cot.estado === "LISTA_PARA_ENVIAR" &&
-                    user?.rol === "JEFE_PRODUCCION"
-                    ? `/cotizaciones/${cot.id}/editar`
-                    : `/cotizaciones/${cot.id}`,
-                );
+                navigate(`/cotizaciones/${cot.id}`);
               }}
               className="font-medium text-primary hover:underline"
-              aria-label={`${cot.estado === "LISTA_PARA_ENVIAR" && user?.rol === "JEFE_PRODUCCION" ? "Editar" : "Ver"} ${cot.numero_cotizacion}`}
+              aria-label={`Ver ${cot.numero_cotizacion}`}
             >
               {cot.numero_cotizacion}
             </button>
@@ -143,19 +148,23 @@ export const CotizacionesPage = () => {
         ),
       },
     ],
-    [navigate, user?.rol],
+    [navigate],
   );
 
   const handleRowClick = (row) => {
-    navigate(
-      row.estado === "LISTA_PARA_ENVIAR" && user?.rol === "JEFE_PRODUCCION"
-        ? `/cotizaciones/${row.id}/editar`
-        : `/cotizaciones/${row.id}`,
-    );
+    navigate(`/cotizaciones/${row.id}`);
+  };
+
+  const cambiarEstado = (event) => {
+    const value = event.target.value;
+    const next = new URLSearchParams(searchParams);
+    if (value === "TODOS") next.delete("estado");
+    else next.set("estado", value);
+    setSearchParams(next);
   };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
+    <div className="mx-auto max-w-[1360px] space-y-8">
       <Title>Cotizaciones</Title>
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -170,15 +179,23 @@ export const CotizacionesPage = () => {
             </p>
           )}
         </div>
-        {user?.rol === "JEFE_PRODUCCION" && (
-          <Button onClick={() => navigate("/cotizaciones/nueva")}>
-            <Plus className="h-4 w-4" />
-            Nueva cotización
-          </Button>
-        )}
+        {/* FE-154: sin botón "Nueva cotización". Se cotiza desde
+            Solicitudes con el botón "Cotizar" de cada fila. */}
+        <Button
+          variant="secondary"
+          onClick={recargar}
+          loading={cargando}
+          aria-label="Actualizar cotizaciones"
+        >
+          <RefreshCw
+            className={`h-4 w-4 ${cargando ? "hidden" : ""}`}
+            aria-hidden={cargando}
+          />
+          Actualizar
+        </Button>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <label className="relative flex-1" htmlFor="cotizaciones-busqueda">
           <Search
             className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted"
@@ -187,7 +204,7 @@ export const CotizacionesPage = () => {
           <input
             id="cotizaciones-busqueda"
             name="busqueda"
-            className="input pl-9"
+            className="input h-11 pl-10 text-body"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             placeholder="Buscar por cotización, cliente o pieza"
@@ -197,9 +214,9 @@ export const CotizacionesPage = () => {
         <select
           id="cotizaciones-estado"
           name="estado"
-          className="select sm:max-w-xs"
+          className="select h-11 sm:w-[220px] sm:max-w-none text-body"
           value={estado}
-          onChange={(e) => setEstado(e.target.value)}
+          onChange={cambiarEstado}
           aria-label="Filtrar por estado"
         >
           <option value="TODOS">Todos los estados</option>
@@ -210,7 +227,7 @@ export const CotizacionesPage = () => {
         </select>
       </div>
 
-      <Card>
+      <Card className="p-0">
         {cargando ? (
           <SkeletonTable columns={7} rows={5} />
         ) : error ? (
@@ -226,6 +243,7 @@ export const CotizacionesPage = () => {
             columns={columns}
             data={cotizacionesFiltradas}
             onRowClick={handleRowClick}
+            comfortable
             footer={`${cotizacionesFiltradas.length} cotización${cotizacionesFiltradas.length !== 1 ? "es" : ""}`}
           />
         )}

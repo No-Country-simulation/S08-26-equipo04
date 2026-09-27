@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
-import { apiGet, apiPost } from '../api';
+import { useCallback, useEffect, useState } from 'react';
+import { apiGet, apiPost, extractApiMessage, subirAdjunto } from '../api';
 import { useAuth } from './AuthContext';
-import { mocks } from '../mocks';
 import { SolicitudesContext } from './SolicitudesContext';
 
 // El DTO de lista del backend no trae razon social del cliente ni
@@ -16,13 +15,34 @@ const mapItem = (item, listaClientes = []) => ({
     null,
 });
 
-const extractMessage = (error, fallback) =>
-  error?.response?.data?.detail ||
-  error?.response?.data?.message ||
-  error?.response?.data?.error ||
-  (error?.code === 'ECONNABORTED'
-    ? 'El servidor tarda en responder (Render en frio). Reintenta.'
-    : fallback);
+const extractMessage = (error, fallback) => {
+  const mensaje = extractApiMessage(error, '');
+  return mensaje ||
+    (error?.code === 'ECONNABORTED'
+      ? 'El servidor tarda en responder (Render en frio). Reintenta.'
+      : fallback);
+};
+
+// Los adjuntos van en un request aparte (POST /api/documentos) porque el
+// backend guarda el archivo en la base. Un archivo que falla no tira la
+// solicitud: se devuelve el detalle para avisarle al vendedor (DoD #206).
+const subirAdjuntos = async (solicitudId, archivos) => {
+  const resultados = await Promise.allSettled(
+    archivos.map(({ archivo, tipoArchivo }) =>
+      subirAdjunto({ solicitudId, archivo, tipoArchivo }),
+    ),
+  );
+  return resultados.reduce((fallidos, resultado, index) => {
+    if (resultado.status === 'fulfilled') return fallidos;
+    return [
+      ...fallidos,
+      {
+        nombre: archivos[index].archivo.name,
+        mensaje: extractMessage(resultado.reason, 'No se pudo subir el archivo.'),
+      },
+    ];
+  }, []);
+};
 
 export const SolicitudesProvider = ({ children }) => {
   const { isAuthenticated, user } = useAuth();
@@ -31,8 +51,6 @@ export const SolicitudesProvider = ({ children }) => {
   const puedeConsultar = user?.rol === 'VENDEDOR' || user?.rol === 'JEFE_PRODUCCION';
   const [solicitudes, setSolicitudes] = useState([]);
   const [clientes, setClientes] = useState([]);
-  // Adjuntos 100% locales hasta BE #36 (sin endpoint de documentos).
-  const [adjuntos, setAdjuntos] = useState(mocks.adjuntos);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
   const [version, setVersion] = useState(0);
@@ -77,11 +95,11 @@ export const SolicitudesProvider = ({ children }) => {
     };
   }, [isAuthenticated, puedeConsultar, version]);
 
-  const recargar = () => {
+  const recargar = useCallback(() => {
     setCargando(true);
     setError(null);
     setVersion((v) => v + 1);
-  };
+  }, []);
 
   const agregarSolicitud = async ({ solicitud, archivos = [] }) => {
     const base = {
@@ -108,28 +126,8 @@ export const SolicitudesProvider = ({ children }) => {
       delete nueva.cliente_nuevo;
       setSolicitudes((prev) => [...prev, nueva]);
 
-      // Metadatos locales hasta BE #36 (el POST no recibe archivos).
-      if (archivos.length > 0) {
-        setAdjuntos((prev) => {
-          const baseId = Math.max(0, ...prev.map((item) => item.id));
-          return [
-            ...prev,
-            ...archivos.map((file, index) => ({
-              id: baseId + index + 1,
-              solicitud_id: data.id,
-              nombre_original: file.name,
-              tipo_archivo: 'OTRO',
-              mime_type: file.type || 'application/octet-stream',
-              tamanio_bytes: file.size,
-              ruta_almacenamiento: `/uploads/solicitudes/${data.id}/${file.name}`,
-              subido_por_id: solicitud.vendedor_id ?? null,
-              created_at: now,
-              solo_local: true,
-            })),
-          ];
-        });
-      }
-      return nueva;
+      const adjuntosFallidos = await subirAdjuntos(data.id, archivos);
+      return { solicitud: nueva, adjuntosFallidos };
     } catch (err) {
       throw new Error(
         extractMessage(err, 'No se pudo crear la solicitud.'),
@@ -146,7 +144,6 @@ export const SolicitudesProvider = ({ children }) => {
       value={{
         solicitudes,
         clientes,
-        adjuntos,
         cargando,
         error,
         recargar,

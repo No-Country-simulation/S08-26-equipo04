@@ -16,10 +16,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,7 +38,6 @@ public class Solicitud {
     @Column(name = "numero_solicitud", nullable = false, unique = true, length = 30)
     private String numeroSolicitud;
 
-    @NotNull(message = "La fecha no puede ser nula")
     @Column(name = "fecha_esperada_entrega")
     private LocalDate fechaEsperadaEntrega;
 
@@ -78,6 +77,11 @@ public class Solicitud {
         }
         createdAt = OffsetDateTime.now();
         updatedAt = OffsetDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = OffsetDateTime.now();
     }
 
 }

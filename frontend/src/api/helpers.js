@@ -48,3 +48,13 @@ export const toApiPayload = (data = {}) => {
 
   return payload;
 };
+
+// Mensaje de error de una respuesta de la API (el backend responde
+// `mensaje`; algunos errores de validacion agregan `detalles`).
+export const extractApiMessage = (error, fallback = 'No se pudo completar la solicitud.') => {
+  const data = error?.response?.data;
+  const mensaje = data?.mensaje || data?.detail || data?.message || data?.error;
+  const detalles = Array.isArray(data?.detalles) ? data.detalles.join(' ') : null;
+
+  return [mensaje, detalles].filter(Boolean).join(' ') || fallback;
+};

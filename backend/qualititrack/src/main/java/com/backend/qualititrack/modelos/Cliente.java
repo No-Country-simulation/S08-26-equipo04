@@ -32,6 +32,10 @@ public class Cliente {
     @Column(name = "razon_social", nullable = false, length = 150)
     private String razonSocial;
 
+    @NotBlank
+    @Column(nullable = false, unique = true)
+    private String cuit;
+
     @NotBlank(message = "El nombre no puede estar vacio")
     @Column(name = "contacto_nombre", nullable = false, length = 120)
     private String contactoNombre;
@@ -44,9 +48,9 @@ public class Cliente {
     @Column(nullable = false, length = 255)
     private String direccion;
 
-
+    @NotBlank
     @Email(message = "Email invalido")
-    @Column(length = 150)
+    @Column(length = 150) // no se pone nullable = false para evitar inconsistencias con la base, not blank igual cubre los casos que necesitamos
     private String email;
 
     @Column(nullable = false)

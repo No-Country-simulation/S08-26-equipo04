@@ -3,6 +3,7 @@ import api from './client';
 export { api };
 export * from './helpers';
 export * from './session';
+export * from './documentos';
 
 export const apiGet = (url, config = {}) => api.get(url, config);
 export const apiPost = (url, data, config = {}) => api.post(url, data, config);

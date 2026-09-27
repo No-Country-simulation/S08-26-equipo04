@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 import com.backend.qualititrack.Enum.EstadoCotizacion;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,7 +16,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -78,11 +76,6 @@ public class Cotizacion {
     )
     private java.util.List<CotizacionFase> fases = new java.util.ArrayList<>();
 
-
-    @OneToOne(mappedBy = "cotizacion")
-    @JsonIgnore
-    private OrdenTrabajo ordenTrabajo;
-
     @PrePersist
     protected void onCreate() {
         fechaCreacion = OffsetDateTime.now();
@@ -92,111 +85,6 @@ public class Cotizacion {
     @PreUpdate
     protected void onUpdate() {
         fechaActualizacion = OffsetDateTime.now();
-    }
-
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getNumeroCotizacion() {
-        return numeroCotizacion;
-    }
-
-    public void setNumeroCotizacion(String numeroCotizacion) {
-        this.numeroCotizacion = numeroCotizacion;
-    }
-
-    public Solicitud getSolicitud() {
-        return solicitud;
-    }
-
-    public void setSolicitud(Solicitud solicitud) {
-        this.solicitud = solicitud;
-    }
-
-    public Usuario getJefeProduccion() {
-        return jefeProduccion;
-    }
-
-    public void setJefeProduccion(Usuario jefeProduccion) {
-        this.jefeProduccion = jefeProduccion;
-    }
-
-    public BigDecimal getPrecioFinal() {
-        return precioFinal;
-    }
-
-    public void setPrecioFinal(BigDecimal precioFinal) {
-        this.precioFinal = precioFinal;
-    }
-
-    public EstadoCotizacion getEstado() {
-        return estado;
-    }
-
-    public void setEstado(EstadoCotizacion estado) {
-        this.estado = estado;
-    }
-
-    public OffsetDateTime getFechaEnvioCliente() {
-        return fechaEnvioCliente;
-    }
-
-    public void setFechaEnvioCliente(OffsetDateTime fechaEnvioCliente) {
-        this.fechaEnvioCliente = fechaEnvioCliente;
-    }
-
-    public OffsetDateTime getFechaRespuestaCliente() {
-        return fechaRespuestaCliente;
-    }
-
-    public void setFechaRespuestaCliente(OffsetDateTime fechaRespuestaCliente) {
-        this.fechaRespuestaCliente = fechaRespuestaCliente;
-    }
-
-    public String getMotivoRechazoCliente() {
-        return motivoRechazoCliente;
-    }
-
-    public void setMotivoRechazoCliente(String motivoRechazo) {
-        this.motivoRechazoCliente = motivoRechazo;
-    }
-
-    public String getObservaciones() {
-        return observaciones;
-    }
-
-    public void setObservaciones(String observaciones) {
-        this.observaciones = observaciones;
-    }
-
-    public OffsetDateTime getFechaCreacion() {
-        return fechaCreacion;
-    }
-
-    public void setFechaCreacion(OffsetDateTime fechaCreacion) {
-        this.fechaCreacion = fechaCreacion;
-    }
-
-    public OffsetDateTime getFechaActualizacion() {
-        return fechaActualizacion;
-    }
-
-    public void setFechaActualizacion(OffsetDateTime fechaActualizacion) {
-        this.fechaActualizacion = fechaActualizacion;
-    }
-
-    public OrdenTrabajo getOrdenTrabajo() {
-        return ordenTrabajo;
-    }
-
-    public void setOrdenTrabajo(OrdenTrabajo ordenTrabajo) {
-        this.ordenTrabajo = ordenTrabajo;
     }
 }
 

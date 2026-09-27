@@ -125,9 +125,10 @@ Se detalla por cada endpoint: método HTTP, ruta, rol que puede usarlo, qué esp
 - Método HTTP: POST
 - Ruta: `/api/documentos`
 - Roles: Vendedor
-- Body: multipart — `solicitud_id`, `archivo`, `tipo_archivo` (`PLANO`, `CERTIFICADO`, `ESPECIFICACION`, `OTRO`)
+- Body: multipart — `solicitudId`, `archivo`, `tipoArchivo` (`PLANO`, `CERTIFICADO`, `ESPECIFICACION`, `OTRO`). En form-data los nombres no pasan por SNAKE_CASE.
+- El archivo se guarda en la base (`adjuntos.contenido`, BYTEA), no en disco: el disco de Render se borra en cada reinicio (25/09 — D-6). Máximo 10 MB por archivo y 20 MB por request.
 - Respuesta exitosa: 201 Created `{ id, nombre_original, tipo_archivo, ruta_almacenamiento }`
-- Respuesta de error: 400 (tipo de archivo no permitido o solicitud inexistente)
+- Respuesta de error: 400 (tipo de archivo no permitido), 404 (solicitud inexistente), 413 (archivo de más de 10 MB)
 
 #### Listar órdenes de trabajo (HU-1.2)
 
@@ -235,16 +236,19 @@ Se detalla por cada endpoint: método HTTP, ruta, rol que puede usarlo, qué esp
 - Roles: Jefe de producción
 - Body: `{ operario_nuevo_id, motivo }` (`operario_anterior_id` y `reasignado_por_id` se resuelven server-side)
 - Respuesta exitosa: 200 OK `{ id, operario_id }` — además crea la fila en `ot_fase_reasignaciones` (D12), visible después en el expediente (HU-1.2).
-- Respuesta de error: 409 (el operario nuevo no está habilitado para la fase — R3)
+- Respuesta de error: 409 (el operario nuevo no está habilitado para la fase — R3; o la fase ya está `EN_EJECUCION` o `TERMINADO` — 25/09 — D-1)
 
 #### Crear fase de retrabajo (HU-2.3)
 
 - Método HTTP: POST
 - Ruta: `/api/ot-fases`
 - Roles: Jefe de producción
-- Body: `{ orden_trabajo_id, fase_catalogo_id, operario_id, tiempo_estimado_minutos, nota }`
-- El backend calcula server-side `es_rehacer = TRUE` y `ciclo_iteracion + 1` (R8) — no se reciben del cliente. También crea la `ot_notas` correspondiente con `origen = JEFE_PRODUCCION`.
-- Respuesta exitosa: 201 Created `{ id, numero_secuencia, ciclo_iteracion, es_rehacer: true }`
+- Body: `{ orden_trabajo_id, fases: [ { fase_id, operario_id, tiempo_estimado_minutos } ] }` — una entrada por cada fase TERMINADA que se rehace (25/09 — D-3).
+- Solo sobre una OT en estado `NO_CONFORME`. Cada operario tiene que estar habilitado para su fase (R3).
+- El backend calcula server-side `es_rehacer = TRUE` y un único `ciclo_iteracion` para todo el retrabajo (el mayor de la OT + 1, R8). La primera fase (menor secuencia) queda `EN_COLA` con su vencimiento y el resto `PENDIENTE`. La OT vuelve a `EN_PRODUCCION`.
+- Las notas para el operario se cargan aparte con `POST /api/ot-fases/{id}/notas` (`origen = JEFE_PRODUCCION`).
+- Respuesta exitosa: 201 Created — lista de las fases nuevas `[{ id, numero_secuencia, ciclo_iteracion, es_rehacer: true, estado }]`
+- Respuesta de error: 409 (la OT no está `NO_CONFORME` u operario no habilitado), 404 (fase u operario inexistente)
 
 ### Módulo Operario
 
@@ -253,7 +257,7 @@ Se detalla por cada endpoint: método HTTP, ruta, rol que puede usarlo, qué esp
 - Método HTTP: GET
 - Ruta: `/api/ot-fases` (mismo endpoint que usa el Jefe de producción para gestión de planta — ver arriba)
 - Roles: Operario
-- Respuesta exitosa: 200 OK — tareas del operario autenticado, en cola y en ejecución, con `fecha_vencimiento` ya calculada.
+- Respuesta exitosa: 200 OK — tareas del operario autenticado, con `fecha_vencimiento` ya calculada. Cada tarea incluye `numero_ot` y `fase_nombre` para mostrarla sin consultar el catálogo, que el Operario no puede leer. Las fases en `PENDIENTE` (todavía no se pueden empezar) las filtra el frontend.
 
 #### Iniciar fase (HU-3.1)
 
@@ -277,7 +281,15 @@ Se detalla por cada endpoint: método HTTP, ruta, rol que puede usarlo, qué esp
 - Ruta: `/api/solicitudes/{id}/documentos`
 - Roles: Operario
 - El `{id}` es de `solicitudes`, no de la OT — los adjuntos cuelgan de la solicitud (Esquema v2 §2.6); el Operario llega navegando desde su fase.
-- Respuesta exitosa: 200 OK — lista de adjuntos con nombre y enlace de descarga.
+- Respuesta exitosa: 200 OK — lista de adjuntos con sus datos (`id`, `nombre_original`, `tipo_archivo`, `mime_type`, `tamanio_bytes`), sin el contenido del archivo.
+
+#### Ver documento (HU-3.2)
+
+- Método HTTP: GET
+- Ruta: `/api/documentos/{id}`
+- Roles: Vendedor, Jefe de producción, Operario
+- Respuesta exitosa: 200 OK — el archivo con su `Content-Type` y `Content-Disposition: inline`, para que el navegador lo muestre (PDF o imagen) sin guardarlo. Como el endpoint pide token, el frontend lo pide con axios como `blob`. (25/09 — D-6)
+- Respuesta de error: 404 (adjunto inexistente o archivo anterior al cambio de almacenamiento)
 
 #### Notas de la fase (HU-3.4)
 
@@ -295,42 +307,36 @@ Se detalla por cada endpoint: método HTTP, ruta, rol que puede usarlo, qué esp
 - Roles: Calidad
 - Respuesta exitosa: 200 OK — OTs en estado `EN_CALIDAD`, ordenadas por `fecha_pase_calidad` ascendente (antigüedad en la cola).
 
-#### Guardar checklist (HU-4.2)
+#### ~~Guardar checklist (HU-4.2)~~ — Eliminado (25/09 — D-2)
 
-- Método HTTP: POST
-- Ruta: `/api/calidad/{id}/checklist`
-- Roles: Calidad
-- Body:
-  ```json
-  {
-    "respuestas": [
-      { "item_numero": 1, "resultado_item": "CUMPLE", "observaciones": null }
-    ],
-    "resultado": "NO_CONFORME",
-    "observaciones_generales": "Fallo en prueba funcional punto 6"
-  }
-  ```
-  Guarda las 7 respuestas del checklist (Esquema v2 §2.14; R10 exige las 7 completas antes del veredicto). Pensado para usarse mientras se completa el formulario, antes de confirmar.
-- Respuesta exitosa: 200 OK `{ id, respuestas_completas: 7 }`
-- Respuesta de error: 400 (`observaciones_generales` vacío con `resultado = NO_CONFORME` — R9)
+No hay guardado parcial del checklist. Las 7 respuestas se envían junto con el veredicto en `/conforme` o `/no-conforme`.
 
 #### Marcar conforme (HU-4.3)
 
 - Método HTTP: POST
 - Ruta: `/api/calidad/{id}/conforme`
 - Roles: Calidad
-- Body: misma forma que `/checklist` (`respuestas` + `resultado: "CONFORME"`) — **incluye siempre las 7 respuestas, no un booleano suelto.** Confirma el veredicto y pasa la OT a `DESPACHO`, sellando `fecha_pase_despacho`.
+- Body: `{ respuestas: [ { item_numero, resultado_item, observaciones } ], observaciones_generales }` — **incluye siempre las 7 respuestas, no un booleano suelto.** El resultado lo define la ruta (25/09 — D-2).
+- Crea la auditoría (siguiente `numero_auditoria`) con sus 7 respuestas y el veredicto en un solo paso. Pasa la OT a `DESPACHO`, sellando `fecha_pase_despacho`.
 - Respuesta exitosa: 200 OK `{ id, estado: "DESPACHO" }`
-- Respuesta de error: 409 (checklist incompleto — trigger `trg_chk_checklist_completo`)
+- Respuesta de error: 400 (faltan respuestas), 409 (algún punto `NO_CUMPLE`, o la OT no está `EN_CALIDAD`)
 
 #### Marcar no conforme (HU-4.3)
 
 - Método HTTP: POST
 - Ruta: `/api/calidad/{id}/no-conforme`
 - Roles: Calidad
-- Body: misma forma que `/checklist` (`respuestas` + `resultado: "NO_CONFORME"` + `observaciones_generales` obligatorio)
+- Body: misma forma que `/conforme`, con `observaciones_generales` obligatorio (25/09 — D-2)
 - Respuesta exitosa: 200 OK `{ id, estado: "NO_CONFORME" }` — deriva la OT y las observaciones al Jefe de producción. El veredicto describe el defecto observado; no atribuye una fase (D4) — esa determinación la hace el Jefe en HU-2.3.
-- Respuesta de error: 400 (`observaciones_generales` vacío — R9), 409 (checklist incompleto)
+- Respuesta de error: 400 (`observaciones_generales` vacío — R9, o faltan respuestas), 409 (la OT no está `EN_CALIDAD`)
+
+#### Última auditoría de una OT (HU-2.3, HU-1.2)
+
+- Método HTTP: GET
+- Ruta: `/api/calidad/{id}/ultima-auditoria`
+- Roles: Calidad, Jefe de producción, Vendedor
+- Respuesta exitosa: 200 OK `{ numero_auditoria, resultado, observaciones_generales, fecha_veredicto, auditor_nombre, respuestas: [ { item_numero, criterio_nombre, resultado_item, observaciones } ] }`. La usa el Jefe para ver por qué se rechazó la OT antes de decidir qué rehacer, y el expediente para mostrar el checklist.
+- Respuesta de error: 404 (OT inexistente o sin auditorías)
 
 ### Módulo Gerente
 
@@ -338,17 +344,18 @@ Se detalla por cada endpoint: método HTTP, ruta, rol que puede usarlo, qué esp
 
 - Método HTTP: GET
 - Ruta: `/api/fases`
-- Roles: Gerente
-- Respuesta exitosa: 200 OK — catálogo global (`fases_catalogo`).
-- ⚠️ El Jefe de producción también necesita leer este catálogo para armar una cotización (HU-2.1), pero Frontend no lo lista bajo su módulo — a confirmar con Alicia si reusa este mismo endpoint habilitando el rol Jefe de producción.
+- Roles: Gerente, Jefe de producción
+- Respuesta exitosa: 200 OK — catálogo global (`fases_catalogo`). Al Gerente le devuelve todas las fases; al Jefe de producción, solo las activas con al menos un operario habilitado, que son las que puede usar para cotizar (25/09 — D-5).
 
 #### Crear fase (HU-5.1)
 
 - Método HTTP: POST
 - Ruta: `/api/fases`
 - Roles: Gerente
-- Body: `{ codigo, nombre, descripcion }` (columnas de `fases_catalogo`, Esquema v2 §2.3 — no lleva tipo de tarea: eso es `usuarios.tipo_tarea`, un concepto distinto de la fase en sí)
+- Body: `{ codigo, nombre, descripcion, operarios_ids }` (columnas de `fases_catalogo`, Esquema v2 §2.3 — no lleva tipo de tarea: eso es `usuarios.tipo_tarea`, un concepto distinto de la fase en sí)
+- `operarios_ids` es obligatorio y no puede estar vacío: la fase se crea con sus operarios habilitados en la misma transacción (25/09 — D-5).
 - Respuesta exitosa: 201 Created `{ id, codigo, nombre }`
+- Respuesta de error: 400 (sin operarios, o algún usuario no es operario), 404 (operario inexistente)
 
 #### Editar fase (HU-5.1)
 
@@ -368,9 +375,16 @@ Se detalla por cada endpoint: método HTTP, ruta, rol que puede usarlo, qué esp
 - Método HTTP: POST
 - Ruta: `/api/fases/{id}/habilitar`
 - Roles: Gerente
-- Body: `{ operario_id }`
+- Body: `{ operario_id, habilitado }` (`habilitado` es opcional; por defecto `true`)
 - La habilitación es individual por operario, nunca por tipo de tarea general (D11).
 - Respuesta exitosa: 201 Created `{ fase_catalogo_id, operario_id, habilitado: true }`
+
+#### Operarios habilitados de una fase (HU-5.1, HU-2.2, HU-2.3)
+
+- Método HTTP: GET
+- Ruta: `/api/fases/{id}/operarios`
+- Roles: Gerente, Jefe de producción
+- Respuesta exitosa: 200 OK `[{ id, nombre, email, tipo_tarea, activo }]` — solo operarios activos y habilitados. Lo usan la pantalla de operarios por fase (Gerente), la reasignación (Jefe) y la elección de operario al rehacer (Jefe).
 
 #### Vista global de planta (HU-5.3)
 
