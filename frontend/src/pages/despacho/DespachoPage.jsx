@@ -98,10 +98,16 @@ export const DespachoPage = () => {
         cell: ({ getValue }) => getValue() ?? "—",
       },
       {
-        accessorKey: "fecha_pase_calidad",
+        accessorKey: "fecha_pase_despacho",
         header: "Aprobada por Calidad",
-        cell: ({ getValue }) => {
-          const value = getValue();
+        cell: ({ row }) => {
+          // fecha_pase_despacho se graba al dar CONFORME (CalidadService);
+          // fecha_pase_calidad es solo la entrada a Calidad. Fallback a
+          // camelCase por si el DTO llegara sin snake_case.
+          const value =
+            row.original.fecha_pase_despacho ??
+            row.original.fechaPaseDespacho ??
+            null;
 
           return value ? formatDateTime(value) : "—";
         },
