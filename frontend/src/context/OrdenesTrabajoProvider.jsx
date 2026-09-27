@@ -172,8 +172,8 @@ export const OrdenesTrabajoProvider = ({ children }) => {
   const registrarEntrega = useCallback(
     async ({ id, receptor_nombre }) => {
       // RBAC espejo del backend (issue #157): solo VENDEDOR ejecuta entregas.
-      // El backend debe exponer POST /api/ordenes-trabajo/{id}/entrega con
-      // @PreAuthorize("hasRole('VENDEDOR')") y retornar 403 para otros roles.
+      // POST /api/ordenes-trabajo/{id}/entrega exige rol VENDEDOR y
+      // retorna 403 para otros roles.
       if (user?.rol !== "VENDEDOR") {
         const forbidden = new Error("No tienes permisos para esta acción.");
         forbidden.status = 403;
@@ -204,9 +204,9 @@ export const OrdenesTrabajoProvider = ({ children }) => {
 
       // Issue #210: la entrega se registra contra la API. El backend
       // (Jackson SNAKE_CASE) espera `{ receptor_nombre }` y responde un
-      // OrdenTrabajoDTO sin `receptor_nombre` (la fecha de entrega viaja
-      // como `fecha_termino_real`), por eso se fusiona la respuesta con
-      // los datos locales ya enriquecidos (cliente, pieza).
+      // OrdenTrabajoDTO que ya incluye `receptor_nombre` y las fechas de
+      // pase; se fusiona con los datos locales enriquecidos (cliente,
+      // pieza) que el DTO no trae.
       const { data } = await apiPost(
         `/api/ordenes-trabajo/${orden.id}/entrega`,
         { receptor_nombre: nombreNormalizado },
