@@ -9,8 +9,19 @@ const mapItem = (item) => ({
   cliente_razon_social: item.cliente_razon_social ?? item.cliente ?? "—",
   descripcion_pieza: item.descripcion_pieza ?? item.pieza_trabajo ?? "—",
   receptor_nombre: item.receptor_nombre ?? null,
-  created_at: item.created_at ?? null,
-  updated_at: item.updated_at ?? null,
+  // El DTO de OT manda fecha_creacion/fecha_actualizacion, no created_at.
+  created_at:
+    item.created_at ??
+    item.createdAt ??
+    item.fecha_creacion ??
+    item.fechaCreacion ??
+    null,
+  updated_at:
+    item.updated_at ??
+    item.updatedAt ??
+    item.fecha_actualizacion ??
+    item.fechaActualizacion ??
+    null,
 });
 
 export const OrdenesTrabajoProvider = ({ children }) => {
@@ -77,14 +88,33 @@ export const OrdenesTrabajoProvider = ({ children }) => {
             "DESPACHO",
             "ENTREGADA",
           ];
-          const respuestas = await Promise.all(
-            estados.map((estado) =>
+          // El DTO de OT no trae cliente: se enriquece con las cotizaciones
+          // (el Jefe tiene permiso a GET /api/cotizaciones), igual que en la
+          // rama Vendedor. Sin esto la actividad reciente muestra "—".
+          const [cotizacionesResponse, ...respuestas] = await Promise.all([
+            apiGet("/api/cotizaciones").catch(() => null),
+            ...estados.map((estado) =>
               apiGet("/api/ordenes-trabajo", { params: { estado } }),
             ),
+          ]);
+          const cotizacionesPorId = new Map(
+            (cotizacionesResponse?.data ?? []).map((cotizacion) => [
+              cotizacion.id,
+              cotizacion,
+            ]),
           );
           ordenes = respuestas.flatMap(({ data }) =>
             Array.isArray(data) ? data : [],
-          );
+          ).map((orden) => {
+            const cotizacion = cotizacionesPorId.get(
+              orden.cotizacionId ?? orden.cotizacion_id,
+            );
+            if (cotizacion?.cliente_razon_social == null) return orden;
+            return {
+              ...orden,
+              cliente_razon_social: cotizacion.cliente_razon_social,
+            };
+          });
         }
 
         if (!cancelado) {
