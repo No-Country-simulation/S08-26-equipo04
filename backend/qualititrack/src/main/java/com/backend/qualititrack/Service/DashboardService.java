@@ -1,22 +1,23 @@
 package com.backend.qualititrack.Service;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.backend.qualititrack.DTO.DashboardCalidadResponseDTO;
 import com.backend.qualititrack.DTO.DashboardPlantaDTO;
+import com.backend.qualititrack.Enum.ResultadoCalidad;
 import com.backend.qualititrack.modelos.AuditoriaCalidad;
 import com.backend.qualititrack.modelos.OrdenTrabajo;
 import com.backend.qualititrack.modelos.OtFase;
 import com.backend.qualititrack.repository.OrdenTrabajoRepository;
 import com.backend.qualititrack.repository.OtFaseRepository;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 public class DashboardService {
@@ -43,7 +44,7 @@ public class DashboardService {
 
         // Comparación correcta usando el enum interno AuditoriaCalidad.Resultado
         long conformes = auditorias.stream()
-                .filter(a -> a.getResultado() == AuditoriaCalidad.Resultado.CONFORME)
+                .filter(a -> a.getResultado() == ResultadoCalidad.CONFORME)
                 .count();
 
         long noConformes = totalEvaluadas - conformes;

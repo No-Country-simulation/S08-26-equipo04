@@ -2,6 +2,8 @@ package com.backend.qualititrack.DTO;
 
 import java.util.List;
 
+import com.backend.qualititrack.Enum.ResultadoCalidad;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -22,32 +24,9 @@ public class CalidadConformidadDTO {
     private List<RespuestaChecklistItemDTO> respuestas;
 
     @NotNull(message = "El resultado no puede ser nulo")
-    private String resultado; // CONFORME o NO_CONFORME
+    private ResultadoCalidad resultado; // CONFORME o NO_CONFORME
 
     private String observacionesGenerales;
 
-    public List<RespuestaChecklistItemDTO> getRespuestas() {
-        return respuestas;
-    }
-
-    public void setRespuestas(List<RespuestaChecklistItemDTO> respuestas) {
-        this.respuestas = respuestas;
-    }
-
-    public String getResultado() {
-        return resultado;
-    }
-
-    public void setResultado(String resultado) {
-        this.resultado = resultado;
-    }
-
-    public String getObservacionesGenerales() {
-        return observacionesGenerales;
-    }
-
-    public void setObservacionesGenerales(String observacionesGenerales) {
-        this.observacionesGenerales = observacionesGenerales;
-    }
 }
 

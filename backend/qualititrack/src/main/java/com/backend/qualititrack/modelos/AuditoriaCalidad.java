@@ -4,6 +4,8 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.backend.qualititrack.Enum.ResultadoCalidad;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -53,7 +55,7 @@ public class AuditoriaCalidad {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private Resultado resultado;
+    private ResultadoCalidad resultado;
 
     @Column(name = "observaciones_generales", columnDefinition = "TEXT")
     private String observacionesGenerales;
@@ -67,7 +69,4 @@ public class AuditoriaCalidad {
     @OneToMany(mappedBy = "auditoria", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AuditoriaChecklistRespuesta> respuestas = new ArrayList<>();
 
-    public enum Resultado {
-        CONFORME, NO_CONFORME
-    }
 }
