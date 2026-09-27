@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
+import com.backend.qualititrack.DTO.AuditoriaDetalleDTO;
 import com.backend.qualititrack.DTO.CalidadConformidadDTO;
 import com.backend.qualititrack.DTO.CalidadResponseDTO;
 import com.backend.qualititrack.DTO.OrdenTrabajoDTO;
@@ -21,6 +22,7 @@ import com.backend.qualititrack.modelos.AuditoriaChecklistRespuesta.ResultadoIte
 import com.backend.qualititrack.modelos.OrdenTrabajo;
 import com.backend.qualititrack.modelos.Usuario;
 import com.backend.qualititrack.repository.AuditoriaCalidadRepository;
+import com.backend.qualititrack.repository.AuditoriaChecklistRespuestaRepository;
 import com.backend.qualititrack.repository.OrdenTrabajoRepository;
 import com.backend.qualititrack.repository.UsuarioRepository;
 
@@ -33,13 +35,15 @@ public class CalidadService {
     private final OrdenTrabajoRepository ordenTrabajoRepository;
 
     private final AuditoriaCalidadRepository auditoriaCalidadRepository;
+    private final AuditoriaChecklistRespuestaRepository auditoriaChecklistRespuestaRepository;
 
     private final UsuarioRepository usuarioRepository;
 
     public CalidadService(OrdenTrabajoRepository ordenTrabajoRepository,
-            AuditoriaCalidadRepository auditoriaCalidadRepository, UsuarioRepository usuarioRepository) {
+            AuditoriaCalidadRepository auditoriaCalidadRepository, AuditoriaChecklistRespuestaRepository auditoriaChecklistRespuestaRepository, UsuarioRepository usuarioRepository) {
         this.ordenTrabajoRepository = ordenTrabajoRepository;
         this.auditoriaCalidadRepository = auditoriaCalidadRepository;
+        this.auditoriaChecklistRespuestaRepository = auditoriaChecklistRespuestaRepository;
         this.usuarioRepository = usuarioRepository;
     }
 
@@ -147,6 +151,29 @@ public class CalidadService {
                 .stream()
                 .map(this::convertirADTO)
                 .toList();
+    }
+    
+    /**
+     * Busca la última auditoría de la OT.
+     */
+    public AuditoriaDetalleDTO obtenerUltimaAuditoria(Long ordenTrabajoId) {
+        if (!ordenTrabajoRepository.existsById(ordenTrabajoId)) {
+            throw new EntityNotFoundException("OT no encontrada con ID: " + ordenTrabajoId);
+        }
+        AuditoriaCalidad a = auditoriaCalidadRepository.findFirstByOrdenTrabajoIdOrderByNumeroAuditoriaDesc(ordenTrabajoId)
+                .orElseThrow(() -> new EntityNotFoundException("La OT todavía no tiene auditorías"));
+
+        return AuditoriaDetalleDTO.builder()
+                .numeroAuditoria(a.getNumeroAuditoria())
+                .resultado(a.getResultado())
+                .observacionesGenerales(a.getObservacionesGenerales())
+                .fechaVeredicto(a.getFechaVeredicto())
+                .auditorNombre(a.getAuditor().getNombre())
+                .respuestas(auditoriaChecklistRespuestaRepository.findByAuditoriaIdOrderByItemNumero(a.getId()).stream()
+                        .map(r -> new AuditoriaDetalleDTO.Item(
+                                r.getItemNumero(), r.getCriterioNombre(), r.getResultadoItem(), r.getObservaciones()))
+                        .toList())
+                .build();
     }
 
     /**

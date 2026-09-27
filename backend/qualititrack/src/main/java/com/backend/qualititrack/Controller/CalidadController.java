@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.backend.qualititrack.DTO.AuditoriaDetalleDTO;
 import com.backend.qualititrack.DTO.CalidadConformidadDTO;
 import com.backend.qualititrack.DTO.CalidadResponseDTO;
 import com.backend.qualititrack.DTO.OrdenTrabajoDTO;
@@ -41,6 +42,18 @@ public class CalidadController {
     @PreAuthorize("hasRole('CALIDAD')")
     public ResponseEntity<List<OrdenTrabajoDTO>> listarPendientesAuditoria() {
         return ResponseEntity.ok(calidadService.listarPendientesAuditoria());
+    }
+
+    /**
+     * GET /api/calidad/{id}/ultima-auditoria
+     * Busca la última auditoría de la OT.
+     * 
+     * Roles: Calidad, Jefe de Producción o Vendedor
+     */
+    @GetMapping("/{ordenTrabajoId}/ultima-auditoria")
+    @PreAuthorize("hasAnyRole('CALIDAD', 'JEFE_PRODUCCION', 'VENDEDOR')")
+    public ResponseEntity<AuditoriaDetalleDTO> obtenerUltimaAuditoria(@PathVariable Long ordenTrabajoId) {
+        return ResponseEntity.ok(calidadService.obtenerUltimaAuditoria(ordenTrabajoId));
     }
 
     /**
