@@ -161,8 +161,11 @@ public class OtFaseService {
         OtFase guardada = otFaseRepository.save(otFase);
 
         // Chequear si existe una fase siguiente para la misma orden de trabajo
-        OtFase faseSiguiente = otFaseRepository.findByOrdenTrabajoIdAndNumeroSecuenciaAndCicloIteracion(
-                otFase.getOrdenTrabajo().getId(), otFase.getNumeroSecuencia() + 1, otFase.getCicloIteracion());
+        OtFase faseSiguiente = otFaseRepository.findFirstByOrdenTrabajoIdAndCicloIteracionAndNumeroSecuenciaGreaterThanOrderByNumeroSecuenciaAsc(
+                otFase.getOrdenTrabajo().getId(),
+                otFase.getCicloIteracion(),
+                otFase.getNumeroSecuencia())
+        .orElse(null);
         // Si existe una fase siguiente, se debe pasar con estado "EN_COLA" y calcular
         // su fecha de vencimiento, sumando el tiempo estimado al momento actual.
         if (faseSiguiente != null) {
