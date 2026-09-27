@@ -6,7 +6,7 @@ import {
   Button,
   EmptyState,
   ErrorBanner,
-  LoadingSpinner,
+  SkeletonCard,
   Title,
 } from "../../components/ui";
 import { TaskCardMobile } from "./TaskCardMobile";
@@ -54,12 +54,16 @@ export const OperarioPage = () => {
     setAccionId(tarea.id);
     setErrorAccion(null);
     try {
-      const { otEstado } = await finalizarFase(tarea.id);
+      const { otEstado, siguienteMia } = await finalizarFase(tarea.id);
       const referencia = tarea.ot_numero ?? "La tarea";
-      if (otEstado === "EN_CALIDAD") {
+      if (siguienteMia) {
+        toast.success(
+          `${referencia} terminada · siguiente fase: ${siguienteMia.fase_nombre ?? "siguiente fase"}`,
+        );
+      } else if (otEstado === "EN_CALIDAD") {
         toast.success(`${referencia} terminada · OT enviada a Calidad`);
       } else {
-        toast.success(`${referencia} terminada`);
+        toast.success(`${referencia} terminada · derivada al siguiente puesto`);
       }
     } catch (err) {
       setErrorAccion(err.message);
@@ -95,7 +99,16 @@ export const OperarioPage = () => {
       )}
 
       {cargando ? (
-        <LoadingSpinner label="Cargando tareas" size="lg" />
+        // Desviacion consciente de la spec §7.1 (que pide "spinner centrado"
+        // para Operario): se usan skeletons con la misma densidad de la card
+        // real para evitar el salto de layout al cargar. Anotado en el PR.
+        <ul className="grid grid-cols-1 gap-4" aria-busy="true">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <li key={index}>
+              <SkeletonCard rows={4} />
+            </li>
+          ))}
+        </ul>
       ) : tareas.length === 0 ? (
         <EmptyState
           icon={ClipboardList}
