@@ -2,13 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Pencil, Users, Inbox } from 'lucide-react';
 import { apiGet, apiPost, apiPut } from '../../api';
-import { Button, Card, CardHeader, CardTitle, DataTable, EmptyState, ErrorBanner, Toggle, Title } from '../../components/ui';
+import { Button, Card, CardHeader, CardTitle, DataTable, EmptyState, ErrorBanner, SkeletonTable, Toggle, Title } from '../../components/ui';
 import { FaseFormModal } from '../../components/FaseFormModal';
 import { toast } from 'sonner';
 
 export const CatalogoFasesPage = () => {
   const navigate = useNavigate();
   const [fases, setFases] = useState([]);
+  const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingFase, setEditingFase] = useState(null);
@@ -16,8 +17,14 @@ export const CatalogoFasesPage = () => {
 
   useEffect(() => {
     apiGet('/api/fases')
-      .then(({ data }) => setFases(data ?? []))
-      .catch((err) => setError(err?.response?.data?.message || 'No se pudieron cargar las fases.'));
+      .then(({ data }) => {
+        setFases(data ?? []);
+        setCargando(false);
+      })
+      .catch((err) => {
+        setError(err?.response?.data?.message || 'No se pudieron cargar las fases.');
+        setCargando(false);
+      });
   }, []);
 
   const handleCreate = () => {
@@ -33,9 +40,20 @@ export const CatalogoFasesPage = () => {
   const handleSubmit = async (data) => {
     setSaving(true);
     try {
+      // Al crear, el backend exige operarios_ids (al menos uno); al editar
+      // los operarios no se tocan (pantalla de operarios por fase).
       const response = editingFase
-        ? await apiPut(`/api/fases/${editingFase.id}`, data)
-        : await apiPost('/api/fases', data);
+        ? await apiPut(`/api/fases/${editingFase.id}`, {
+            codigo: data.codigo,
+            nombre: data.nombre,
+            descripcion: data.descripcion,
+          })
+        : await apiPost('/api/fases', {
+            codigo: data.codigo,
+            nombre: data.nombre,
+            descripcion: data.descripcion,
+            operarios_ids: data.operarios_ids,
+          });
       if (editingFase) {
         setFases((prev) =>
           prev.map((f) =>
@@ -148,7 +166,9 @@ export const CatalogoFasesPage = () => {
         <CardHeader>
           <CardTitle>Fases registradas</CardTitle>
         </CardHeader>
-        {error ? <ErrorBanner message={error} /> : fases.length === 0 ? (
+        {error ? <ErrorBanner message={error} /> : cargando ? (
+          <SkeletonTable columns={5} rows={5} />
+        ) : fases.length === 0 ? (
           <EmptyState
             icon={Inbox}
             title="Sin fases configuradas"

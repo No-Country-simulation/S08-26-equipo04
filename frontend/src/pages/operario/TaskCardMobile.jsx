@@ -22,12 +22,6 @@ export const TaskCardMobile = ({ tarea, accionEnCurso = false, onIniciar, onFina
         <div className="min-w-0">
           <p className="text-label text-primary">{tarea.ot_numero ?? "—"}</p>
           <h3 className="truncate text-h2 text-ink">{tarea.fase_nombre ?? "Fase sin nombre"}</h3>
-          <p className="mt-0.5 text-label text-text-secondary">
-            Fase {tarea.numero_secuencia}
-            {tarea.tiempo_estimado_minutos
-              ? ` · Tiempo estimado: ~${tarea.tiempo_estimado_minutos} min`
-              : ''}
-          </p>
         </div>
         <Badge variant={estado.variant}>{estado.label}</Badge>
       </div>
