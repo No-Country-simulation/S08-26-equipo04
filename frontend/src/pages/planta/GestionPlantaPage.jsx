@@ -5,6 +5,7 @@ import { apiGet, apiPost } from '../../api';
 import { Badge, Button, Card, CardHeader, CardTitle, ErrorBanner, LoadingSpinner, Modal, Title } from '../../components/ui';
 
 const estadoVariant = {
+  PENDIENTE: 'queue',
   EN_EJECUCION: 'production',
   EN_COLA: 'queue',
   TERMINADO: 'completed',
@@ -12,6 +13,7 @@ const estadoVariant = {
 };
 
 const estadoLabel = {
+  PENDIENTE: 'Pendiente',
   EN_EJECUCION: 'En ejecución',
   EN_COLA: 'En cola',
   TERMINADO: 'Terminado',
@@ -24,6 +26,10 @@ export const GestionPlantaPage = () => {
   const [motivo, setMotivo] = useState('');
   const [otFases, setOtFases] = useState([]);
   const [fasesCatalogo, setFasesCatalogo] = useState([]);
+  // Nombre y especialidad por operario. GET /api/usuarios es solo Gerente,
+  // asi que el Jefe los resuelve con GET /api/fases/{id}/operarios
+  // (permite Jefe) por cada fase del catalogo presente en planta.
+  const [detalleOperarios, setDetalleOperarios] = useState(() => new Map());
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
 
@@ -42,16 +48,55 @@ export const GestionPlantaPage = () => {
     return () => { cancelado = true; };
   }, []);
 
+  useEffect(() => {
+    const catalogoIds = [
+      ...new Set(
+        otFases
+          .map((fase) => fase.faseCatalogoId ?? fase.fase_catalogo_id)
+          .filter((id) => id != null),
+      ),
+    ];
+    if (catalogoIds.length === 0) return undefined;
+    let cancelado = false;
+    Promise.all(
+      catalogoIds.map((id) =>
+        apiGet(`/api/fases/${id}/operarios`).then(
+          ({ data }) => data ?? [],
+          () => [],
+        ),
+      ),
+    ).then((listas) => {
+      if (cancelado) return;
+      const mapa = new Map();
+      listas.flat().forEach((item) => {
+        if (item?.id != null && !mapa.has(item.id)) {
+          mapa.set(item.id, {
+            nombre: item.nombre ?? `Operario #${item.id}`,
+            tipo_tarea: item.tipo_tarea ?? item.tipoTarea ?? null,
+          });
+        }
+      });
+      setDetalleOperarios(mapa);
+    });
+    return () => { cancelado = true; };
+  }, [otFases]);
+
   const operarios = useMemo(() => {
     const ids = [...new Set(otFases.map((fase) => fase.operarioId ?? fase.operario_id).filter(Boolean))];
-    return ids.map((id) => ({ id, nombre: `Operario #${id}` }));
-  }, [otFases]);
+    return ids.map((id) => ({
+      id,
+      nombre: detalleOperarios.get(id)?.nombre ?? `Operario #${id}`,
+      tipo_tarea: detalleOperarios.get(id)?.tipo_tarea ?? null,
+    }));
+  }, [detalleOperarios, otFases]);
 
   const fasesNormalizadas = useMemo(() => otFases.map((fase) => ({
     ...fase,
     operario_id: fase.operarioId ?? fase.operario_id,
     fase_nombre: fase.fase_nombre ?? fasesCatalogo.find((item) => item.id === (fase.faseCatalogoId ?? fase.fase_catalogo_id))?.nombre ?? `Fase #${fase.faseCatalogoId ?? fase.fase_catalogo_id}`,
-    ot_numero: fase.ot_numero ?? `OT #${fase.ordenTrabajoId ?? fase.orden_trabajo_id}`,
+    // El DTO manda `numeroOt` (numero_ot), no `ot_numero`: leerlo primero
+    // para no mostrar el id interno como "OT #46".
+    ot_numero: fase.ot_numero ?? fase.numero_ot ?? fase.numeroOt ?? `OT #${fase.ordenTrabajoId ?? fase.orden_trabajo_id}`,
   })), [fasesCatalogo, otFases]);
 
   const cargaPorOperario = useMemo(() => {
@@ -231,7 +276,7 @@ export const GestionPlantaPage = () => {
             <div className="rounded-lg bg-canvas p-3">
               <p className="text-label text-ink">{faseActual.ot_numero}</p>
               <p className="text-body text-text-secondary">
-                {faseActual.fase_nombre} · actual: {faseActual.operario_nombre}
+                {faseActual.fase_nombre} · actual: {faseActual.operario_nombre ?? detalleOperarios.get(faseActual.operarioId ?? faseActual.operario_id)?.nombre ?? `Operario #${faseActual.operarioId ?? faseActual.operario_id}`}
               </p>
             </div>
 
