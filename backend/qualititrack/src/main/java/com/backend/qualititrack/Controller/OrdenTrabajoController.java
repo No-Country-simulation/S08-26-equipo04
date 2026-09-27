@@ -1,6 +1,7 @@
 package com.backend.qualititrack.Controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,19 +19,17 @@ import com.backend.qualititrack.DTO.OrdenTrabajoDTO;
 import com.backend.qualititrack.DTO.OrdenTrabajoResumenDTO;
 import com.backend.qualititrack.Enum.EstadoOT;
 import com.backend.qualititrack.Service.OrdenTrabajoService;
-import com.backend.qualititrack.modelos.OrdenTrabajo;
-
-import com.backend.qualititrack.DTO.OrdenTrabajoResumenDTO;
-import com.backend.qualititrack.DTO.ExpedienteCompletoDTO;
-import java.util.List;
 
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/ordenes-trabajo")
 public class OrdenTrabajoController {
-    @Autowired
-    private OrdenTrabajoService ordenTrabajoService;
+    private final OrdenTrabajoService ordenTrabajoService;
+
+    OrdenTrabajoController(OrdenTrabajoService ordenTrabajoService) {
+        this.ordenTrabajoService = ordenTrabajoService;
+    }
 
     /**
      * OBTENER POR ID - GET /api/ordenes-trabajo/{id}
