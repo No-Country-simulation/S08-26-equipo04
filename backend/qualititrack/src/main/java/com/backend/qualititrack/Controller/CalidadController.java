@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.backend.qualititrack.DTO.CalidadConformidadDTO;
 import com.backend.qualititrack.DTO.CalidadResponseDTO;
 import com.backend.qualititrack.DTO.OrdenTrabajoDTO;
+import com.backend.qualititrack.Enum.ResultadoCalidad;
 import com.backend.qualititrack.Service.CalidadService;
 
 import jakarta.validation.Valid;
@@ -52,20 +53,10 @@ public class CalidadController {
     public ResponseEntity<CalidadResponseDTO> marcarConforme(
             @PathVariable Long id,
             @Valid @RequestBody CalidadConformidadDTO dto,
-            Authentication authentication) {
-
-        String emailAuditor = authentication.getName(); // Extrae email del JWT
-        CalidadResponseDTO respuesta = calidadService.marcarConforme(id, dto, emailAuditor);
-
+            Authentication auth) {
+        CalidadResponseDTO respuesta = calidadService.marcarConforme(id, dto, auth.getName(),
+                ResultadoCalidad.CONFORME);
         return ResponseEntity.status(HttpStatus.CREATED).body(respuesta);
-        /*
-         * Usuario auditor = new Usuario();
-         * auditor.setEmail(authentication.getName());
-         * 
-         * CalidadResponseDTO response = calidadService.marcarConforme(id, dto,
-         * String.valueOf(auditor));
-         * return ResponseEntity.status(HttpStatus.CREATED).body(response);
-         */
     }
 
     /**
@@ -78,18 +69,9 @@ public class CalidadController {
     public ResponseEntity<CalidadResponseDTO> marcarNoConforme(
             @PathVariable Long id,
             @Valid @RequestBody CalidadConformidadDTO dto,
-            Authentication authentication) {
-
-        /*
-         * Usuario auditor = new Usuario();
-         * auditor.setEmail(authentication.getName());
-         * 
-         * CalidadResponseDTO response = calidadService.marcarNoConforme(id, dto,
-         * String.valueOf(auditor));
-         * return ResponseEntity.status(HttpStatus.CREATED).body(response);
-         */
-        String emailAuditor = authentication.getName(); // Extrae email del JWT
-        CalidadResponseDTO respuesta = calidadService.marcarNoConforme(id, dto, emailAuditor);
+            Authentication auth) {
+        CalidadResponseDTO respuesta = calidadService.marcarConforme(id, dto, auth.getName(),
+                ResultadoCalidad.NO_CONFORME);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(respuesta);
     }

@@ -3,6 +3,7 @@ package com.backend.qualititrack.Service;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
@@ -11,9 +12,12 @@ import com.backend.qualititrack.DTO.CalidadResponseDTO;
 import com.backend.qualititrack.DTO.OrdenTrabajoDTO;
 import com.backend.qualititrack.DTO.RespuestaChecklistItemDTO;
 import com.backend.qualititrack.Enum.EstadoOT;
+import com.backend.qualititrack.Enum.ResultadoCalidad;
 import com.backend.qualititrack.exception.EntityNotFoundException;
+import com.backend.qualititrack.exception.InvalidStateException;
 import com.backend.qualititrack.modelos.AuditoriaCalidad;
 import com.backend.qualititrack.modelos.AuditoriaChecklistRespuesta;
+import com.backend.qualititrack.modelos.AuditoriaChecklistRespuesta.ResultadoItem;
 import com.backend.qualititrack.modelos.OrdenTrabajo;
 import com.backend.qualititrack.modelos.Usuario;
 import com.backend.qualititrack.repository.AuditoriaCalidadRepository;
@@ -29,51 +33,75 @@ public class CalidadService {
     private final OrdenTrabajoRepository ordenTrabajoRepository;
 
     private final AuditoriaCalidadRepository auditoriaCalidadRepository;
-    
+
     private final UsuarioRepository usuarioRepository;
 
-    public CalidadService(OrdenTrabajoRepository ordenTrabajoRepository, AuditoriaCalidadRepository auditoriaCalidadRepository, UsuarioRepository usuarioRepository) {
+    public CalidadService(OrdenTrabajoRepository ordenTrabajoRepository,
+            AuditoriaCalidadRepository auditoriaCalidadRepository, UsuarioRepository usuarioRepository) {
         this.ordenTrabajoRepository = ordenTrabajoRepository;
         this.auditoriaCalidadRepository = auditoriaCalidadRepository;
         this.usuarioRepository = usuarioRepository;
     }
 
-@Transactional
-    public CalidadResponseDTO marcarConforme(Long otId, CalidadConformidadDTO dto, String emailAuditor) {
-        // 1. Validar OT existe
+    private static final Map<Integer, String> CRITERIOS = Map.of(
+            1, "Conformidad dimensional",
+            2, "Fases completas",
+            3, "Terminación/acabado",
+            4, "Cantidad",
+            5, "Identificación",
+            6, "Prueba funcional",
+            7, "Documentación de respaldo");
+
+    @Transactional
+    public CalidadResponseDTO marcarConforme(Long otId, CalidadConformidadDTO dto, String emailAuditor,
+            ResultadoCalidad resultado) {
+        // Validar OT existe
         OrdenTrabajo ot = ordenTrabajoRepository.findById(otId)
                 .orElseThrow(() -> new EntityNotFoundException("OT no encontrada"));
 
-        // 2. Validar OT está COMPLETADA
-        EstadoOT estado = ot.getEstado();
-        if (!estado.equals(EstadoOT.COMPLETADA)) {
-            throw new IllegalStateException("La OT debe estar en estado COMPLETADA");
+        // Validar OT está en calidad
+        if (ot.getEstado() != EstadoOT.EN_CALIDAD) {
+            throw new InvalidStateException("La OT debe estar en estado EN_CALIDAD");
         }
 
-        // 3. Validar exactamente 7 respuestas
-        if (dto.getRespuestas().size() != 7) {
-            throw new IllegalArgumentException("Debe proporcionar exactamente 7 respuestas");
+        // Validar exactamente 7 respuestas, con número diferente
+        List<RespuestaChecklistItemDTO> respuestas = dto.getRespuestas();
+        long itemsDistintos = respuestas.stream().map(RespuestaChecklistItemDTO::getItemNumero).distinct().count();
+        if (itemsDistintos != 7 || respuestas.stream().anyMatch(r -> r.getResultadoItem() == null)) {
+            throw new IllegalArgumentException("Debe proporcionar exactamente 7 respuestas distintas y válidas");
         }
 
-        // 4. Validar resultado
-        String resultado = dto.getResultado() != null ? dto.getResultado().toUpperCase() : "";
-        if (!resultado.equals("CONFORME") && !resultado.equals("NO_CONFORME")) {
-            throw new IllegalArgumentException("Resultado debe ser CONFORME o NO_CONFORME");
+        // Validar resultado (conforme cumple todas, no conforme tiene observaciones)
+        boolean hayNoCumple = respuestas.stream()
+                .anyMatch(r -> r.getResultadoItem() == ResultadoItem.NO_CUMPLE);
+        if (resultado == ResultadoCalidad.CONFORME && hayNoCumple) {
+            throw new InvalidStateException("No se puede dar CONFORME si algún punto no cumple");
         }
 
-        // 5. Buscar auditor en BD por email
+        if (resultado == ResultadoCalidad.NO_CONFORME
+                && (dto.getObservacionesGenerales() == null || dto.getObservacionesGenerales().isBlank())) {
+            throw new IllegalArgumentException("Las observaciones son obligatorias en un veredicto NO CONFORME");
+        }
+
+        // Buscar auditor en BD por email
         Usuario auditor = usuarioRepository.findByEmail(emailAuditor)
                 .orElseThrow(() -> new EntityNotFoundException("Usuario auditor no encontrado: " + emailAuditor));
 
-        // 6. Crear AuditoriaCalidad
+        // Ver número de auditoria (verificando si hay auditorías previas para la OT)
+        int numero = auditoriaCalidadRepository.findFirstByOrdenTrabajoIdOrderByNumeroAuditoriaDesc(otId)
+                .map(a -> a.getNumeroAuditoria() + 1)
+                .orElse(1);
+
+        // Generar auditoría y respuestas
+        OffsetDateTime ahora = OffsetDateTime.now();
         AuditoriaCalidad auditoria = new AuditoriaCalidad();
         auditoria.setOrdenTrabajo(ot);
         auditoria.setAuditor(auditor);
-        auditoria.setNumeroAuditoria(1);
-        auditoria.setResultado(AuditoriaCalidad.Resultado.valueOf(resultado));
+        auditoria.setNumeroAuditoria(numero);
+        auditoria.setResultado(resultado);
         auditoria.setObservacionesGenerales(dto.getObservacionesGenerales());
-        auditoria.setFechaVeredicto(OffsetDateTime.now());
-        auditoria.setCreatedAt(OffsetDateTime.now());
+        auditoria.setFechaVeredicto(ahora);
+        auditoria.setCreatedAt(ahora);
         auditoria.setRespuestas(new ArrayList<>());
 
         // 7. Agregar respuestas (7 items)
@@ -81,8 +109,8 @@ public class CalidadService {
             AuditoriaChecklistRespuesta respuesta = new AuditoriaChecklistRespuesta();
             respuesta.setAuditoria(auditoria);
             respuesta.setItemNumero(item.getItemNumero());
-            respuesta.setCriterioNombre("Criterio " + item.getItemNumero());
-            respuesta.setResultadoItem(AuditoriaChecklistRespuesta.ResultadoItem.valueOf(item.getResultadoItem().toUpperCase()));
+            respuesta.setCriterioNombre(CRITERIOS.get(item.getItemNumero()));
+            respuesta.setResultadoItem(item.getResultadoItem());
             respuesta.setObservaciones(item.getObservaciones());
             auditoria.getRespuestas().add(respuesta);
         }
@@ -90,8 +118,13 @@ public class CalidadService {
         // 8. Guardar en BD
         AuditoriaCalidad auditoriaGuardada = auditoriaCalidadRepository.save(auditoria);
 
-        // 9. Actualizar OT fecha pase calidad
-        ot.setFechaPaseCalidad(OffsetDateTime.now());
+        // Actualizar OT
+        if (resultado == ResultadoCalidad.CONFORME) {
+            ot.setEstado(EstadoOT.DESPACHO);
+            ot.setFechaPaseDespacho(ahora);
+        } else {
+            ot.setEstado(EstadoOT.NO_CONFORME);
+        }
         ordenTrabajoRepository.save(ot);
 
         // 10. Retornar respuesta
@@ -101,13 +134,7 @@ public class CalidadService {
                 auditoriaGuardada.getResultado().name(),
                 auditoriaGuardada.getObservacionesGenerales(),
                 auditoriaGuardada.getFechaVeredicto(),
-                auditoriaGuardada.getRespuestas().size()
-        );
-    }
-
-    @Transactional
-    public CalidadResponseDTO marcarNoConforme(Long otId, CalidadConformidadDTO dto, String emailAuditor) {
-        return marcarConforme(otId, dto, emailAuditor);
+                auditoriaGuardada.getRespuestas().size());
     }
 
     /**
