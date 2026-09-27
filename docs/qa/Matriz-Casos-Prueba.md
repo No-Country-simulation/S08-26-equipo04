@@ -2,11 +2,11 @@
 
 **Proyecto:** QualityTrack — MVP  
 **Documento:** Matriz de Casos de Prueba  
-**Versión:** 1.0  
+**Versión:** 1.2  
 **Estado:** En diseño  
 **Responsable QA:** María Chiribao  
 **Referencia:** Cronograma de desarrollo definido por PM  
-**Base funcional:** PRD V2 + Backlog V2 + Esquema de Base de Datos V2 + Análisis Funcional QA
+**Base funcional:** PRD V2 + Backlog V2 + Esquema de Base de Datos V2 + Análisis Funcional QA + Decisiones del 25/09 (D-1 a D-6, `docs/funcional/QualityTrack-Cambios-PRD-Backlog.md`)
 
 ---
 
@@ -82,10 +82,10 @@ El recorrido esperado para QA es:
 
 | ID | Escenario | Datos | Pasos | Resultado esperado | Tipo | Prioridad | Estado |
 |---|---|---|---|---|---|---|---|
-| TC-A-1.1-01 | Registrar una solicitud con todos los datos obligatorios válidos | Razón social válida; dirección y teléfono opcionales informados; descripción de pieza/trabajo válida; cantidad = 1 | 1. Ingresar los datos del cliente. 2. Ingresar descripción. 3. Informar cantidad. 4. Guardar solicitud. | La solicitud se registra correctamente con los datos obligatorios informados. | Funcional | Crítica | NOT RUN |
+| TC-A-1.1-01 | Registrar una solicitud con todos los datos obligatorios válidos | Cliente nuevo con razón social, CUIT, nombre de contacto, dirección, teléfono y email válidos; descripción de pieza/trabajo válida; cantidad = 1 | 1. Ingresar los datos del cliente. 2. Ingresar descripción. 3. Informar cantidad. 4. Guardar solicitud. | La solicitud se registra correctamente con los datos obligatorios informados. | Funcional | Crítica | NOT RUN |
 | TC-A-1.1-02 | Registrar solicitud sin razón social | Dirección y teléfono válidos; descripción válida; cantidad = 1; razón social vacía | 1. Completar los campos restantes. 2. Dejar razón social vacía. 3. Intentar guardar. | La solicitud no debe registrarse porque la razón social es obligatoria. | Negativo | Alta | NOT RUN |
-| TC-A-1.1-03 | Registrar solicitud sin dirección del cliente | Razón social válida; teléfono válido; descripción válida; cantidad = 1; dirección vacía | 1. Completar los campos restantes. 2. Dejar dirección vacía. 3. Guardar la solicitud. | La solicitud se registra correctamente sin dirección, ya que la dirección es opcional en el diseño actual. | Funcional | Media | NOT RUN |
-| TC-A-1.1-04 | Registrar solicitud sin teléfono del cliente | Razón social válida; dirección válida; descripción válida; cantidad = 1; teléfono vacío | 1. Completar los campos restantes. 2. Dejar teléfono vacío. 3. Guardar la solicitud. | La solicitud se registra correctamente sin teléfono, ya que el teléfono es opcional en el diseño actual. | Funcional | Media | NOT RUN |
+| TC-A-1.1-03 | Registrar cliente nuevo sin dirección | Razón social, CUIT, contacto, teléfono y email válidos; descripción válida; cantidad = 1; dirección vacía | 1. Completar los campos restantes. 2. Dejar dirección vacía. 3. Intentar guardar. | La solicitud no se registra y el sistema señala que falta la dirección, que es obligatoria. | Negativo | Media | NOT RUN |
+| TC-A-1.1-04 | Registrar cliente nuevo sin teléfono | Razón social, CUIT, contacto, dirección y email válidos; descripción válida; cantidad = 1; teléfono vacío | 1. Completar los campos restantes. 2. Dejar teléfono vacío. 3. Intentar guardar. | La solicitud no se registra y el sistema señala que falta el teléfono, que es obligatorio. | Negativo | Media | NOT RUN |
 | TC-A-1.1-05 | Registrar solicitud sin descripción de pieza/trabajo | Datos del cliente válidos; descripción vacía; cantidad = 1 | 1. Completar los datos del cliente. 2. Dejar descripción vacía. 3. Informar cantidad. 4. Intentar guardar. | La solicitud no debe registrarse porque la descripción de pieza/trabajo es obligatoria. | Negativo | Crítica | NOT RUN |
 | TC-A-1.1-06 | Registrar solicitud sin cantidad | Datos del cliente válidos; descripción válida; cantidad no informada | 1. Completar los datos obligatorios del cliente. 2. Informar descripción. 3. No informar cantidad. 4. Intentar guardar. | La solicitud no debe registrarse porque la cantidad es obligatoria. | Negativo | Crítica | NOT RUN |
 | TC-A-1.1-07 | Registrar solicitud con cantidad igual a 0 | Datos del cliente válidos; descripción válida; cantidad = 0 | 1. Completar los datos obligatorios. 2. Informar cantidad = 0. 3. Intentar guardar. | La solicitud no debe registrarse porque la cantidad debe ser mayor que 0. | Negativo | Alta | NOT RUN |
@@ -95,15 +95,17 @@ El recorrido esperado para QA es:
 | TC-A-1.1-11 | Verificar persistencia de los datos registrados | Solicitud válida con datos completos | 1. Registrar solicitud. 2. Consultar posteriormente la solicitud. 3. Comparar los datos registrados. | Los datos registrados permanecen disponibles y consistentes después de la creación. | Integración | Alta | NOT RUN |
 | TC-A-1.1-12 | Registrar solicitud con cliente ya registrado | `cliente_id` válido correspondiente a un cliente existente; descripción válida; cantidad = 1 | 1. Seleccionar un cliente ya registrado. 2. Verificar que se utilice su `cliente_id`. 3. Completar la solicitud. 4. Guardar. | La solicitud se registra correctamente asociada al cliente existente mediante su `cliente_id`. | Integración | Crítica | NOT RUN |
 | TC-A-1.1-13 | Registrar solicitud con `cliente_id` inexistente | `cliente_id` inexistente; descripción válida; cantidad = 1 | 1. Informar un `cliente_id` inexistente. 2. Completar los datos restantes. 3. Intentar guardar. | La solicitud no debe registrarse y el sistema debe rechazar la referencia a un cliente inexistente. | Negativo | Alta | NOT RUN |
-| TC-A-1.1-14 | Adjuntar documentación válida a la solicitud | Archivo permitido, por ejemplo plano válido | 1. Completar la solicitud. 2. Adjuntar un plano válido. 3. Guardar. | La documentación válida se adjunta correctamente a la solicitud. | Funcional | Alta | NOT RUN |
-| TC-A-1.1-15 | Intentar adjuntar un archivo no permitido | Archivo con extensión/formato no permitido | 1. Completar la solicitud. 2. Intentar adjuntar un archivo no permitido. | El sistema rechaza el archivo no permitido y no lo incorpora como documentación válida. | Negativo | Alta | NOT RUN |
+| TC-A-1.1-14 | Adjuntar documentación válida a la solicitud | Archivo de hasta 10 MB, por ejemplo un plano | 1. Completar la solicitud. 2. Adjuntar el plano. 3. Guardar. 4. Recargar la solicitud. 5. Abrir el documento. | La documentación se adjunta correctamente, sigue disponible al recargar y se puede abrir desde el navegador sin descargarla. | Funcional | Alta | NOT RUN |
+| TC-A-1.1-15 | Intentar adjuntar un archivo de más de 10 MB | Archivo de más de 10 MB | 1. Completar la solicitud. 2. Intentar adjuntar el archivo. | El sistema rechaza el archivo por superar el tamaño máximo y no lo incorpora a la solicitud. | Negativo | Alta | NOT RUN |
 | TC-A-1.1-16 | Registrar solicitud sin archivo de documentación | Solicitud válida; sin archivo adjunto | 1. Completar la solicitud. 2. No adjuntar ningún archivo. 3. Guardar. | La solicitud se registra sin archivo cuando la documentación no es obligatoria en el diseño actual. | Funcional | Media | NOT RUN |
+| TC-A-1.1-17 | Registrar cliente nuevo con un CUIT que ya existe | CUIT de un cliente ya registrado; resto de los datos válidos | 1. Cargar un cliente nuevo con ese CUIT. 2. Completar la solicitud. 3. Intentar guardar. | El sistema no registra el cliente e informa que el CUIT ya está registrado. | Negativo | Alta | NOT RUN |
+| TC-A-1.1-18 | Registrar cliente nuevo sin email | Razón social, CUIT, contacto, dirección y teléfono válidos; email vacío | 1. Completar los campos restantes. 2. Dejar email vacío. 3. Intentar guardar. | La solicitud no se registra y el sistema señala que falta el email, que es obligatorio. | Negativo | Alta | NOT RUN |
 
 ### Validación principal
 
 QA debe comprobar que la solicitud quede registrada completa y disponible para continuar el circuito hacia la cotización.
 
-> **Nota PM:** Posible mejora futura — evaluar si la dirección y el teléfono deberían pasar a ser obligatorios.
+> **Nota PM (25/09 — D-4):** todos los datos del cliente nuevo son obligatorios (razón social, CUIT, nombre de contacto, dirección, teléfono y email) y el CUIT no se repite.
 
 ---
 
@@ -118,11 +120,11 @@ QA debe comprobar que la solicitud quede registrada completa y disponible para c
 | ID | Escenario | Datos | Pasos | Resultado esperado | Tipo | Prioridad | Estado |
 |---|---|---|---|---|---|---|---|
 | TC-A-5.1-01 | Gerente consulta el catálogo de fases | Usuario con rol Gerente; catálogo disponible | 1. Ingresar como Gerente. 2. Acceder al catálogo de fases. | El Gerente puede consultar el catálogo de fases disponible. | Funcional | Alta | NOT RUN |
-| TC-A-5.1-02 | Configurar una fase del catálogo | Usuario Gerente; fase disponible para configurar | 1. Acceder al catálogo. 2. Seleccionar una fase. 3. Configurar los datos correspondientes. 4. Guardar. | La configuración de la fase queda registrada correctamente. | Funcional | Alta | NOT RUN |
-| TC-A-5.1-03 | Configurar los operarios habilitados para una fase | Fase configurada; operarios disponibles | 1. Seleccionar una fase. 2. Consultar los operarios disponibles. 3. Configurar los operarios habilitados. 4. Guardar. | La fase queda asociada a los operarios habilitados definidos. | Funcional | Crítica | NOT RUN |
+| TC-A-5.1-02 | Crear una fase con al menos un operario habilitado | Usuario Gerente; operarios disponibles | 1. Acceder al catálogo. 2. Crear una fase. 3. Elegir al menos un operario habilitado. 4. Guardar. 5. Repetir sin elegir ningún operario. | La fase queda registrada con sus operarios. Sin operarios, el sistema no permite crear la fase. | Funcional | Alta | NOT RUN |
+| TC-A-5.1-03 | Configurar los operarios habilitados para una fase | Fase configurada; operarios disponibles | 1. Seleccionar una fase. 2. Consultar los operarios disponibles. 3. Configurar los operarios habilitados. 4. Guardar. 5. Intentar deshabilitar al último operario habilitado. | La fase queda asociada a los operarios habilitados definidos. No se puede deshabilitar al último operario de una fase. | Funcional | Crítica | NOT RUN |
 | TC-A-5.1-04 | Verificar que un operario habilitado pueda ser seleccionado para la fase | Fase configurada; Operario habilitado | 1. Seleccionar la fase. 2. Consultar operarios habilitados. 3. Seleccionar el operario habilitado. | El operario habilitado aparece como elegible para ejecutar la fase. | Integración | Crítica | NOT RUN |
 | TC-A-5.1-05 | Verificar que un operario no habilitado no pueda ejecutar esa fase | Fase configurada; operario no habilitado | 1. Consultar la configuración de la fase. 2. Identificar un operario no habilitado. 3. Verificar su disponibilidad para la ejecución de la fase. | Un operario no habilitado no debe quedar disponible como ejecutor válido de esa fase. | Negativo | Alta | NOT RUN |
-| TC-A-5.1-06 | Jefe consulta el catálogo de fases disponible para gestionar una cotización | Usuario Jefe de Producción; catálogo configurado | 1. Ingresar como Jefe. 2. Acceder a la consulta del catálogo. | El Jefe puede consultar el catálogo de fases necesario para gestionar una cotización. | Integración | Crítica | NOT RUN |
+| TC-A-5.1-06 | Jefe consulta el catálogo de fases disponible para gestionar una cotización | Usuario Jefe de Producción; catálogo con fases activas con operarios, y alguna fase inactiva o sin operarios | 1. Ingresar como Jefe. 2. Acceder a la consulta del catálogo. | El Jefe ve solo las fases activas que tienen al menos un operario habilitado; las demás no aparecen. | Integración | Crítica | NOT RUN |
 
 ### Validación principal
 
@@ -141,7 +143,7 @@ QA debe comprobar que exista una configuración de fases suficiente para que el 
 | ID | Escenario | Datos | Pasos | Resultado esperado | Tipo | Prioridad | Estado |
 |---|---|---|---|---|---|---|---|
 | TC-A-2.1-01 | Jefe consulta una solicitud disponible para cotizar | Solicitud en estado `PENDIENTE_COTIZACION` | 1. Ingresar como Jefe. 2. Consultar solicitudes disponibles. 3. Seleccionar la solicitud. | La solicitud disponible para cotizar puede ser consultada por el Jefe. | Funcional | Crítica | NOT RUN |
-| TC-A-2.1-02 | Jefe selecciona fases del catálogo | Solicitud disponible; catálogo de fases configurado | 1. Abrir la solicitud. 2. Consultar catálogo. 3. Seleccionar las fases necesarias. | Las fases seleccionadas quedan incorporadas a la cotización. | Funcional | Crítica | NOT RUN |
+| TC-A-2.1-02 | Jefe selecciona fases del catálogo | Solicitud disponible; catálogo con fases que tienen operarios habilitados | 1. Abrir la solicitud. 2. Consultar catálogo. 3. Seleccionar las fases necesarias. | Solo se ofrecen fases con operarios habilitados, y las seleccionadas quedan incorporadas a la cotización. | Funcional | Crítica | NOT RUN |
 | TC-A-2.1-03 | Jefe define el orden de las fases | Solicitud con varias fases seleccionadas | 1. Seleccionar varias fases. 2. Definir el orden de ejecución. 3. Guardar la cotización. | Las fases quedan registradas en el orden definido por el Jefe. | Funcional | Alta | NOT RUN |
 | TC-A-2.1-04 | Jefe utiliza una fase repetida cuando corresponde | Catálogo con una fase disponible para repetición | 1. Seleccionar una fase. 2. Incorporar nuevamente la misma fase cuando corresponda. 3. Definir el orden. | La cotización permite que una misma fase aparezca más de una vez cuando corresponde. | Regla de negocio | Alta | NOT RUN |
 | TC-A-2.1-05 | Jefe informa el tiempo estimado de las fases | Fases seleccionadas; tiempos estimados definidos | 1. Seleccionar las fases. 2. Informar el tiempo estimado de cada fase. 3. Guardar. | Cada fase queda asociada al tiempo estimado informado. | Funcional | Alta | NOT RUN |
@@ -198,15 +200,13 @@ Este es el caso más importante de esta etapa porque representa exactamente el c
 - Usuario Vendedor disponible.
 - Usuario Jefe de Producción disponible.
 - Usuario Gerente disponible.
-- Catálogo de fases configurado.
+- Catálogo de fases configurado, con al menos un operario habilitado en cada fase.
 - Operario habilitado para la primera fase.
 - Datos de prueba disponibles.
 
 ### Datos de prueba
 
-- Cliente válido.
-- Dirección válida.
-- Teléfono válido.
+- Cliente válido: razón social, CUIT no registrado, nombre de contacto, dirección, teléfono y email.
 - Descripción de pieza/trabajo válida.
 - Cantidad mayor que 0.
 - Fases existentes en el catálogo.
@@ -250,8 +250,9 @@ La OT debe generarse automáticamente como consecuencia de la aprobación válid
 | E2E-A-NEG-01 | Solicitud incompleta intenta ingresar al circuito | Solicitud con al menos un dato obligatorio faltante | 1. Intentar registrar la solicitud. 2. Intentar continuar el circuito. | La solicitud incompleta no debe continuar hacia una cotización válida. | Crítica | NOT RUN |
 | E2E-A-NEG-02 | Cotización no aprobada | Cotización válida en estado `NO_APROBADA` | 1. Registrar la no aprobación. 2. Consultar las OT. | No debe generarse una OT. | Crítica | NOT RUN |
 | E2E-A-NEG-03 | Intentar aprobar una cotización ya procesada | Cotización ya aprobada y OT generada | 1. Consultar la cotización. 2. Intentar aprobarla nuevamente. | El sistema debe impedir una segunda transición no válida. | Alta | NOT RUN |
-| E2E-A-NEG-04 | Primera fase sin operario habilitado/correspondiente | Fase sin operario habilitado para su ejecución | 1. Configurar la fase sin un ejecutor habilitado. 2. Intentar completar el circuito hasta la generación de OT. | El sistema no debe asignar incorrectamente la fase a un operario no habilitado. | Crítica | NOT RUN |
 | E2E-A-NEG-05 | Verificar posible duplicación de OT después de una aprobación | Cotización válida aprobada | 1. Registrar una aprobación válida. 2. Consultar las OT generadas. 3. Verificar que no exista una segunda OT para la misma aprobación. | Una aprobación válida debe generar una única OT. | Crítica | NOT RUN |
+
+> **E2E-A-NEG-04 eliminado (25/09 — D-5):** el escenario "primera fase sin operario habilitado" ya no es posible, porque una fase no se puede crear sin operarios ni quedarse sin el último. La validación queda cubierta por la variante negativa de TC-A-5.1-02 y por TC-A-5.1-03. El ID no se reutiliza.
 
 ---
 
@@ -259,7 +260,7 @@ La OT debe generarse automáticamente como consecuencia de la aprobación válid
 
 | HU | Casos relacionados | E2E | Punto de cierre |
 |---|---|---|---|
-| HU-1.1 | TC-A-1.1-01 a TC-A-1.1-16 | E2E-A-01 | Solicitud completa registrada |
+| HU-1.1 | TC-A-1.1-01 a TC-A-1.1-18 | E2E-A-01 | Solicitud completa registrada |
 | HU-5.1 | TC-A-5.1-01 a TC-A-5.1-06 | E2E-A-01 | Fases y operario correctamente configurados |
 | HU-2.1 | TC-A-2.1-01 a TC-A-2.1-08 | E2E-A-01 | Cotización armada y disponible |
 | HU-1.3 | TC-A-1.3-01 a TC-A-1.3-14 | E2E-A-01 | Aprobación → OT generada |
@@ -268,13 +269,13 @@ La OT debe generarse automáticamente como consecuencia de la aprobación válid
 
 | Área | Casos |
 |---|---:|
-| HU-1.1 | 16 |
+| HU-1.1 | 18 |
 | HU-5.1 | 6 |
 | HU-2.1 | 8 |
 | HU-1.3 | 14 |
-| **Total casos por HU** | **44** |
+| **Total casos por HU** | **46** |
 | E2E principal | 1 |
-| E2E negativos | 5 |
+| E2E negativos | 4 |
 
 ---
 
@@ -305,6 +306,9 @@ QA podrá considerar validado el circuito comercial cuando se pueda demostrar co
 
 - La solicitud se registra completa.
 - Los datos obligatorios de la solicitud son validados.
+- Los datos del cliente nuevo son todos obligatorios y el CUIT no se repite.
+- Los adjuntos de hasta 10 MB quedan guardados y se pueden abrir; los de más de 10 MB se rechazan.
+- El Jefe solo ve para cotizar fases activas con operarios habilitados.
 - La cantidad debe ser mayor que 0.
 - La solicitud queda registrada con estado `PENDIENTE_COTIZACION`.
 - La solicitud puede continuar al circuito de cotización.
@@ -382,4 +386,29 @@ El criterio de cierre será entonces la ejecución de todas las fases de la OT h
 7. **HU-5.1:** se elimina la nota de dependencia sobre filtrado de operarios, dado que PM indica que ya está resuelto.
 
 **Cobertura resultante:** 50 casos en Fase A: 44 casos por HU + 1 E2E principal + 5 E2E negativos.
+
+---
+
+# 17. Cambios por las decisiones del 25/09
+
+Las decisiones D-4, D-5 y D-6 (`docs/funcional/QualityTrack-Cambios-PRD-Backlog.md`, sección 08) modifican el comportamiento esperado de algunos casos de la Fase A. D-1, D-2 y D-3 impactan en las Fases B y C.
+
+| Caso | Acción | Cambio | Decisión |
+|---|---|---|---|
+| TC-A-1.1-01 | Modificado | Los datos del cliente nuevo incluyen CUIT, contacto y email, todos obligatorios. | D-4 |
+| TC-A-1.1-03 | Modificado | Sin dirección, la solicitud no se registra (antes: se registraba). Pasa a Negativo. | D-4 |
+| TC-A-1.1-04 | Modificado | Sin teléfono, la solicitud no se registra (antes: se registraba). Pasa a Negativo. | D-4 |
+| TC-A-1.1-14 | Modificado | El adjunto sigue disponible al recargar y se abre desde el navegador. | D-6 |
+| TC-A-1.1-15 | Modificado | Pasa de "archivo no permitido" a "archivo de más de 10 MB": no hay tipos de archivo prohibidos, la regla es el tamaño. | D-6 |
+| TC-A-1.1-17 | Nuevo | Cliente nuevo con un CUIT que ya existe. | D-4 |
+| TC-A-1.1-18 | Nuevo | Cliente nuevo sin email. | D-4 |
+| TC-A-5.1-02 | Modificado | Crear una fase con al menos un operario, con la variante negativa sin operarios. | D-5 |
+| TC-A-5.1-03 | Modificado | No se puede deshabilitar al último operario de una fase. | D-5 |
+| TC-A-5.1-06 | Modificado | El Jefe ve solo las fases activas con operarios habilitados. | D-5 |
+| TC-A-2.1-02 | Modificado | Solo se ofrecen fases con operarios habilitados. | D-5 |
+| E2E-A-NEG-04 | Eliminado | El escenario ya no es posible; queda cubierto por TC-A-5.1-02 y TC-A-5.1-03. | D-5 |
+
+La corrección 2 de la sección 16 (dirección y teléfono opcionales) queda reemplazada por D-4.
+
+**Cobertura resultante:** 51 casos en Fase A: 46 casos por HU + 1 E2E principal + 4 E2E negativos.
 
