@@ -20,10 +20,20 @@ const estadoLabel = {
   NO_CONFORME: 'No conforme',
 };
 
+// Maximo de tareas visibles por operario antes de paginar.
+const TAREAS_POR_PAGINA = 8;
+
 export const GestionPlantaPage = () => {
   const [faseActual, setFaseActual] = useState(null);
   const [operarioDestinoId, setOperarioDestinoId] = useState('');
   const [motivo, setMotivo] = useState('');
+  // Habilitados de la fase en edicion: son los destinos posibles (incluye
+  // operarios sin carga, que no aparecen en el agrupado de Planta).
+  const [destinos, setDestinos] = useState([]);
+  const [cargandoDestinos, setCargandoDestinos] = useState(false);
+  // Pagina actual por operario (la lista no esta preparada en backend, se
+  // pagina en el front sobre el agrupado por operario).
+  const [paginaPorOperario, setPaginaPorOperario] = useState({});
   const [otFases, setOtFases] = useState([]);
   const [fasesCatalogo, setFasesCatalogo] = useState([]);
   // Nombre y especialidad por operario. GET /api/usuarios es solo Gerente,
@@ -125,8 +135,33 @@ export const GestionPlantaPage = () => {
 
   const openReasignacion = (fase) => {
     setFaseActual(fase);
-    setOperarioDestinoId(String(fase.operarioId ?? fase.operario_id));
+    // El select arranca vacio con placeholder: antes arrancaba con el actual
+    // (excluido de las opciones) y confirmar asi cerraba sin toast.
+    setOperarioDestinoId('');
     setMotivo('');
+    const catalogoId = fase.faseCatalogoId ?? fase.fase_catalogo_id;
+    if (catalogoId == null) {
+      setDestinos([]);
+      return;
+    }
+    setCargandoDestinos(true);
+    apiGet(`/api/fases/${catalogoId}/operarios`).then(
+      ({ data }) => {
+        setDestinos(data ?? []);
+        setCargandoDestinos(false);
+      },
+      () => {
+        setDestinos([]);
+        setCargandoDestinos(false);
+      },
+    );
+  };
+
+  const cerrarReasignacion = () => {
+    setFaseActual(null);
+    setOperarioDestinoId('');
+    setMotivo('');
+    setDestinos([]);
   };
 
   const handleReasignar = async () => {
@@ -134,8 +169,7 @@ export const GestionPlantaPage = () => {
 
     const operarioActualId = faseActual.operarioId ?? faseActual.operario_id;
     if (Number(operarioDestinoId) === Number(operarioActualId)) {
-      setFaseActual(null);
-      setOperarioDestinoId('');
+      toast.warning('Elegí un operario distinto al actual.');
       return;
     }
 
@@ -148,14 +182,15 @@ export const GestionPlantaPage = () => {
         ? { ...fase, operarioId: Number(operarioDestinoId), operario_id: Number(operarioDestinoId) }
         : fase));
       toast.success('Fase reasignada correctamente.');
-      setFaseActual(null);
-      setOperarioDestinoId('');
-      setMotivo('');
+      cerrarReasignacion();
     } catch (err) {
       toast.error(err?.response?.data?.message || err?.response?.data?.error || 'No se pudo reasignar la fase.');
     }
   };
 
+  const irAPagina = (operarioId, pagina) => {
+    setPaginaPorOperario((prev) => ({ ...prev, [operarioId]: pagina }));
+  };
   const formatDate = (value) => {
     if (!value) return 'Sin fecha';
     return new Intl.DateTimeFormat('es-AR', {
@@ -219,8 +254,19 @@ export const GestionPlantaPage = () => {
           <p className="text-body text-text-secondary">No hay operarios activos con carga asignada.</p>
         </Card>
       ) : !cargando && !error ? (
-        <div className="grid gap-5 xl:grid-cols-2">
-          {cargaPorOperario.map((operario) => (
+        <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
+          {cargaPorOperario.map((operario) => {
+            const totalPaginas = Math.max(
+              1,
+              Math.ceil(operario.fases.length / TAREAS_POR_PAGINA),
+            );
+            const pagina = Math.min(
+              paginaPorOperario[operario.id] ?? 0,
+              totalPaginas - 1,
+            );
+            const desde = pagina * TAREAS_POR_PAGINA;
+            const visibles = operario.fases.slice(desde, desde + TAREAS_POR_PAGINA);
+            return (
             <Card key={operario.id} className="space-y-4">
               <CardHeader className="mb-0 flex items-center justify-between gap-3">
                 <div>
@@ -233,7 +279,7 @@ export const GestionPlantaPage = () => {
               </CardHeader>
 
               <div className="space-y-3">
-                {operario.fases.map((fase) => (
+                {visibles.map((fase) => (
                   <div key={fase.id} className="rounded-lg border border-border bg-canvas p-3">
                     <div className="flex items-center justify-between gap-3">
                       <div>
@@ -258,17 +304,43 @@ export const GestionPlantaPage = () => {
                   </div>
                 ))}
               </div>
+
+              {totalPaginas > 1 && (
+                <div className="flex items-center justify-between gap-3 border-t border-border pt-3">
+                  <p className="text-metadata text-text-muted">
+                    {desde + 1}–{Math.min(desde + TAREAS_POR_PAGINA, operario.fases.length)} de {operario.fases.length}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={pagina === 0}
+                      onClick={() => irAPagina(operario.id, pagina - 1)}
+                      aria-label={`Tareas anteriores de ${operario.nombre}`}
+                    >
+                      Anterior
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={pagina >= totalPaginas - 1}
+                      onClick={() => irAPagina(operario.id, pagina + 1)}
+                      aria-label={`Tareas siguientes de ${operario.nombre}`}
+                    >
+                      Siguiente
+                    </Button>
+                  </div>
+                </div>
+              )}
             </Card>
-          ))}
+            );
+          })}
         </div>
       ) : null}
 
       <Modal
         open={Boolean(faseActual)}
-        onClose={() => {
-          setFaseActual(null);
-          setOperarioDestinoId('');
-        }}
+        onClose={cerrarReasignacion}
         title="Reasignar fase"
       >
         {faseActual && (
@@ -287,10 +359,14 @@ export const GestionPlantaPage = () => {
                 name="operario_destino_id"
                 className="select"
                 value={operarioDestinoId}
+                disabled={cargandoDestinos}
                 onChange={(event) => setOperarioDestinoId(event.target.value)}
               >
-                {operarios
-                  .filter((operario) => operario.id !== faseActual.operario_id)
+                <option value="">
+                  {cargandoDestinos ? 'Cargando habilitados...' : 'Elegí un operario'}
+                </option>
+                {destinos
+                  .filter((operario) => operario.id !== (faseActual.operarioId ?? faseActual.operario_id))
                   .map((operario) => (
                     <option key={operario.id} value={operario.id}>
                       {operario.nombre}
@@ -314,10 +390,7 @@ export const GestionPlantaPage = () => {
             <div className="flex justify-end gap-3 pt-2">
               <Button
                 variant="secondary"
-                onClick={() => {
-                  setFaseActual(null);
-                  setOperarioDestinoId('');
-                }}
+                onClick={cerrarReasignacion}
               >
                 Cancelar
               </Button>
