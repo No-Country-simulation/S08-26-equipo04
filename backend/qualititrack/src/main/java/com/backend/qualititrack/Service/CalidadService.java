@@ -187,6 +187,9 @@ public class CalidadService {
         dto.setEstado(ordenTrabajo.getEstado());
         dto.setFechaCreacion(ordenTrabajo.getCreatedAt());
         dto.setFechaTerminoReal(ordenTrabajo.getFechaEntrega());
+        dto.setReceptorNombre(ordenTrabajo.getReceptorNombre());
+        dto.setFechaPaseCalidad(ordenTrabajo.getFechaPaseCalidad());
+        dto.setFechaPaseDespacho(ordenTrabajo.getFechaPaseDespacho());
 
         if (ordenTrabajo.getCotizacion() != null) {
             dto.setCotizacionId(ordenTrabajo.getCotizacion().getId());
