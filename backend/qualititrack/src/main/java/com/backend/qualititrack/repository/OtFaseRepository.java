@@ -5,15 +5,21 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.backend.qualititrack.Enum.EstadoOtFase;
 import com.backend.qualititrack.modelos.OtFase;
 
 public interface OtFaseRepository extends JpaRepository<OtFase, Long> {
-        @Query("SELECT f FROM OtFase f " + "JOIN FETCH f.ordenTrabajo " + "JOIN FETCH f.faseCatalogo")
+        // Trae en una sola consulta todo lo que usa convertirADTO (OT, cotización, solicitud y fase)
+        @Query("SELECT f FROM OtFase f " + "JOIN FETCH f.ordenTrabajo ot " + "JOIN FETCH ot.cotizacion c "
+                        + "JOIN FETCH c.solicitud " + "JOIN FETCH f.faseCatalogo")
         List<OtFase> findAllWithRelaciones();
-        
-        List<OtFase> findByOperario_Id(Long operarioId);
+
+        @Query("SELECT f FROM OtFase f " + "JOIN FETCH f.ordenTrabajo ot " + "JOIN FETCH ot.cotizacion c "
+                        + "JOIN FETCH c.solicitud " + "JOIN FETCH f.faseCatalogo "
+                        + "WHERE f.operario.id = :operarioId")
+        List<OtFase> findByOperario_Id(@Param("operarioId") Long operarioId);
 
         OtFase findByOrdenTrabajoIdAndNumeroSecuencia(Long ordenTrabajoId, Integer numeroSecuencia);
 

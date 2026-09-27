@@ -21,6 +21,13 @@ public class OtFaseResponseDTO {
     
     private String numeroOt;
 
+    // Datos de la solicitud, para mostrar la tarea sin pedir la OT y la cotización
+    private String descripcionPieza;
+
+    private Integer cantidad;
+
+    private Long solicitudId;
+
     private Long faseCatalogoId;
     
     private String faseNombre;
