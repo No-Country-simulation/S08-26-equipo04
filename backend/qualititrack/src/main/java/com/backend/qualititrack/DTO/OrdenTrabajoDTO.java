@@ -46,7 +46,7 @@ public class OrdenTrabajoDTO {
 
     private OffsetDateTime fechaActualizacion;
 
-    private OffsetDateTime fechaInicioReal;
+    private OffsetDateTime fechaInicioProduccion;
 
     private OffsetDateTime fechaTerminoReal;
 
