@@ -161,7 +161,7 @@ public class OtFaseService {
         OtFase guardada = otFaseRepository.save(otFase);
 
         // Chequear si existe una fase siguiente para la misma orden de trabajo
-        OtFase faseSiguiente = otFaseRepository.findFirstByOrdenTrabajoIdAndCicloIteracionAndNumeroSecuenciaGreaterThanOrderByNumeroSecuenciaAsc(
+        OtFase faseSiguiente = otFaseRepository.findNextFase(
                 otFase.getOrdenTrabajo().getId(),
                 otFase.getCicloIteracion(),
                 otFase.getNumeroSecuencia())

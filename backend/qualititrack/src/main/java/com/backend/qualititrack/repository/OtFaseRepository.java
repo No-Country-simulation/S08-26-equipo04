@@ -43,6 +43,7 @@ public interface OtFaseRepository extends JpaRepository<OtFase, Long> {
 
 
         // Busca la siguiente, aunque no sea consecutiva (por cuestiones de retrabajo)
-        Optional<OtFase> findFirstByOrdenTrabajoIdAndCicloIteracionAndNumeroSecuenciaGreaterThanOrderByNumeroSecuenciaAsc(
-        Long ordenTrabajoId, Integer cicloIteracion, Integer numeroSecuencia);
+        
+        @Query("SELECT o FROM OtFase o WHERE o.ordenTrabajo.id = :ordenTrabajoId AND o.cicloIteracion = :cicloIteracion AND o.numeroSecuencia > :numeroSecuencia ORDER BY o.numeroSecuencia asc")
+        Optional<OtFase> findNextFase(@Param("ordenTrabajoId") Long ordenTrabajoId, @Param("cicloIteracion") Integer cicloIteracion, @Param("numeroSecuencia") Integer numeroSecuencia);
 }
