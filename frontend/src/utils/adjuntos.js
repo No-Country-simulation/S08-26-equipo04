@@ -28,19 +28,21 @@ export const superaTamanioMaximo = (archivo) => archivo.size > MAX_ADJUNTO_BYTES
 export const mensajeTamanioMaximo = (archivo) =>
   `${archivo.name} supera el máximo de ${formatBytes(MAX_ADJUNTO_BYTES)} por archivo. Revisá el tamaño antes de adjuntarlo.`;
 
-// El backend responde AdjuntoResponseDTO en camelCase; el resto de la app
-// trabaja en snake_case, asi que se normaliza al entrar (igual que
-// mapItem en los otros providers).
+// El backend serializa con SNAKE_CASE (spring.jackson.property-naming-strategy)
+// y el resto de la app trabaja en snake_case, asi que se normaliza al entrar.
+// Se aceptan ambas grafias para no depender de esa configuracion
+// (igual que numeroOTDe en OtFasesProvider).
 export const mapAdjunto = (item) => ({
   id: item.id,
-  solicitud_id: item.solicitudId ?? null,
-  nombre_original: item.nombreOriginal,
-  tipo_archivo: item.tipoArchivo,
-  mime_type: item.mimeType,
-  tamanio_bytes: item.tamanioBytes,
-  ruta_almacenamiento: item.rutaAlmacenamiento,
-  subido_por_id: item.subidoPorId ?? null,
-  created_at: item.createdAt,
+  solicitud_id: item.solicitud_id ?? item.solicitudId ?? null,
+  nombre_original: item.nombre_original ?? item.nombreOriginal ?? null,
+  tipo_archivo: item.tipo_archivo ?? item.tipoArchivo ?? null,
+  mime_type: item.mime_type ?? item.mimeType ?? null,
+  tamanio_bytes: item.tamanio_bytes ?? item.tamanioBytes ?? null,
+  ruta_almacenamiento:
+    item.ruta_almacenamiento ?? item.rutaAlmacenamiento ?? null,
+  subido_por_id: item.subido_por_id ?? item.subidoPorId ?? null,
+  created_at: item.created_at ?? item.createdAt ?? null,
 });
 
 // El endpoint que devuelve el archivo responde 404 con un JSON de error,
