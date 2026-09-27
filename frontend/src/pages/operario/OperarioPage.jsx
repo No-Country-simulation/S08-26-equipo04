@@ -1,13 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ClipboardList, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "../../context/AuthContext";
 import { useOtFases } from "../../hooks/useOtFases";
 import {
   Button,
   EmptyState,
   ErrorBanner,
-  LoadingSpinner,
+  SkeletonCard,
   Title,
 } from "../../components/ui";
 import { TaskCardMobile } from "./TaskCardMobile";
@@ -16,52 +15,35 @@ import { TaskDetailModal } from "./TaskDetailModal";
 const ESTADOS_ACTIVOS = ["EN_COLA", "EN_EJECUCION"];
 
 export const OperarioPage = () => {
-  const { user } = useAuth();
-  const { otFases, iniciarFase, finalizarFase } = useOtFases();
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState(null);
+  // GET /api/ot-fases ya filtra por el operario logueado via JWT: no hay
+  // filtrado local por usuario.
+  const { otFases, cargando, error, recargar, iniciarFase, finalizarFase } =
+    useOtFases();
   const [accionId, setAccionId] = useState(null);
+  const [errorAccion, setErrorAccion] = useState(null);
   const [detalleId, setDetalleId] = useState(null);
 
-  const cargar = () => {
-    setCargando(true);
-    setError(null);
-    // El provider es sincrono (mock); se simula la latencia de red para
-    // ejercitar los estados de UI segun spec §7.1.
-    setTimeout(() => setCargando(false), 400);
-  };
-
-  useEffect(() => {
-    const timer = setTimeout(() => setCargando(false), 400);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Los ids de usuario del mock de auth no coinciden con los operario_id
-  // del mock de ot-fases; se filtra por nombre (consistente en ambos mocks)
-  // hasta que el backend estabilice los ids (GET /api/ot-fases ya filtra
-  // por el operario logueado via JWT).
-  const tareas = useMemo(() => {
-    if (!user) return [];
-    return otFases
-      .filter(
-        (fase) =>
-          ESTADOS_ACTIVOS.includes(fase.estado) &&
-          fase.operario_nombre === user.nombre,
-      )
-      .sort((a, b) => {
-        if (a.estado !== b.estado) return a.estado === "EN_EJECUCION" ? -1 : 1;
-        return a.numero_secuencia - b.numero_secuencia;
-      });
-  }, [otFases, user]);
+  const tareas = useMemo(
+    () =>
+      otFases
+        .filter((fase) => ESTADOS_ACTIVOS.includes(fase.estado))
+        .sort((a, b) => {
+          if (a.estado !== b.estado) return a.estado === "EN_EJECUCION" ? -1 : 1;
+          return a.numero_secuencia - b.numero_secuencia;
+        }),
+    [otFases],
+  );
 
   const handleIniciar = async (tarea) => {
     setAccionId(tarea.id);
-    setError(null);
+    setErrorAccion(null);
     try {
       await iniciarFase(tarea.id);
-      toast.success(`${tarea.ot_numero} · ${tarea.fase_nombre} en ejecucion`);
+      toast.success(
+        `${tarea.ot_numero ?? "La tarea"} · ${tarea.fase_nombre ?? "fase"} en ejecucion`,
+      );
     } catch (err) {
-      setError(err.message);
+      setErrorAccion(err.message);
       toast.error(err.message);
     } finally {
       setAccionId(null);
@@ -70,34 +52,37 @@ export const OperarioPage = () => {
 
   const handleFinalizar = async (tarea) => {
     setAccionId(tarea.id);
-    setError(null);
+    setErrorAccion(null);
     try {
-      const { siguiente } = await finalizarFase(tarea.id);
-      if (siguiente) {
-        // La fase siguiente puede pertenecer a otro operario: en ese caso
-        // la lista propia queda vacia y el toast debe decir a quien se derivo.
-        const esMia = siguiente.operario_nombre === user?.nombre;
+      const { otEstado, siguienteMia } = await finalizarFase(tarea.id);
+      const referencia = tarea.ot_numero ?? "La tarea";
+      if (siguienteMia) {
         toast.success(
-          esMia
-            ? `${tarea.ot_numero} terminada · siguiente fase: ${siguiente.fase_nombre}`
-            : `${tarea.ot_numero} terminada · derivada a ${siguiente.operario_nombre} (${siguiente.fase_nombre})`,
+          `${referencia} terminada · siguiente fase: ${siguienteMia.fase_nombre ?? "siguiente fase"}`,
         );
+      } else if (otEstado === "EN_CALIDAD") {
+        toast.success(`${referencia} terminada · OT enviada a Calidad`);
       } else {
-        toast.success(`${tarea.ot_numero} terminada · OT enviada a Calidad`);
+        toast.success(`${referencia} terminada · derivada al siguiente puesto`);
       }
     } catch (err) {
-      setError(err.message);
+      setErrorAccion(err.message);
       toast.error(err.message);
     } finally {
       setAccionId(null);
     }
   };
 
-  const reintentar = () => cargar();
+  const reintentar = () => {
+    setErrorAccion(null);
+    recargar();
+  };
 
   const tareaDetalle = detalleId
     ? otFases.find((fase) => fase.id === detalleId) ?? null
     : null;
+
+  const errorVisible = errorAccion ?? error;
 
   return (
     <div className="space-y-4 py-2">
@@ -109,12 +94,21 @@ export const OperarioPage = () => {
         </p>
       </header>
 
-      {error && !cargando && (
-        <ErrorBanner message={error} onRetry={reintentar} />
+      {errorVisible && !cargando && (
+        <ErrorBanner message={errorVisible} onRetry={reintentar} />
       )}
 
       {cargando ? (
-        <LoadingSpinner label="Cargando tareas" size="lg" />
+        // Desviacion consciente de la spec §7.1 (que pide "spinner centrado"
+        // para Operario): se usan skeletons con la misma densidad de la card
+        // real para evitar el salto de layout al cargar. Anotado en el PR.
+        <ul className="grid grid-cols-1 gap-4" aria-busy="true">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <li key={index}>
+              <SkeletonCard rows={4} />
+            </li>
+          ))}
+        </ul>
       ) : tareas.length === 0 ? (
         <EmptyState
           icon={ClipboardList}

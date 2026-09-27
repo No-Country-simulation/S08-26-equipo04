@@ -47,6 +47,7 @@ public class OtFaseService {
     }
 
     // GET /api/ot-fases (Jefe)
+    @Transactional
     public List<OtFaseResponseDTO> listarFases() {
         // Retornar todas las fases, mapeadas a DTOs
         return otFaseRepository.findAllWithRelaciones()
@@ -347,6 +348,9 @@ public class OtFaseService {
                 .id(otFase.getId())
                 .ordenTrabajoId(otFase.getOrdenTrabajo().getId())
                 .numeroOt(otFase.getOrdenTrabajo().getNumeroOt())
+                .descripcionPieza(otFase.getOrdenTrabajo().getCotizacion().getSolicitud().getDescripcionPieza())
+                .cantidad(otFase.getOrdenTrabajo().getCantidad())
+                .solicitudId(otFase.getOrdenTrabajo().getCotizacion().getSolicitud().getId())
                 .faseCatalogoId(otFase.getFaseCatalogo().getId())
                 .faseNombre(otFase.getFaseCatalogo().getNombre())
                 .numeroSecuencia(otFase.getNumeroSecuencia())

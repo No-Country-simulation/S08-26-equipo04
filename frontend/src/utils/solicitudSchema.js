@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MAX_ADJUNTO_BYTES, formatBytes } from './adjuntos';
 
 // Formato válido para CUIT: 11 dígitos seguidos o XX-XXXXXXXX-X.
 const cuitRegex = /^(\d{11}|\d{2}-\d{8}-\d)$/;
@@ -16,7 +17,12 @@ export const solicitudSchema = z.object({
   cantidad: z.coerce.number().int('La cantidad debe ser un número entero').min(1, 'La cantidad debe ser mayor a 0'),
   fecha_esperada_entrega: z.string().optional().or(z.literal('')),
   notas_comerciales: z.string().trim().optional().or(z.literal('')),
-  adjuntos: z.array(z.custom((file) => file instanceof File)).optional(),
+  adjuntos: z
+    .array(z.custom((file) => file instanceof File, { message: 'Adjunto inválido' }))
+    .refine((files) => files.every((file) => file.size <= MAX_ADJUNTO_BYTES), {
+      message: `Ningún archivo puede superar los ${formatBytes(MAX_ADJUNTO_BYTES)}`,
+    })
+    .optional(),
 }).superRefine((data, context) => {
   if (data.cliente_mode === 'registrado' && !data.cliente_id) {
     context.addIssue({ code: 'custom', path: ['cliente_id'], message: 'Seleccioná un cliente' });

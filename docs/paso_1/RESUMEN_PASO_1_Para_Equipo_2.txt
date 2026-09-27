@@ -1,0 +1,203 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║           🎓 QualityTrack - PASO 1: Explicación para el Equipo               ║
+║                    Claves Primarias y Foráneas - Versión Simple              ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 CONCEPTOS BÁSICOS (5 minutos de lectura)
+
+🔑 CLAVE PRIMARIA (PK)
+├─ Es el "DNI" o "pasaporte" de cada fila en una tabla
+├─ Debe ser ÚNICO (no se puede repetir)
+├─ No puede ser NULL (debe tener valor)
+└─ Ejemplo: CLIENTE.id = 1, 2, 3... (cada cliente tiene un ID único)
+
+🔗 CLAVE FORÁNEA (FK)
+├─ Es una "referencia" que apunta a la PK de otra tabla
+├─ Vincula dos tablas entre sí
+├─ Garantiza la integridad de los datos
+└─ Ejemplo: SOLICITUD_TRABAJO.clienteId = 1 (apunta a CLIENTE.id = 1)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔄 TIPOS DE RELACIONES
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 1️⃣  UNO A MUCHOS (1:N) - La más común                                   │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│   CLIENTE (1) ──────────→ SOLICITUD_TRABAJO (N)                          │
+│                                                                           │
+│   Un cliente puede tener MUCHAS solicitudes de trabajo                   │
+│   La FK va en la tabla "muchos": solicitud_trabajo.cliente_id            │
+│                                                                           │
+│   Ejemplos en QualityTrack:                                              │
+│   • 1 Cliente → N Solicitudes                                            │
+│   • 1 Solicitud → N Cotizaciones                                         │
+│   • 1 Orden de Trabajo → N Operaciones                                   │
+│                                                                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 2️⃣  UNO A UNO (1:1)                                                      │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│   COTIZACION (1) ──────────→ ORDEN_TRABAJO (1)                           │
+│                                                                           │
+│   Una cotización genera exactamente UNA orden de trabajo                 │
+│   La FK va en la tabla "dependiente": orden_trabajo.cotizacion_id        │
+│                                                                           │
+│   Ejemplos en QualityTrack:                                              │
+│   • 1 Cotización → 1 Orden de Trabajo                                    │
+│   • 1 Orden de Trabajo → 1 Entrega                                       │
+│                                                                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 3️⃣  MUCHOS A UNO (M:1) - Especial: Múltiples registros → Un registro   │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│   OPERACION (N) ──────────→ USUARIO (1)                                  │
+│                                                                           │
+│   MUCHAS operaciones pueden asignarse a UN usuario (operario)            │
+│   UN usuario puede supervisar MUCHAS órdenes de trabajo                  │
+│                                                                           │
+│   En QualityTrack:                                                       │
+│   • N Operaciones → 1 Usuario (responsable)                              │
+│   • N Órdenes → 1 Usuario (supervisor)                                   │
+│   • N Quality Checks → 1 Usuario (inspector)                             │
+│                                                                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 EL FLUJO COMPLETO DE QualityTrack
+
+┌──────────────┐
+│   CLIENTE    │  (Un cliente solicita trabajo)
+│  (id = PK)   │
+└──────┬───────┘
+       │ 1:N (cliente_id FK)
+       │
+       ↓
+┌──────────────────────────────────┐
+│  SOLICITUD_TRABAJO               │  (Cliente describe qué necesita)
+│  (id = PK, cliente_id = FK)      │
+└──────┬───────────────────────────┘
+       │ 1:N (solicitud_trabajo_id FK)
+       │
+       ↓
+┌──────────────────────────────────┐
+│  COTIZACION                      │  (Empresa da precio y plazo)
+│  (id = PK, solicitud_id = FK)    │
+└──────┬───────────────────────────┘
+       │ 1:1 (cotizacion_id FK)
+       │
+       ↓
+┌──────────────────────────────────┐
+│  ORDEN_TRABAJO                   │  (Cliente aprueba, sale a planta)
+│  (id = PK, cliente_id, cotiz_id) │
+│  (responsable_id FK → USUARIO)   │
+└──────┬───────────────────────────┘
+       │ 1:N (orden_trabajo_id FK)
+       │
+       ├──→ HOJA_RUTA               (Divide el trabajo en pasos)
+       │    │ 1:N
+       │    └──→ OPERACION          (Cada paso específico)
+       │         (responsable_id FK → USUARIO)
+       │         │ 1:N
+       │         └──→ QUALITY_CHECK  (Se verifica cada operación)
+       │              (inspector_id FK → USUARIO)
+       │
+       └──→ ENTREGA                 (Trabajo completado, cliente recibe)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💾 EJEMPLO EN SQL (Cómo se crea una tabla con FK)
+
+-- Paso 1: Crear tabla INDEPENDIENTE (sin FK)
+CREATE TABLE cliente (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    email VARCHAR(100),
+    telefono VARCHAR(20)
+);
+
+-- Paso 2: Crear tabla DEPENDIENTE (con FK)
+CREATE TABLE solicitud_trabajo (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    cliente_id BIGINT NOT NULL,           ← Esta es la FK
+    descripcion TEXT,
+    estado VARCHAR(50),
+
+    -- Aquí decimos que cliente_id DEBE existir en cliente.id
+    FOREIGN KEY (cliente_id) REFERENCES cliente(id)
+);
+
+-- Paso 3: Si intentas algo ilógico → ❌ ERROR
+INSERT INTO solicitud_trabajo VALUES (1, 999, 'Descripción', 'PENDIENTE');
+                                           ↑
+                            No existe cliente con id=999
+                            LA BASE DE DATOS LO RECHAZA
+
+-- Paso 4: Hacer correctamente → ✅ OK
+INSERT INTO cliente VALUES (1, 'Acme Corp', 'acme@test.com', '1234567');
+INSERT INTO solicitud_trabajo VALUES (1, 1, 'Descripción', 'PENDIENTE');
+                                           ↑
+                        Ahora cliente con id=1 SÍ existe
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 RESUMEN TABLA: Todas las Relaciones en QualityTrack
+
+Tabla De            │ Tabla A             │ Tipo  │ FK va en
+────────────────────┼─────────────────────┼───────┼──────────────────────
+CLIENTE             │ SOLICITUD_TRABAJO   │ 1:N   │ solicitud.cliente_id
+SOLICITUD_TRABAJO   │ COTIZACION          │ 1:N   │ cotizacion.solicitud_id
+COTIZACION          │ ORDEN_TRABAJO       │ 1:1   │ orden_trabajo.cotizacion_id
+ORDEN_TRABAJO       │ HOJA_RUTA           │ 1:N   │ hoja_ruta.orden_trabajo_id
+HOJA_RUTA           │ OPERACION           │ 1:N   │ operacion.hoja_ruta_id
+OPERACION           │ QUALITY_CHECK       │ 1:N   │ qc.operacion_id
+ORDEN_TRABAJO       │ ENTREGA             │ 1:1   │ entrega.orden_trabajo_id
+USUARIO             │ ORDEN_TRABAJO       │ M:1   │ orden_trabajo.responsable_id
+USUARIO             │ OPERACION           │ M:1   │ operacion.responsable_id
+USUARIO             │ QUALITY_CHECK       │ M:1   │ qc.inspector_id
+USUARIO             │ DOCUMENTO           │ M:1   │ documento.upload_por_id
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚡ PUNTOS CLAVE PARA MEMORIZAR
+
+1. PK (Primary Key) = El DNI de cada registro (único, no NULL)
+2. FK (Foreign Key) = La referencia que conecta dos tablas
+3. La FK SIEMPRE va en la tabla "muchos" o la tabla "dependiente"
+4. La BD valida automáticamente que la FK apunte a un PK que exista
+5. Sin FK no hay integridad referencial (se puede tener datos "huérfanos")
+6. Con FK sí hay integridad = datos consistentes y confiables
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📚 DOCUMENTOS DISPONIBLES PARA ESTA FASE
+
+1. PASO_1_Diseño_Modelo_Datos.md     → Las 10 entidades y atributos
+2. PASO_1B_Claves_Relaciones.md      → Esta explicación en formato largo
+3. diagrama_er_qualitytrack.html     → Visualización gráfica interactiva
+4. RESUMEN_PASO_1_Para_Equipo.txt    → Este archivo (versión resumida)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ CHECKLIST ANTES DE AVANZAR AL PASO 2
+
+□ El equipo entiende qué es una Clave Primaria
+□ El equipo entiende qué es una Clave Foránea
+□ Pueden explicar por qué la FK va en la tabla "muchos"
+□ Entienden el flujo completo: Cliente → Solicitud → Cotización → OT → Operaciones
+□ Revisaron el diagrama visual (diagrama_er_qualitytrack.html)
+□ Tienen preguntas anotadas y las conversamos
+
+CUANDO TODO ESTÉ CLARO: Diremos "OK" y pasaremos a PASO 2
+↓
+En PASO 2 convertiremos este diseño a CLASES JAVA con anotaciones JPA
+
+╚════════════════════════════════════════════════════════════════════════════════╝
