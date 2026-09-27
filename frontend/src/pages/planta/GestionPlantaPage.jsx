@@ -175,7 +175,7 @@ export const GestionPlantaPage = () => {
 
     try {
       await apiPost(`/api/ot-fases/${faseActual.id}/reasignar`, {
-        operarioNuevoId: Number(operarioDestinoId),
+        operario_nuevo_id: Number(operarioDestinoId),
         motivo: motivo.trim(),
       });
       setOtFases((prev) => prev.map((fase) => fase.id === faseActual.id
@@ -352,28 +352,40 @@ export const GestionPlantaPage = () => {
               </p>
             </div>
 
-            <label className="block space-y-1.5" htmlFor="operario-destino">
-              <span className="text-label text-ink">Nuevo operario</span>
-              <select
-                id="operario-destino"
-                name="operario_destino_id"
-                className="select"
-                value={operarioDestinoId}
-                disabled={cargandoDestinos}
-                onChange={(event) => setOperarioDestinoId(event.target.value)}
-              >
-                <option value="">
-                  {cargandoDestinos ? 'Cargando habilitados...' : 'Elegí un operario'}
-                </option>
-                {destinos
-                  .filter((operario) => operario.id !== (faseActual.operarioId ?? faseActual.operario_id))
-                  .map((operario) => (
-                    <option key={operario.id} value={operario.id}>
-                      {operario.nombre}
+            {(() => {
+              const otrosHabilitados = destinos.filter(
+                (operario) => operario.id !== (faseActual.operarioId ?? faseActual.operario_id),
+              );
+              if (!cargandoDestinos && otrosHabilitados.length === 0) {
+                return (
+                  <p className="text-body text-text-secondary">
+                    No hay otro operario habilitado para esta fase.
+                  </p>
+                );
+              }
+              return (
+                <label className="block space-y-1.5" htmlFor="operario-destino">
+                  <span className="text-label text-ink">Nuevo operario</span>
+                  <select
+                    id="operario-destino"
+                    name="operario_destino_id"
+                    className="select"
+                    value={operarioDestinoId}
+                    disabled={cargandoDestinos}
+                    onChange={(event) => setOperarioDestinoId(event.target.value)}
+                  >
+                    <option value="">
+                      {cargandoDestinos ? 'Cargando habilitados...' : 'Elegí un operario'}
                     </option>
-                  ))}
-              </select>
-            </label>
+                    {otrosHabilitados.map((operario) => (
+                      <option key={operario.id} value={operario.id}>
+                        {operario.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              );
+            })()}
 
             <label className="block space-y-1.5" htmlFor="motivo-reasignacion">
               <span className="text-label text-ink">Motivo</span>
