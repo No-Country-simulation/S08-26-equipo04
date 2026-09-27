@@ -24,7 +24,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-// 13. Auditorías Calidad[cite: 1]
 @Entity
 @Table(name = "auditorias_calidad", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"orden_trabajo_id", "numero_auditoria"})
@@ -65,7 +64,6 @@ public class AuditoriaCalidad {
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
-    // En la clase AuditoriaCalidad:
     @OneToMany(mappedBy = "auditoria", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AuditoriaChecklistRespuesta> respuestas = new ArrayList<>();
 
