@@ -190,12 +190,12 @@ Se detalla por cada endpoint: método HTTP, ruta, rol que puede usarlo, qué esp
 
 ### Módulo Jefe de producción
 
-#### Listar solicitudes pendientes (HU-2.1)
+#### Listar solicitudes (HU-1.1 / HU-2.1)
 
 - Método HTTP: GET
 - Ruta: `/api/solicitudes`
-- Roles: Jefe de producción
-- Respuesta exitosa: 200 OK — solicitudes en estado `PENDIENTE_COTIZACION`, con la documentación adjunta, la descripción de la pieza y la cantidad.
+- Roles: Vendedor, Jefe de producción
+- Respuesta exitosa: 200 OK — el Jefe de producción recibe solo las solicitudes en `PENDIENTE_COTIZACION`; el Vendedor recibe todas (`PENDIENTE_COTIZACION` y `COTIZADA`). Cada una con la documentación adjunta, la descripción de la pieza y la cantidad. *(27/09 — #156)*
 
 #### Crear cotización con fases (HU-2.1)
 
@@ -219,6 +219,7 @@ Se detalla por cada endpoint: método HTTP, ruta, rol que puede usarlo, qué esp
   ```
   Una misma `fase_catalogo_id` puede repetirse con distinto `numero_secuencia` (D6 del Esquema v2).
 - Respuesta exitosa: 201 Created `{ id, numero_cotizacion, estado: "LISTA_PARA_ENVIAR" }`
+- Efecto: la solicitud asociada pasa a `COTIZADA` y deja de aparecer en el listado del Jefe de producción. *(27/09 — #156)*
 - Respuesta de error: 400 (faltan datos, o `numero_secuencia` repetido dentro de la misma cotización)
 
 #### Consultar fases asignadas / gestión de planta (HU-2.2)

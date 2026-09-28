@@ -74,6 +74,7 @@ Como Jefe de producción, quiero armar la cotización de una solicitud eligiendo
 - Dado que elige las fases del catálogo global y las ordena, cuando les carga un tiempo estimado a cada una, entonces el sistema guarda ese orden y esos tiempos asociados a la cotización. Una misma fase puede elegirse más de una vez en la secuencia si el proceso lo requiere (ej. Mecanizado → Soldadura → Mecanizado). **(v2 — D6 del esquema)**
 - Dado que el Jefe de producción arma la secuencia, cuando elige fases del catálogo, entonces solo ve las fases activas que tienen al menos un operario habilitado. **(25/09 — D-5)**
 - Dado que definió un precio final único para toda la cotización, cuando presiona "aceptar", entonces la cotización vuelve al Vendedor lista para enviar.
+- Dado que el Jefe de producción crea la cotización de una solicitud, cuando se guarda, entonces la solicitud pasa a estado `COTIZADA` y deja de figurar entre las pendientes de cotizar. **(27/09 — #156)**
 
 ### HU-2.2 Gestión de planta
 
