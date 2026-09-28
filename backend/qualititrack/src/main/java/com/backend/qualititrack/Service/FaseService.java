@@ -22,14 +22,15 @@ import com.backend.qualititrack.repository.UsuarioRepository;
 @Service
 public class FaseService {
 
-    @Autowired
-    private FaseRepository faseRepository;
+    private final FaseRepository faseRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final FaseOperarioHabilitadoRepository faseOperarioRepository;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
-
-    @Autowired
-    private FaseOperarioHabilitadoRepository faseOperarioRepository;
+    public FaseService(FaseRepository faseRepository, UsuarioRepository usuarioRepository, FaseOperarioHabilitadoRepository faseOperarioRepository) {
+        this.faseRepository = faseRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.faseOperarioRepository = faseOperarioRepository;
+    }
 
     // lista las fases, ya sea todas (para el gerente) o las que tienen operarios habilitados (para el jefe)
     public List<FaseCatalogo> listarFases(boolean soloConOperarios) {
