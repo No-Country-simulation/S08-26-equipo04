@@ -21,6 +21,15 @@ const resultadoCalidadLabels = {
   NO_CONFORME: 'No conforme',
 };
 
+const estadoFaseLabels = {
+  PENDIENTE: 'Pendiente',
+  EN_COLA: 'En cola',
+  EN_EJECUCION: 'En ejecución',
+  TERMINADO: 'Terminada',
+};
+
+const leer = (item, snake, camel) => item?.[snake] ?? item?.[camel] ?? null;
+
 const tipoArchivoLabel = (value) =>
   TIPOS_ARCHIVO.find((item) => item.value === value)?.label || value || '—';
 
@@ -73,12 +82,42 @@ export const ExpedientePage = () => {
     expediente?.fechaEntrega ??
     null;
 
-  const fases = useMemo(() => {
+  // Historial real de fases (PR #234): una fila por fase con estado,
+  // operario, fechas, intento y motivo de reasignación. Si todavía viene
+  // vacío se muestra lo planificado de la cotización.
+  const historialFases = useMemo(
+    () => expediente?.historial_fases ?? expediente?.historialFases ?? [],
+    [expediente],
+  );
+
+  const fasesPlan = useMemo(() => {
     const lista = cotizacion?.fases ?? [];
     return [...lista].sort(
-      (a, b) => (a.numero_secuencia ?? a.numeroSecuencia ?? 0) - (b.numero_secuencia ?? b.numeroSecuencia ?? 0),
+      (a, b) => (leer(a, 'numero_secuencia', 'numeroSecuencia') ?? 0) - (leer(b, 'numero_secuencia', 'numeroSecuencia') ?? 0),
     );
   }, [cotizacion]);
+
+  // Avance real: por cada secuencia se toma el intento más alto y se
+  // cuenta cuántos están terminados.
+  const avance = useMemo(() => {
+    if (historialFases.length === 0) return null;
+    const porSecuencia = new Map();
+    historialFases.forEach((fase) => {
+      const secuencia = leer(fase, 'numero_secuencia', 'numeroSecuencia');
+      const intento = leer(fase, 'numero_intento', 'numeroIntento') ?? 1;
+      const actual = porSecuencia.get(secuencia);
+      if (!actual || intento > (leer(actual, 'numero_intento', 'numeroIntento') ?? 1)) {
+        porSecuencia.set(secuencia, fase);
+      }
+    });
+    const ultimas = [...porSecuencia.values()];
+    return {
+      total: ultimas.length,
+      terminadas: ultimas.filter(
+        (fase) => leer(fase, 'estado_fase', 'estadoFase') === 'TERMINADO',
+      ).length,
+    };
+  }, [historialFases]);
 
   const historial = useMemo(() => {
     const eventos = [];
@@ -113,6 +152,22 @@ export const ExpedientePage = () => {
     if (fechaEntrega) {
       agregar(fechaEntrega, receptor ? `Entregada a ${receptor}` : 'Entregada');
     }
+    // Eventos por fase desde el historial real (inicio, fin y reasignaciones).
+    (expediente?.historial_fases ?? expediente?.historialFases ?? []).forEach((fase) => {
+      const nombre = leer(fase, 'nombre_fase', 'nombreFase') || 'Fase';
+      const operario = leer(fase, 'operario_asignado', 'operarioAsignado');
+      const intento = leer(fase, 'numero_intento', 'numeroIntento') ?? 1;
+      const etiqueta = intento > 1 ? `${nombre} (intento ${intento})` : nombre;
+      const fechaInicio = leer(fase, 'fecha_inicio', 'fechaInicio');
+      const fechaFin = leer(fase, 'fecha_fin', 'fechaFin');
+      const fechaReasignacion = leer(fase, 'fecha_reasignacion', 'fechaReasignacion');
+      const motivo = leer(fase, 'motivo_reasignacion', 'motivoReasignacion');
+      if (fechaInicio) agregar(fechaInicio, `${etiqueta} iniciada${operario ? ` por ${operario}` : ''}`);
+      if (fechaFin) agregar(fechaFin, `${etiqueta} terminada`);
+      if (fechaReasignacion) {
+        agregar(fechaReasignacion, `${etiqueta} reasignada${motivo ? `: ${motivo}` : ''}`);
+      }
+    });
     return eventos
       .map((evento) => ({ ...evento, tiempo: Date.parse(evento.fecha) || 0 }))
       .sort((a, b) => b.tiempo - a.tiempo);
@@ -237,17 +292,51 @@ export const ExpedientePage = () => {
     }
 
     if (activeTab === 'Hoja de ruta') {
+      // Con historial real se muestra el estado vivo de cada fase
+      // (DoD #213: fase, estado, fechas, operario, intento y motivo).
+      // Sin historial, fallback a lo planificado de la cotización.
+      if (historialFases.length > 0) {
+        const ordenadas = [...historialFases].sort(
+          (a, b) => (leer(a, 'numero_secuencia', 'numeroSecuencia') ?? 0) - (leer(b, 'numero_secuencia', 'numeroSecuencia') ?? 0)
+            || (leer(a, 'numero_intento', 'numeroIntento') ?? 1) - (leer(b, 'numero_intento', 'numeroIntento') ?? 1),
+        );
+        return (
+          <section className="overflow-hidden rounded-xl border border-border bg-surface">
+            <div className="border-b border-border px-5 py-4 text-h2">Hoja de ruta</div>
+            <div className="space-y-3 p-5">
+              {ordenadas.map((fase) => {
+                const numero = leer(fase, 'numero_secuencia', 'numeroSecuencia') ?? '—';
+                const nombre = leer(fase, 'nombre_fase', 'nombreFase') || '—';
+                const estadoFase = leer(fase, 'estado_fase', 'estadoFase');
+                const operario = leer(fase, 'operario_asignado', 'operarioAsignado') || '—';
+                const intento = leer(fase, 'numero_intento', 'numeroIntento') ?? 1;
+                const motivo = leer(fase, 'motivo_reasignacion', 'motivoReasignacion');
+                const fechaFin = leer(fase, 'fecha_fin', 'fechaFin');
+                const fechaInicio = leer(fase, 'fecha_inicio', 'fechaInicio');
+                return (
+                  <div key={fase.fase_id ?? fase.faseId ?? `${numero}-${intento}`} className="grid min-h-[68px] grid-cols-[40px_minmax(0,1fr)] items-center gap-3 rounded-lg border border-border px-4 py-3 sm:grid-cols-[40px_minmax(0,1fr)_140px_120px] sm:gap-4">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-tint text-metadata font-semibold text-primary">{String(numero).padStart(2, '0')}</span>
+                    <div className="min-w-0"><p className="text-label font-semibold text-ink">{nombre}</p><p className="text-metadata text-text-muted">{operario}{intento > 1 ? ` · intento ${intento}` : ''}{motivo ? ` · ${motivo}` : ''}</p></div>
+                    <span className="text-metadata text-text-secondary">{estadoFaseLabels[estadoFase] || estadoFase || '—'}</span>
+                    <span className="text-left text-metadata text-text-muted sm:text-right">{fechaFin ? formatDateTime(fechaFin) : fechaInicio ? `Inició ${formatDateTime(fechaInicio)}` : '—'}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        );
+      }
       return (
         <section className="overflow-hidden rounded-xl border border-border bg-surface">
           <div className="border-b border-border px-5 py-4 text-h2">Hoja de ruta</div>
           <div className="space-y-3 p-5">
-            <div className="rounded-lg bg-info-light px-3 py-3 text-label text-info">Fases planificadas en la cotización. El seguimiento en tiempo real de cada fase estará disponible próximamente.</div>
-            {fases.length === 0 ? (
+            <div className="rounded-lg bg-info-light px-3 py-3 text-label text-info">Fases planificadas en la cotización.</div>
+            {fasesPlan.length === 0 ? (
               <p className="text-body text-text-secondary">Esta cotización no tiene fases cargadas.</p>
             ) : (
-              fases.map((fase, index) => {
-                const numero = fase.numero_secuencia ?? fase.numeroSecuencia ?? index + 1;
-                const nombre = fase.fase_nombre ?? fase.nombre_fase ?? fase.nombreFase ?? '—';
+              fasesPlan.map((fase, index) => {
+                const numero = leer(fase, 'numero_secuencia', 'numeroSecuencia') ?? index + 1;
+                const nombre = fase.fase_nombre ?? leer(fase, 'nombre_fase', 'nombreFase') ?? '—';
                 const minutos = fase.tiempo_estimado_minutos ?? fase.tiempoEstimadoMinutos ?? null;
                 const instrucciones = fase.instrucciones_fase ?? fase.instruccionesFase ?? null;
                 return (
@@ -312,10 +401,14 @@ export const ExpedientePage = () => {
     }
 
     const montoTexto = monto != null ? `$${Number(monto).toLocaleString('es-AR', { minimumFractionDigits: 2 })}` : '—';
+    // Resultado de Calidad: la última auditoría manda; si aún no hay,
+    // se usa el del expediente ("Aprobado" | "Rechazado" | "Pendiente").
     const calidadTexto =
       auditoria?.resultado != null
         ? resultadoCalidadLabels[auditoria.resultado] || auditoria.resultado
-        : 'Pendiente';
+        : leer(expediente, 'resultado_calidad', 'resultadoCalidad') || 'Pendiente';
+    const avanceTexto = avance != null ? `${avance.terminadas} de ${avance.total}` : fasesPlan.length === 0 ? '—' : String(fasesPlan.length);
+    const avanceSubtitulo = avance != null ? 'fases terminadas' : 'fases planificadas';
     return (
       <div className="grid gap-5 xl:grid-cols-[minmax(0,2fr)_280px]">
         <section className="overflow-hidden rounded-xl border border-border bg-surface">
@@ -329,7 +422,7 @@ export const ExpedientePage = () => {
             ['Calidad', calidadTexto],
           ].map(([label, value], index, values) => <div key={label} className={`flex justify-between gap-3 py-3 text-label ${index < values.length - 1 ? 'border-b border-border' : ''}`}><span className="text-text-muted">{label}</span><span className="text-right text-ink">{value}</span></div>)}</div>
         </section>
-        <aside className="h-fit rounded-xl border border-border bg-surface p-4"><span className="text-label text-text-secondary">Avance</span><div className="mt-3 text-2xl font-semibold text-ink">{fases.length === 0 ? '—' : fases.length}</div><p className="text-metadata text-text-muted">fases planificadas</p><div className="mt-3 rounded-lg bg-info-light px-3 py-3 text-metadata text-info">{estadoLabels[estado] || 'En producción'}.</div></aside>
+        <aside className="h-fit rounded-xl border border-border bg-surface p-4"><span className="text-label text-text-secondary">Avance</span><div className="mt-3 text-2xl font-semibold text-ink">{avanceTexto}</div><p className="text-metadata text-text-muted">{avanceSubtitulo}</p><div className="mt-3 rounded-lg bg-info-light px-3 py-3 text-metadata text-info">{estadoLabels[estado] || 'En producción'}.</div></aside>
       </div>
     );
   };

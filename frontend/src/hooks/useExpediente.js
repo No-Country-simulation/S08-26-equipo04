@@ -5,17 +5,15 @@ import { useOrdenesTrabajo } from "./useOrdenesTrabajo";
 // Expediente del Vendedor (issue #213, HU-1.2).
 //
 // Compone datos reales de endpoints que el rol VENDEDOR puede consultar:
-// - GET /api/ordenes-trabajo/{id}/expediente (cabecera, cliente, monto)
+// - GET /api/ordenes-trabajo/{id}/expediente (cabecera, cliente, monto,
+//   historial_fases con operario/intento/motivo, resultado_calidad) [PR #234]
 // - GET /api/ordenes-trabajo/cotizacion/{id} (OT completa: estado, fechas, receptor)
 // - GET /api/cotizaciones/{id} o /solicitud/{id} (fases planificadas, solicitud)
 // - GET /api/solicitudes/{id}/documentos (adjuntos)
 // - GET /api/calidad/{id}/ultima-auditoria (veredicto; 404 = aún sin auditar)
 //
-// Hueco BE conocido: el expediente devuelve `historial_fases: []` y
-// `resultado_calidad: "Pendiente"`, y GET /api/ot-fases no permite VENDEDOR.
-// Por eso la Hoja de ruta muestra lo planificado (cotización) y el avance
-// en vivo queda pendiente de backend. Si un dato no viene, queda en null y
-// la vista lo muestra como faltante ("—"), sin inventarlo.
+// Si un dato no viene, queda en null y la vista lo muestra como faltante
+// ("—"), sin inventarlo.
 
 const resolverOt = (param, lista) => {
   if (param == null || param === "") return { otId: null, cotizacionId: null };
@@ -71,18 +69,21 @@ export const useExpediente = (otParam) => {
       );
       const solicitudId =
         expediente.solicitud_id ?? expediente.solicitudId ?? null;
+      // PR #234: el expediente ya trae el cotizacion_id.
+      const cidInicial =
+        cidLista ?? expediente.cotizacion_id ?? expediente.cotizacionId ?? null;
 
       let cotizacion = null;
-      if (cidLista != null) {
+      if (cidInicial != null) {
         ({ data: cotizacion } = await apiGet(
-          `/api/cotizaciones/${cidLista}`,
+          `/api/cotizaciones/${cidInicial}`,
         ));
       } else if (solicitudId != null) {
         ({ data: cotizacion } = await apiGet(
           `/api/cotizaciones/solicitud/${solicitudId}`,
         ));
       }
-      const cid = cotizacion?.id ?? cidLista;
+      const cid = cotizacion?.id ?? cidInicial;
 
       const [orden, documentos, auditoria] = await Promise.all([
         cid != null
