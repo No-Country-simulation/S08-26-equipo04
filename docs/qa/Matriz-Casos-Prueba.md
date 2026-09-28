@@ -149,7 +149,7 @@ QA debe comprobar que exista una configuración de fases suficiente para que el 
 | TC-A-2.1-05 | Jefe informa el tiempo estimado de las fases | Fases seleccionadas; tiempos estimados definidos | 1. Seleccionar las fases. 2. Informar el tiempo estimado de cada fase. 3. Guardar. | Cada fase queda asociada al tiempo estimado informado. | Funcional | Alta | NOT RUN |
 | TC-A-2.1-06 | Verificar que la cotización mantenga un único precio final | Cotización con una o varias fases | 1. Configurar las fases. 2. Informar el precio final. 3. Guardar la cotización. | La cotización mantiene un único precio final y no un precio individual por fase. | Regla de negocio | Alta | NOT RUN |
 | TC-A-2.1-07 | Generar y enviar la cotización asociada a la solicitud | Solicitud válida; cotización configurada | 1. Completar la cotización. 2. Guardar/generar la cotización. 3. Enviar la cotización al circuito correspondiente. | La cotización queda asociada a la solicitud y disponible para el Vendedor. | Integración | Crítica | NOT RUN |
-| TC-A-2.1-08 | Verificar cambio de estado de la solicitud/cotización según el flujo definido | Solicitud cotizada y cotización generada | 1. Generar la cotización. 2. Consultar los estados correspondientes. | La solicitud y la cotización reflejan los estados definidos para el flujo comercial. | Integración | Crítica | NOT RUN |
+| TC-A-2.1-08 | Verificar que la solicitud pasa a `COTIZADA` al crear su cotización | Solicitud en estado `PENDIENTE_COTIZACION`, sin cotización | 1. Ingresar como Jefe. 2. Crear la cotización de esa solicitud. 3. Consultar `GET /api/solicitudes` como Jefe. 4. Consultar `GET /api/solicitudes` como Vendedor. 5. Consultar la cotización creada. | La solicitud queda en `COTIZADA`. No figura en el listado del Jefe; sí figura, como "Cotizada", en el del Vendedor. La cotización queda en `LISTA_PARA_ENVIAR`. | Integración | Crítica | NOT RUN |
 
 ### Validación principal
 
@@ -391,7 +391,7 @@ El criterio de cierre será entonces la ejecución de todas las fases de la OT h
 
 # 17. Cambios por las decisiones del 25/09
 
-Las decisiones D-4, D-5 y D-6 (`docs/funcional/QualityTrack-Cambios-PRD-Backlog.md`, sección 08) modifican el comportamiento esperado de algunos casos de la Fase A. D-1, D-2 y D-3 impactan en las Fases B y C.
+Las decisiones D-4, D-5 y D-6 (`docs/funcional/QualityTrack-Cambios-PRD-Backlog.md`, sección 08) modifican el comportamiento esperado de algunos casos de la Fase A. D-1, D-2 y D-3 impactan en las Fases B y C. Además, TC-A-2.1-08 se ajusta a la transición a `COTIZADA` documentada en #156.
 
 | Caso | Acción | Cambio | Decisión |
 |---|---|---|---|
@@ -407,6 +407,7 @@ Las decisiones D-4, D-5 y D-6 (`docs/funcional/QualityTrack-Cambios-PRD-Backlog.
 | TC-A-5.1-06 | Modificado | El Jefe ve solo las fases activas con operarios habilitados. | D-5 |
 | TC-A-2.1-02 | Modificado | Solo se ofrecen fases con operarios habilitados. | D-5 |
 | E2E-A-NEG-04 | Eliminado | El escenario ya no es posible; queda cubierto por TC-A-5.1-02 y TC-A-5.1-03. | D-5 |
+| TC-A-2.1-08 | Modificado | Pasa de "estados según el flujo definido" a verificar que la solicitud queda en `COTIZADA`, sale del listado del Jefe y el Vendedor la sigue viendo. | #156 |
 
 La corrección 2 de la sección 16 (dirección y teléfono opcionales) queda reemplazada por D-4.
 
