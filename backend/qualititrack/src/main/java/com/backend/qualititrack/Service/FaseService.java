@@ -72,9 +72,19 @@ public class FaseService {
         FaseCatalogo fase = faseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Fase no encontrada con ID: " + id));
 
-        // Actualiza los campos necesarios según la entidad Fase
-        fase.setNombre(detallesFase.getNombre());
-        // Agrega aquí los demás campos que tenga la entidad Fase
+        // Se actualizan los campos que lleguen no nulos en detallesFase
+        if (detallesFase.getNombre() != null) {
+            fase.setNombre(detallesFase.getNombre());
+        }
+        if (detallesFase.getCodigo() != null) {
+            fase.setCodigo(detallesFase.getCodigo());
+        }
+        if (detallesFase.getDescripcion() != null) {
+            fase.setDescripcion(detallesFase.getDescripcion());
+        }
+        if (detallesFase.getActivo() != null) {
+            fase.setActivo(detallesFase.getActivo());
+        }
 
         return faseRepository.save(fase);
     }
