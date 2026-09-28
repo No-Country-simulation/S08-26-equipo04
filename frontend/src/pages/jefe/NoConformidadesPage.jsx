@@ -43,7 +43,11 @@ const RehacerForm = ({ orden, cargarFasesOt, cargarOperarios, enviarARehacer, on
     };
   }, [orden.id, cargarFasesOt]);
 
-  const toggleFase = (faseId, catalogoId) => {
+  // Precarga de la vez anterior (alcance #100): el tiempo arranca con el
+  // estimado previo y el operario con el anterior si sigue habilitado.
+  const toggleFase = (fase) => {
+    const faseId = String(fase.id);
+    const catalogoId = fase.fase_catalogo_id ?? fase.faseCatalogoId;
     if (seleccionadas[faseId]) {
       setSeleccionadas((prev) => {
         const siguiente = { ...prev };
@@ -52,17 +56,41 @@ const RehacerForm = ({ orden, cargarFasesOt, cargarOperarios, enviarARehacer, on
       });
       return;
     }
+    const tiempoPrevio = fase.tiempo_estimado_minutos ?? fase.tiempoEstimadoMinutos;
     setSeleccionadas((prev) => ({
       ...prev,
-      [faseId]: { operarioId: "", tiempoEstimadoMinutos: "", nota: "" },
+      [faseId]: {
+        operarioId: "",
+        tiempoEstimadoMinutos: tiempoPrevio != null ? String(tiempoPrevio) : "",
+        nota: "",
+      },
     }));
     // Operarios habilitados de la fase, lazy: solo al seleccionarla.
     // Fuera del updater: los efectos secundarios no van en fase de render.
     if (catalogoId != null && operariosPorFase[catalogoId] === undefined) {
       setOperariosPorFase((prev) => ({ ...prev, [catalogoId]: null }));
       cargarOperarios(catalogoId).then(
-        (lista) =>
-          setOperariosPorFase((actual) => ({ ...actual, [catalogoId]: lista })),
+        (lista) => {
+          setOperariosPorFase((actual) => ({ ...actual, [catalogoId]: lista }));
+          const habilitados = new Set(lista.map((item) => String(item.id)));
+          setSeleccionadas((prev) => {
+            const siguiente = { ...prev };
+            Object.keys(siguiente).forEach((id) => {
+              const item = (fases ?? []).find((f) => String(f.id) === id);
+              const cat = item?.fase_catalogo_id ?? item?.faseCatalogoId;
+              const previo = item?.operario_id ?? item?.operarioId;
+              if (
+                String(cat) === String(catalogoId) &&
+                !siguiente[id].operarioId &&
+                previo != null &&
+                habilitados.has(String(previo))
+              ) {
+                siguiente[id] = { ...siguiente[id], operarioId: String(previo) };
+              }
+            });
+            return siguiente;
+          });
+        },
         () =>
           setOperariosPorFase((actual) => ({ ...actual, [catalogoId]: [] })),
       );
@@ -146,7 +174,7 @@ const RehacerForm = ({ orden, cargarFasesOt, cargarOperarios, enviarARehacer, on
                 type="checkbox"
                 className="h-5 w-5 accent-primary"
                 checked={marcada}
-                onChange={() => toggleFase(id, catalogoId)}
+                onChange={() => toggleFase(fase)}
               />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-label font-semibold text-ink">
