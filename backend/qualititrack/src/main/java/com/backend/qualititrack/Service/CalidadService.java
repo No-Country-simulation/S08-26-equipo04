@@ -142,12 +142,12 @@ public class CalidadService {
     }
 
     /**
-     * Obtiene las órdenes de trabajo que están pendientes de auditoría.
-     *
+     * Obtiene las órdenes de trabajo que están pendientes de auditoría,
+     * de la más antigua a la más nueva.
      * Una OT está pendiente de auditoría cuando su estado es EN_CALIDAD.
      */
     public List<OrdenTrabajoDTO> listarPendientesAuditoria() {
-        return ordenTrabajoRepository.findByEstado(EstadoOT.EN_CALIDAD)
+        return ordenTrabajoRepository.findByEstadoOrderByFechaPaseCalidadAsc(EstadoOT.EN_CALIDAD)
                 .stream()
                 .map(this::convertirADTO)
                 .toList();
