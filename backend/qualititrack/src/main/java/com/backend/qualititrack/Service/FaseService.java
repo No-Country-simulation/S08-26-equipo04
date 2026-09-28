@@ -70,7 +70,7 @@ public class FaseService {
     // Actualizar campos de una fase existente
     public FaseCatalogo actualizarFase(Long id, FaseCatalogo detallesFase) {
         FaseCatalogo fase = faseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Fase no encontrada con ID: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Fase no encontrada con ID: " + id));
 
         // Se actualizan los campos que lleguen no nulos en detallesFase
         if (detallesFase.getNombre() != null) {
