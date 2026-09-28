@@ -49,9 +49,8 @@ El MVP se desarrolla en 5 semanas dentro del programa **NO-Country**, con 5 role
 | `docs/datos/` | Esquema de Base de Datos | Mel |
 | `docs/backend/` | Especificación Técnica y Plan de Trabajo de Backend | Lisandro / Felipe |
 | `docs/frontend/` | Especificación Técnica, Plan de Trabajo, Service Blueprint | Alicia / Alfredo |
-| `docs/qa/` | Análisis Funcional QA | Maria |
-| `docs/historial/` | Documentación histórica del planteo inicial del proyecto | — |
-| `docs/historico/` | Propuestas paralelas, superadas por las versiones vigentes | — |
+| `docs/qa/` | Análisis Funcional, Plan de Trabajo, Matriz de Casos de Prueba y registros E2E de QA | Maria |
+| `docs/historico/` | Antecedentes del proyecto y propuestas paralelas, superados por las versiones vigentes | — |
 | `CONTRIBUTING.md` | Convención de ramas, commits y Pull Requests | — |
 | `CODEOWNERS` | Revisores automáticos por carpeta | — |
 
