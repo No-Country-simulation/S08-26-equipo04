@@ -9,6 +9,7 @@ import { CotizacionDetailPage } from "../pages/cotizaciones/CotizacionDetailPage
 import { DashboardPage } from "../pages/dashboard/DashboardPage";
 import { LoginPage } from "../pages/LoginPage";
 import { GestionPlantaPage } from "../pages/planta/GestionPlantaPage";
+import { NoConformidadesPage } from "../pages/jefe/NoConformidadesPage";
 import { SolicitudFormPage } from "../pages/solicitudes/SolicitudFormPage";
 import { SolicitudesPage } from "../pages/solicitudes/SolicitudesPage";
 import { ProtectedRoute } from "./ProtectedRoute";
@@ -91,6 +92,7 @@ export const AppRoutes = () => {
           <Route element={<ProtectedRoute roles={["JEFE_PRODUCCION"]} />}>
             <Route path="cotizaciones/nueva" element={<CotizacionFormPage />} />
             <Route path="planta" element={<GestionPlantaPage />} />
+            <Route path="no-conformidades" element={<NoConformidadesPage />} />
           </Route>
           <Route element={<ProtectedRoute roles={["GERENTE"]} />}>
             <Route
