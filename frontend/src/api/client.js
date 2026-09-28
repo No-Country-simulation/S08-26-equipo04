@@ -41,7 +41,12 @@ api.interceptors.response.use(
     // En las respuestas blob (ver documento) el cuerpo no es un objeto y la
     // vista responsable muestra su propio mensaje: no se duplica el toast.
     const esBlob = error?.config?.responseType === 'blob';
-
+    // Hay 404 esperados (ej. OT sin auditorías en el expediente): la vista
+    // los maneja y pide silencio con `silenciarToast: true` en el config.
+    // Solo se salta ese 404 puntual: 401/403/500 siguen el flujo global.
+    if (status === 404 && error?.config?.silenciarToast === true) {
+      return Promise.reject(error);
+    }
     if (status === 401 && !error?.config?.url?.includes('/api/auth/login')) {
       clearSession();
       toast.error('Tu sesión expiró. Inicia sesión nuevamente.');
