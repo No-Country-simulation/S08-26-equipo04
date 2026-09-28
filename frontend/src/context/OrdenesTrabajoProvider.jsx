@@ -115,10 +115,20 @@ export const OrdenesTrabajoProvider = ({ children }) => {
             const cotizacion = cotizacionesPorId.get(
               orden.cotizacionId ?? orden.cotizacion_id,
             );
-            if (cotizacion?.cliente_razon_social == null) return orden;
+            // Igual que en la rama Vendedor: el resumen no trae pieza,
+            // cantidad ni fecha solicitada; se completan por cotización.
+            if (cotizacion == null) return orden;
             return {
               ...orden,
-              cliente_razon_social: cotizacion.cliente_razon_social,
+              cliente_razon_social:
+                cotizacion.cliente_razon_social ?? orden.cliente ?? "—",
+              descripcion_pieza:
+                cotizacion.descripcion_pieza ?? orden.pieza_trabajo ?? "—",
+              cantidad: cotizacion.cantidad ?? orden.cantidad ?? "—",
+              fecha_esperada_entrega:
+                cotizacion.fecha_esperada_entrega ??
+                orden.fecha_esperada_entrega ??
+                null,
             };
           });
         }
