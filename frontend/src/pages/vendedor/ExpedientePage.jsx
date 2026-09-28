@@ -302,32 +302,52 @@ export const ExpedientePage = () => {
       // (DoD #213: fase, estado, fechas, operario, intento y motivo).
       // Sin historial, fallback a lo planificado de la cotización.
       if (historialFases.length > 0) {
-        const ordenadas = [...historialFases].sort(
-          (a, b) => (leer(a, 'numero_secuencia', 'numeroSecuencia') ?? 0) - (leer(b, 'numero_secuencia', 'numeroSecuencia') ?? 0)
-            || (leer(a, 'numero_intento', 'numeroIntento') ?? 1) - (leer(b, 'numero_intento', 'numeroIntento') ?? 1),
-        );
+        // Agrupado por intento: cada pasada completa del trabajo va en su
+        // bloque (Intento 1, Intento 2, ...) en vez de mezclarse 1 1 2 2.
+        const porIntento = new Map();
+        historialFases.forEach((fase) => {
+          const intento = leer(fase, 'numero_intento', 'numeroIntento') ?? 1;
+          if (!porIntento.has(intento)) porIntento.set(intento, []);
+          porIntento.get(intento).push(fase);
+        });
+        const intentos = [...porIntento.entries()]
+          .sort((a, b) => a[0] - b[0])
+          .map(([intento, lista]) => ({
+            intento,
+            fases: [...lista].sort(
+              (a, b) => (leer(a, 'numero_secuencia', 'numeroSecuencia') ?? 0) - (leer(b, 'numero_secuencia', 'numeroSecuencia') ?? 0),
+            ),
+          }));
+        const filaFase = (fase) => {
+          const numero = leer(fase, 'numero_secuencia', 'numeroSecuencia') ?? '—';
+          const nombre = leer(fase, 'nombre_fase', 'nombreFase') || '—';
+          const estadoFase = leer(fase, 'estado_fase', 'estadoFase');
+          const operario = leer(fase, 'operario_asignado', 'operarioAsignado') || '—';
+          const intento = leer(fase, 'numero_intento', 'numeroIntento') ?? 1;
+          const motivo = leer(fase, 'motivo_reasignacion', 'motivoReasignacion');
+          const fechaFin = leer(fase, 'fecha_fin', 'fechaFin');
+          const fechaInicio = leer(fase, 'fecha_inicio', 'fechaInicio');
+          return (
+            <div key={fase.fase_id ?? fase.faseId ?? `${numero}-${intento}`} className="grid min-h-[68px] grid-cols-[40px_minmax(0,1fr)] items-center gap-3 rounded-lg border border-border px-4 py-3 sm:grid-cols-[40px_minmax(0,1fr)_140px_120px] sm:gap-4">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-tint text-metadata font-semibold text-primary">{String(numero).padStart(2, '0')}</span>
+              <div className="min-w-0"><p className="text-label font-semibold text-ink">{nombre}</p><p className="text-metadata text-text-muted">{operario}{motivo ? ` · ${motivo}` : ''}</p></div>
+              <span className="text-metadata text-text-secondary"><Badge variant={estadoFaseVariant[estadoFase] || 'queue'} type="inline">{estadoFaseLabels[estadoFase] || estadoFase || '—'}</Badge></span>
+              <span className="text-left text-metadata text-text-muted sm:text-right">{fechaFin ? formatDateTime(fechaFin) : fechaInicio ? `Inició ${formatDateTime(fechaInicio)}` : '—'}</span>
+            </div>
+          );
+        };
         return (
           <section className="overflow-hidden rounded-xl border border-border bg-surface">
             <div className="border-b border-border px-5 py-4 text-h2">Hoja de ruta</div>
-            <div className="space-y-3 p-5">
-              {ordenadas.map((fase) => {
-                const numero = leer(fase, 'numero_secuencia', 'numeroSecuencia') ?? '—';
-                const nombre = leer(fase, 'nombre_fase', 'nombreFase') || '—';
-                const estadoFase = leer(fase, 'estado_fase', 'estadoFase');
-                const operario = leer(fase, 'operario_asignado', 'operarioAsignado') || '—';
-                const intento = leer(fase, 'numero_intento', 'numeroIntento') ?? 1;
-                const motivo = leer(fase, 'motivo_reasignacion', 'motivoReasignacion');
-                const fechaFin = leer(fase, 'fecha_fin', 'fechaFin');
-                const fechaInicio = leer(fase, 'fecha_inicio', 'fechaInicio');
-                return (
-                  <div key={fase.fase_id ?? fase.faseId ?? `${numero}-${intento}`} className="grid min-h-[68px] grid-cols-[40px_minmax(0,1fr)] items-center gap-3 rounded-lg border border-border px-4 py-3 sm:grid-cols-[40px_minmax(0,1fr)_140px_120px] sm:gap-4">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-tint text-metadata font-semibold text-primary">{String(numero).padStart(2, '0')}</span>
-                    <div className="min-w-0"><p className="text-label font-semibold text-ink">{nombre}</p><p className="text-metadata text-text-muted">{operario}{intento > 1 ? ` · intento ${intento}` : ''}{motivo ? ` · ${motivo}` : ''}</p></div>
-                    <span className="text-metadata text-text-secondary"><Badge variant={estadoFaseVariant[estadoFase] || 'queue'} type="inline">{estadoFaseLabels[estadoFase] || estadoFase || '—'}</Badge></span>
-                    <span className="text-left text-metadata text-text-muted sm:text-right">{fechaFin ? formatDateTime(fechaFin) : fechaInicio ? `Inició ${formatDateTime(fechaInicio)}` : '—'}</span>
-                  </div>
-                );
-              })}
+            <div className="space-y-5 p-5">
+              {intentos.map(({ intento, fases }) => (
+                <div key={intento} className="space-y-3">
+                  {intentos.length > 1 && (
+                    <p className="text-label font-semibold text-text-secondary">Intento {intento}</p>
+                  )}
+                  {fases.map(filaFase)}
+                </div>
+              ))}
             </div>
           </section>
         );
