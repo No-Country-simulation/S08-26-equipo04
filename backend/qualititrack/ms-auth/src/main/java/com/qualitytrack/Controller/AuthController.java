@@ -51,7 +51,6 @@ public class AuthController {
     public ResponseEntity<?> debugDB() {
         System.out.println("=== DATABASE CONNECTION DEBUG ===");
         System.out.println("Driver: " + env.getProperty("spring.datasource.driver-class-name"));
-        System.out.println("URL: " + env.getProperty("spring.datasource.url"));
         System.out.println("User: " + env.getProperty("spring.datasource.username"));
         System.out.println("DB_HOST: " + env.getProperty("DB_HOST"));
         System.out.println("DB_NAME: " + env.getProperty("DB_NAME"));

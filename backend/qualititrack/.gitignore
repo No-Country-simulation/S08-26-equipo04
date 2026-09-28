@@ -1,35 +1,107 @@
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+# SECRETS & CREDENTIALS - NUNCA SUBIR A GIT
 .env
-env
+.env.local
+.env.*.local
+*.key
+*.pem
+credentials.json
+secret.key
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+# Build & Dependencies
+target/
+build/
+.gradle/
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
 
-### IntelliJ IDEA ###
-.idea
+# IDE & Editor
+.idea/
+.vscode/
 *.iws
 *.iml
 *.ipr
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
 
-### NetBeans ###
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+.m2/
+
+# Spring Boot
+/logs/
+*.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# OS specific
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+$RECYCLE.BIN/
+ehthumbs.db
+Desktop.ini
+
+# IntelliJ
+*.iml
+*.iws
+*.ipr
+.idea/
+out/
+
+# Eclipse
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+
+# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-### VS Code ###
+# Compiled sources
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# VS Code
 .vscode/
+.history/
+
+# Node (si hay frontend)
+node_modules/
+package-lock.json
+npm-debug.log
+yarn.lock
+
+# Python (si hay scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+
+# Docker
+docker-compose.override.yml
+.dockerignore

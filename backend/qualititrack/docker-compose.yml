@@ -1,88 +1,90 @@
 version: '3.8'
 
 services:
-  eureka-sv:
-    build: ./eureka-server
-    container_name: eureka-sv
-    mem_limit: 512m
-    ports:
-      - "8761:8761"
-    environment:
-      - SPRING_APPLICATION_NAME=eureka-sv
-      - SERVER_PORT=8761
-    networks:
-      - qualitytrack-network
-
-  api-gateway:
-    build: ./api-gateway
-    container_name: api-gateway
-    mem_limit: 512m
-    ports:
-      - "8080:8080"
-    environment:
-      - SPRING_APPLICATION_NAME=apigateway
-      - SERVER_PORT=8080
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-sv:8761/eureka
-      - EUREKA_INSTANCE_HOSTNAME=api-gateway
-    networks:
-      - qualitytrack-network
-    depends_on:
-      - eureka-sv
-
   ms-auth:
-    build: ./ms-auth
+    build:
+      context: .
+      dockerfile: ms-auth/Dockerfile
     container_name: ms-auth
-    mem_limit: 512m
+    env_file:
+      - .env.docker.local
     ports:
       - "8081:8081"
-    environment:
-      - PRIVATE_KEY=$${PRIVATE_KEY:MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC7}
-      - USER_GENERATOR=$${USER_GENERATOR:test@qualitytrack.com}
-      - SPRING_APPLICATION_NAME=ms-auth
-      - SERVER_PORT=8081
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-sv:8761/eureka
-      - EUREKA_INSTANCE_HOSTNAME=ms-auth
     networks:
       - qualitytrack-network
-    depends_on:
-      - eureka-sv
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   ms-business:
-    build: ./ms-business
+    build:
+      context: .
+      dockerfile: ms-business/Dockerfile
     container_name: ms-business
-    mem_limit: 512m
+    env_file:
+      - .env.docker.local
     ports:
       - "8082:8082"
-    environment:
-      - MS_EXECUTION_URL=http://ms-execution:8084
-      - PRIVATE_KEY=$${PRIVATE_KEY:MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC7}
-      - USER_GENERATOR=$${USER_GENERATOR:test@qualitytrack.com}
-      - SPRING_APPLICATION_NAME=ms-business
-      - SERVER_PORT=8082
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-sv:8761/eureka
-      - EUREKA_INSTANCE_HOSTNAME=ms-business
+    depends_on:
+      ms-auth:
+        condition: service_healthy
     networks:
       - qualitytrack-network
-    depends_on:
-      - eureka-sv
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8082/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   ms-execution:
-    build: ./ms-execution
+    build:
+      context: .
+      dockerfile: ms-execution/Dockerfile
     container_name: ms-execution
-    mem_limit: 512m
+    env_file:
+      - .env.docker.local
     ports:
       - "8084:8084"
-    environment:
-      - PRIVATE_KEY=$${PRIVATE_KEY:MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC7}
-      - USER_GENERATOR=$${USER_GENERATOR:test@qualitytrack.com}
-      - SPRING_APPLICATION_NAME=ms-execution
-      - SERVER_PORT=8084
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-sv:8761/eureka
-      - EUREKA_INSTANCE_HOSTNAME=ms-execution
+    depends_on:
+      ms-auth:
+        condition: service_healthy
     networks:
       - qualitytrack-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8084/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    container_name: api-gateway
+    env_file:
+      - .env.docker.local
+    ports:
+      - "8080:8080"
     depends_on:
-      - eureka-sv
+      ms-auth:
+        condition: service_healthy
+    environment:
+      MS_AUTH_URL: http://ms-auth:8081
+      MS_BUSINESS_URL: http://ms-business:8082
+      MS_EXECUTION_URL: http://ms-execution:8084
+    networks:
+      - qualitytrack-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 networks:
   qualitytrack-network:
