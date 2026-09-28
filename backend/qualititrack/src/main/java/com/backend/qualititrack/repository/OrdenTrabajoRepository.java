@@ -13,5 +13,8 @@ public interface OrdenTrabajoRepository extends JpaRepository<OrdenTrabajo, Long
 
     Optional<OrdenTrabajo> findByCotizacionId(Long cotizacionId);
 
+    // Para devolver pendientes de auditoría, con la más antigua primero
+    List<OrdenTrabajo> findByEstadoOrderByFechaPaseCalidadAsc(EstadoOT estado);
+
     List<OrdenTrabajo> findByEstado(EstadoOT estado);
 }
