@@ -9,20 +9,25 @@ import org.springframework.stereotype.Service;
 
 import com.backend.qualititrack.DTO.EntregaOtRequestDTO;
 import com.backend.qualititrack.DTO.ExpedienteCompletoDTO;
+import com.backend.qualititrack.DTO.FaseDetalleExpedienteDTO;
 import com.backend.qualititrack.DTO.OrdenTrabajoDTO;
 import com.backend.qualititrack.DTO.OrdenTrabajoResumenDTO;
 import com.backend.qualititrack.Enum.EstadoOT;
 import com.backend.qualititrack.Enum.EstadoOtFase;
+import com.backend.qualititrack.Enum.ResultadoCalidad;
 import com.backend.qualititrack.exception.EntityNotFoundException;
 import com.backend.qualititrack.exception.InvalidStateException;
 import com.backend.qualititrack.modelos.Cotizacion;
 import com.backend.qualititrack.modelos.CotizacionFase;
 import com.backend.qualititrack.modelos.OrdenTrabajo;
 import com.backend.qualititrack.modelos.OtFase;
+import com.backend.qualititrack.modelos.OtFaseReasignacion;
 import com.backend.qualititrack.modelos.Usuario;
+import com.backend.qualititrack.repository.AuditoriaCalidadRepository;
 import com.backend.qualititrack.repository.CotizacionFaseRepository;
 import com.backend.qualititrack.repository.CotizacionRepository;
 import com.backend.qualititrack.repository.OrdenTrabajoRepository;
+import com.backend.qualititrack.repository.OtFaseReasignacionRepository;
 import com.backend.qualititrack.repository.OtFaseRepository;
 
 import jakarta.transaction.Transactional;
@@ -34,17 +39,23 @@ public class OrdenTrabajoService {
     private final CotizacionRepository cotizacionRepository;
     private final CotizacionFaseRepository cotizacionFaseRepository;
     private final OtFaseRepository otFaseRepository;
+    private final OtFaseReasignacionRepository otFaseReasignacionRepository;
+    private final AuditoriaCalidadRepository auditoriaCalidadRepository;
     private final UsuarioService usuarioService;
 
     public OrdenTrabajoService(OrdenTrabajoRepository ordenTrabajoRepository,
             CotizacionRepository cotizacionRepository,
             CotizacionFaseRepository cotizacionFaseRepository,
             OtFaseRepository otFaseRepository,
+            OtFaseReasignacionRepository otFaseReasignacionRepository,
+            AuditoriaCalidadRepository auditoriaCalidadRepository,
             UsuarioService usuarioService) {
         this.ordenTrabajoRepository = ordenTrabajoRepository;
         this.cotizacionRepository = cotizacionRepository;
         this.cotizacionFaseRepository = cotizacionFaseRepository;
         this.otFaseRepository = otFaseRepository;
+        this.otFaseReasignacionRepository = otFaseReasignacionRepository;
+        this.auditoriaCalidadRepository = auditoriaCalidadRepository;
         this.usuarioService = usuarioService;
     }
 
@@ -279,10 +290,10 @@ public class OrdenTrabajoService {
     /**
      * OBTENER EXPEDIENTE COMPLETO (Trazabilidad detallada de la OT)
      */
-    @Transactional()
+    @Transactional
     public ExpedienteCompletoDTO obtenerExpedienteCompleto(Long id) {
         OrdenTrabajo ot = ordenTrabajoRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("La Orden de Trabajo con ID " + id + " no existe"));
+                .orElseThrow(() -> new EntityNotFoundException("La Orden de Trabajo con ID " + id + " no existe"));
 
         ExpedienteCompletoDTO expediente = new ExpedienteCompletoDTO();
 
@@ -294,6 +305,7 @@ public class OrdenTrabajoService {
         expediente.setReceptorNombre(ot.getReceptorNombre());
 
         if (ot.getCotizacion() != null) {
+            expediente.setCotizacionId(ot.getCotizacion().getId());
             expediente.setMontoTotal(ot.getCotizacion().getPrecioFinal().doubleValue());
 
             if (ot.getCotizacion().getSolicitud() != null) {
@@ -304,8 +316,40 @@ public class OrdenTrabajoService {
             }
         }
 
-        expediente.setHistorialFases(List.of());
-        expediente.setResultadoCalidad("Pendiente");
+        // Una fila por fase, ordenadas por ciclo y secuencia
+        // Las fases rehechas aparecen con numero_intento = su ciclo de iteración
+        List<OtFaseReasignacion> reasignaciones = otFaseReasignacionRepository
+                .findByOtFase_OrdenTrabajo_IdOrderByFechaReasignacionAsc(ot.getId());
+        List<FaseDetalleExpedienteDTO> historial = otFaseRepository.findByOrdenTrabajoIdWithRelaciones(ot.getId())
+                .stream()
+                .map(fase -> {
+                    // Última reasignación de esta fase, si la hubo
+                    OtFaseReasignacion ultima = reasignaciones.stream()
+                            .filter(r -> r.getOtFase().getId().equals(fase.getId()))
+                            .reduce((anterior, siguiente) -> siguiente)
+                            .orElse(null);
+                    return FaseDetalleExpedienteDTO.builder()
+                            .faseId(fase.getId())
+                            .nombreFase(fase.getFaseCatalogo() != null ? fase.getFaseCatalogo().getNombre() : null)
+                            .numeroSecuencia(fase.getNumeroSecuencia())
+                            .estadoFase(fase.getEstado())
+                            .fechaInicio(fase.getFechaInicioReal())
+                            .fechaFin(fase.getFechaFinReal())
+                            .operarioAsignado(fase.getOperario() != null ? fase.getOperario().getNombre() : null)
+                            .numeroIntento(fase.getCicloIteracion())
+                            .motivoReasignacion(ultima != null ? ultima.getMotivo() : null)
+                            .fechaReasignacion(ultima != null ? ultima.getFechaReasignacion() : null)
+                            .build();
+                })
+                .toList();
+
+        expediente.setHistorialFases(historial);
+
+        // Resultado de la última auditoría (Aprobado | Rechazado) o Pendiente
+        expediente.setResultadoCalidad(auditoriaCalidadRepository
+                .findFirstByOrdenTrabajoIdOrderByNumeroAuditoriaDesc(ot.getId())
+                .map(a -> a.getResultado() == ResultadoCalidad.CONFORME ? "Aprobado" : "Rechazado")
+                .orElse("Pendiente"));
 
         return expediente;
     }
