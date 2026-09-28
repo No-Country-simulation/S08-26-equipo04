@@ -1,11 +1,11 @@
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams, Navigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DragDropContext, Droppable } from "@hello-pangea/dnd";
 import { toast } from "sonner";
 import { ArrowLeft, Save } from "lucide-react";
-import { mocks } from "../../mocks";
+import { apiGet, extractApiMessage } from "../../api";
 import { useCotizaciones } from "../../hooks/useCotizaciones";
 import { useSolicitudes } from "../../hooks/useSolicitudes";
 import { Button, Card, CardTitle, Field, Title } from "../../components/ui";
@@ -86,7 +86,35 @@ export const CotizacionFormPage = () => {
       solicitudActual.estado !== "PENDIENTE_COTIZACION" ||
       cotizaciones.some((c) => c.solicitud_id === solicitudSeleccionada));
 
-  const fasesCatalogo = useMemo(() => mocks.fases.filter((f) => f.activo), []);
+  // Catálogo real: GET /api/fases ya devuelve al Jefe solo fases activas
+  // con operarios habilitados, asi que no hay filtrado local. Los setState
+  // viven en los callbacks (react-hooks/set-state-in-effect).
+  const [fasesCatalogo, setFasesCatalogo] = useState([]);
+  const [cargandoFases, setCargandoFases] = useState(true);
+  const [errorFases, setErrorFases] = useState(null);
+
+  useEffect(() => {
+    let cancelado = false;
+    apiGet("/api/fases").then(
+      ({ data }) => {
+        if (cancelado) return;
+        setFasesCatalogo(data ?? []);
+        setErrorFases(null);
+        setCargandoFases(false);
+      },
+      (err) => {
+        if (cancelado) return;
+        setFasesCatalogo([]);
+        setErrorFases(
+          extractApiMessage(err, "No se pudieron cargar las fases."),
+        );
+        setCargandoFases(false);
+      },
+    );
+    return () => {
+      cancelado = true;
+    };
+  }, []);
 
   const {
     register,
@@ -294,6 +322,9 @@ export const CotizacionFormPage = () => {
                 <SelectorFases
                   fasesDisponibles={fasesCatalogo}
                   onAgregar={handleAgregarFase}
+                  cargando={cargandoFases}
+                  error={errorFases}
+                  mensajeVacio="No hay fases con operarios habilitados. Pedile al Gerente que las configure."
                 />
               </div>
             </div>

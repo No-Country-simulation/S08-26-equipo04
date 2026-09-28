@@ -98,10 +98,16 @@ export const DespachoPage = () => {
         cell: ({ getValue }) => getValue() ?? "—",
       },
       {
-        accessorKey: "fecha_pase_calidad",
+        accessorKey: "fecha_pase_despacho",
         header: "Aprobada por Calidad",
-        cell: ({ getValue }) => {
-          const value = getValue();
+        cell: ({ row }) => {
+          // fecha_pase_despacho se graba al dar CONFORME (CalidadService);
+          // fecha_pase_calidad es solo la entrada a Calidad. Fallback a
+          // camelCase por si el DTO llegara sin snake_case.
+          const value =
+            row.original.fecha_pase_despacho ??
+            row.original.fechaPaseDespacho ??
+            null;
 
           return value ? formatDateTime(value) : "—";
         },
@@ -172,12 +178,17 @@ export const DespachoPage = () => {
         return;
       }
       const message =
+        err?.response?.data?.mensaje ||
         err?.response?.data?.message ||
         err?.response?.data?.error ||
         err?.message ||
         "No se pudo registrar la entrega. Reintente.";
-      setSubmitError(message);
-      toast.error(message);
+      const detalles = Array.isArray(err?.response?.data?.detalles)
+        ? ` ${err.response.data.detalles.join(" ")}`
+        : "";
+      const fullMessage = `${message}${detalles}`.trim();
+      setSubmitError(fullMessage);
+      toast.error(fullMessage);
     } finally {
       setIsSubmitting(false);
     }

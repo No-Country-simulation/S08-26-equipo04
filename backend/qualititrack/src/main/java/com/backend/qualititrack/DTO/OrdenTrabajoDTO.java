@@ -46,103 +46,11 @@ public class OrdenTrabajoDTO {
 
     private OffsetDateTime fechaActualizacion;
 
-    private OffsetDateTime fechaInicioReal;
+    private OffsetDateTime fechaInicioProduccion;
 
     private OffsetDateTime fechaTerminoReal;
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getCotizacionId() {
-        return cotizacionId;
-    }
-
-    public void setCotizacionId(Long cotizacionId) {
-        this.cotizacionId = cotizacionId;
-    }
-
-    public EstadoOT getEstado() {
-        return estado;
-    }
-
-    public void setEstado(EstadoOT estado) {
-        this.estado = estado;
-    }
-
-    public String getDescripcion() {
-        return descripcion;
-    }
-
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
-    }
-
-    public String getNumeroOT() {
-        return numeroOT;
-    }
-
-    public void setNumeroOT(String numeroOT) {
-        this.numeroOT = numeroOT;
-    }
-
-    public OffsetDateTime getFechaVencimiento() {
-        return fechaVencimiento;
-    }
-
-    public void setFechaVencimiento(OffsetDateTime fechaVencimiento) {
-        this.fechaVencimiento = fechaVencimiento;
-    }
-
-    public String getObservaciones() {
-        return observaciones;
-    }
-
-    public void setObservaciones(String observaciones) {
-        this.observaciones = observaciones;
-    }
-
-    public Integer getPrioridad() {
-        return prioridad;
-    }
-
-    public void setPrioridad(Integer prioridad) {
-        this.prioridad = prioridad;
-    }
-
-    public OffsetDateTime getFechaCreacion() {
-        return fechaCreacion;
-    }
-
-    public void setFechaCreacion(OffsetDateTime fechaCreacion) {
-        this.fechaCreacion = fechaCreacion;
-    }
-
-    public OffsetDateTime getFechaActualizacion() {
-        return fechaActualizacion;
-    }
-
-    public void setFechaActualizacion(OffsetDateTime fechaActualizacion) {
-        this.fechaActualizacion = fechaActualizacion;
-    }
-
-    public OffsetDateTime getFechaTerminoReal() {
-        return fechaTerminoReal;
-    }
-
-    public void setFechaTerminoReal(OffsetDateTime fechaTerminoReal) {
-        this.fechaTerminoReal = fechaTerminoReal;
-    }
-
-    public OffsetDateTime getFechaInicioReal() {
-        return fechaInicioReal;
-    }
-
-    public void setFechaInicioReal(OffsetDateTime fechaInicioReal) {
-        this.fechaInicioReal = fechaInicioReal;
-    }
+    private String receptorNombre;
+    private OffsetDateTime fechaPaseCalidad;
+    private OffsetDateTime fechaPaseDespacho;
 }
