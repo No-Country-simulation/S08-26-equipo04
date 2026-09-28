@@ -209,7 +209,9 @@ export const CotizacionDetailPage = () => {
       <Card className="p-0">
         <CardHeader className="border-b border-border px-4 py-4 sm:px-6"><CardTitle>Fases cotizadas</CardTitle></CardHeader>
         <div className="space-y-2 p-4 sm:p-6">
-          {cotizacion.fases.map((fase, index) => (
+          {[...(cotizacion.fases ?? [])]
+            .sort((a, b) => (a.numero_secuencia ?? 0) - (b.numero_secuencia ?? 0))
+            .map((fase, index) => (
             <div key={`${fase.fase_catalogo_id}-${index}`} className="flex items-center gap-3 rounded-lg border border-border p-3">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary-tint text-caption font-semibold text-primary">{String(fase.numero_secuencia || index + 1).padStart(2, '0')}</span>
               <div className="min-w-0 flex-1"><p className="text-label font-semibold text-ink">{fase.fase_nombre}</p><p className="text-metadata text-text-muted">{fase.instrucciones_fase || 'Sin instrucciones'}</p></div>
