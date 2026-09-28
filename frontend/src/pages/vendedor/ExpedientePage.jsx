@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
-import { Download, FileText } from 'lucide-react';
+import { Eye, FileText } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { formatDate, formatDateTime, verAdjunto } from '../../api';
 import { TIPOS_ARCHIVO, formatBytes, mensajeErrorAdjunto } from '../../utils/adjuntos';
-import { EmptyState, ErrorBanner, SkeletonCard } from '../../components/ui';
+import { Badge, EmptyState, ErrorBanner, SkeletonCard } from '../../components/ui';
 import { useExpediente } from '../../hooks/useExpediente';
 
 const tabs = ['Resumen', 'Documentos', 'Hoja de ruta', 'Calidad', 'Entrega', 'Historial'];
@@ -19,6 +19,13 @@ const estadoLabels = {
 const resultadoCalidadLabels = {
   CONFORME: 'Conforme',
   NO_CONFORME: 'No conforme',
+};
+
+const estadoFaseVariant = {
+  PENDIENTE: 'queue',
+  EN_COLA: 'queue',
+  EN_EJECUCION: 'production',
+  TERMINADO: 'completed',
 };
 
 const estadoFaseLabels = {
@@ -271,17 +278,16 @@ export const ExpedientePage = () => {
           <div className="space-y-2 p-4">
             {documentos.lista.map((documento) => (
               <div key={documento.id} className="flex items-center gap-3 rounded-lg border border-border px-3 py-3">
-                <FileText className="h-5 w-5 text-primary" />
-                <div className="min-w-0 flex-1"><p className="text-label font-semibold text-ink">{documento.nombre_original || '—'}</p><p className="text-metadata text-text-muted">{tipoArchivoLabel(documento.tipo_archivo)}</p></div>
-                <span className="text-metadata text-text-muted">{documento.mime_type || ''}{documento.tamanio_bytes != null ? ` · ${formatBytes(documento.tamanio_bytes)}` : ''}</span>
+                <FileText className="h-5 w-5 shrink-0 text-primary" />
+                <div className="min-w-0 flex-1"><p className="truncate text-label font-semibold text-ink">{documento.nombre_original || '—'}</p><p className="truncate text-metadata text-text-muted">{tipoArchivoLabel(documento.tipo_archivo)}{documento.mime_type ? ` · ${documento.mime_type}` : ''}{documento.tamanio_bytes != null ? ` · ${formatBytes(documento.tamanio_bytes)}` : ''}</p></div>
                 <button
                   type="button"
                   className="p-1 text-text-secondary disabled:opacity-50"
-                  aria-label={`Abrir ${documento.nombre_original}`}
+                  aria-label={`Ver ${documento.nombre_original}`}
                   disabled={abriendoId === documento.id}
                   onClick={() => verDocumento(documento)}
                 >
-                  <Download className="h-4 w-4" />
+                  <Eye className="h-4 w-4" />
                 </button>
               </div>
             ))}
@@ -317,7 +323,7 @@ export const ExpedientePage = () => {
                   <div key={fase.fase_id ?? fase.faseId ?? `${numero}-${intento}`} className="grid min-h-[68px] grid-cols-[40px_minmax(0,1fr)] items-center gap-3 rounded-lg border border-border px-4 py-3 sm:grid-cols-[40px_minmax(0,1fr)_140px_120px] sm:gap-4">
                     <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-tint text-metadata font-semibold text-primary">{String(numero).padStart(2, '0')}</span>
                     <div className="min-w-0"><p className="text-label font-semibold text-ink">{nombre}</p><p className="text-metadata text-text-muted">{operario}{intento > 1 ? ` · intento ${intento}` : ''}{motivo ? ` · ${motivo}` : ''}</p></div>
-                    <span className="text-metadata text-text-secondary">{estadoFaseLabels[estadoFase] || estadoFase || '—'}</span>
+                    <span className="text-metadata text-text-secondary"><Badge variant={estadoFaseVariant[estadoFase] || 'queue'} type="inline">{estadoFaseLabels[estadoFase] || estadoFase || '—'}</Badge></span>
                     <span className="text-left text-metadata text-text-muted sm:text-right">{fechaFin ? formatDateTime(fechaFin) : fechaInicio ? `Inició ${formatDateTime(fechaInicio)}` : '—'}</span>
                   </div>
                 );
@@ -343,7 +349,7 @@ export const ExpedientePage = () => {
                   <div key={fase.id ?? `${numero}-${index}`} className="grid min-h-[68px] grid-cols-[40px_minmax(0,1fr)] items-center gap-3 rounded-lg border border-border px-4 py-3 sm:grid-cols-[40px_minmax(0,1fr)_140px_120px] sm:gap-4">
                     <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-tint text-metadata font-semibold text-primary">{String(numero).padStart(2, '0')}</span>
                     <div className="min-w-0"><p className="text-label font-semibold text-ink">{nombre}</p><p className="text-metadata text-text-muted">{minutos != null ? `${minutos} min estimados` : '—'}{instrucciones ? ` · ${instrucciones}` : ''}</p></div>
-                    <span className="text-metadata text-text-secondary">Planificada</span>
+                    <span className="text-metadata text-text-secondary"><Badge variant="queue" type="inline">Planificada</Badge></span>
                     <span className="text-left text-metadata text-text-muted sm:text-right">—</span>
                   </div>
                 );
@@ -359,18 +365,32 @@ export const ExpedientePage = () => {
       if (!auditoria) {
         return <section className="overflow-hidden rounded-xl border border-border bg-surface"><div className="border-b border-border px-4 py-3 text-h2">Control de Calidad</div><div className="m-4 rounded-lg bg-info-light px-3 py-3 text-label text-info">Disponible cuando terminen las fases de producción.</div></section>;
       }
-      const respuestas = auditoria.respuestas ?? [];
+      // Mismo esquema que Entrega: título a la izquierda, badge a la
+      // derecha y filas etiqueta/valor con división entre entradas. El
+      // veredicto (resultado) va primero, no la fecha.
+      const filas = [
+        ['Veredicto', resultadoCalidadLabels[resultado] || resultado || '—'],
+        ['Fecha de veredicto', formatDateTime(auditoria.fecha_veredicto ?? auditoria.fechaVeredicto)],
+        ['Auditor', auditoria.auditor_nombre ?? auditoria.auditorNombre ?? '—'],
+      ];
+      const observaciones = auditoria.observaciones_generales ?? auditoria.observacionesGenerales ?? null;
+      if (observaciones) filas.push(['Observaciones', observaciones]);
+      const respuestas = [...(auditoria.respuestas ?? [])].sort(
+        (a, b) => (a.item_numero ?? a.itemNumero ?? 0) - (b.item_numero ?? b.itemNumero ?? 0),
+      );
+      respuestas.forEach((item, index) => {
+        const numero = item.item_numero ?? item.itemNumero ?? index + 1;
+        filas.push([
+          item.criterio_nombre ?? item.criterioNombre ?? `Punto ${numero}`,
+          item.resultado_item ?? item.resultadoItem ?? '—',
+        ]);
+      });
       return (
         <section className="overflow-hidden rounded-xl border border-border bg-surface">
           <div className="flex items-center justify-between border-b border-border px-4 py-3 text-h2"><span>Control de Calidad</span><span className="badge badge-queue">{resultadoCalidadLabels[resultado] || resultado || '—'}</span></div>
           <div className="px-4 py-2">
-            <div className="flex justify-between gap-3 border-b border-border py-3 text-label"><span className="text-text-muted">Veredicto</span><span className="text-right text-ink">{formatDateTime(auditoria.fecha_veredicto ?? auditoria.fechaVeredicto)}</span></div>
-            <div className="flex justify-between gap-3 border-b border-border py-3 text-label"><span className="text-text-muted">Auditor</span><span className="text-right text-ink">{auditoria.auditor_nombre ?? auditoria.auditorNombre ?? '—'}</span></div>
-            {(auditoria.observaciones_generales ?? auditoria.observacionesGenerales) && (
-              <div className="flex justify-between gap-3 border-b border-border py-3 text-label"><span className="text-text-muted">Observaciones</span><span className="text-right text-ink">{auditoria.observaciones_generales ?? auditoria.observacionesGenerales}</span></div>
-            )}
-            {respuestas.map((item, index) => (
-              <div key={item.item_numero ?? item.itemNumero ?? index} className="flex justify-between gap-3 border-b border-border py-3 text-label last:border-b-0"><span className="text-text-muted">{item.criterio_nombre ?? item.criterioNombre ?? `Punto ${item.item_numero ?? index + 1}`}</span><span className="text-right text-ink">{item.resultado_item ?? item.resultadoItem ?? '—'}</span></div>
+            {filas.map(([label, value], index) => (
+              <div key={`${label}-${index}`} className={`flex justify-between gap-3 py-3 text-label ${index < filas.length - 1 ? 'border-b border-border' : ''}`}><span className="text-text-muted">{label}</span><span className="text-right text-ink">{value}</span></div>
             ))}
           </div>
         </section>
