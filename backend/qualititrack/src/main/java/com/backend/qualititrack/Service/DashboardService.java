@@ -22,11 +22,13 @@ import com.backend.qualititrack.repository.OtFaseRepository;
 @Service
 public class DashboardService {
 
-    @Autowired
-    private OrdenTrabajoRepository ordenTrabajoRepository;
+    private final OrdenTrabajoRepository ordenTrabajoRepository;
+    private final OtFaseRepository otFaseRepository;
 
-    @Autowired
-    private OtFaseRepository otFaseRepository;
+    public DashboardService(OrdenTrabajoRepository ordenTrabajoRepository, OtFaseRepository otFaseRepository) {
+        this.ordenTrabajoRepository = ordenTrabajoRepository;
+        this.otFaseRepository = otFaseRepository;
+    }
 
     @Transactional(readOnly = true)
     public DashboardCalidadResponseDTO obtenerMetricasCalidad() {
