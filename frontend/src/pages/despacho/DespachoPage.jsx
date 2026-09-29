@@ -15,7 +15,7 @@ import {
   SkeletonTable,
   Title,
 } from "../../components/ui";
-import { formatDate, formatDateTime } from "../../api/helpers";
+import { formatDateTime, formatFechaEntrega } from "../../api/helpers";
 
 const estadoBadge = {
   DESPACHO: "pending",
@@ -115,7 +115,7 @@ export const DespachoPage = () => {
       {
         accessorKey: "fecha_esperada_entrega",
         header: "Entrega solicitada",
-        cell: ({ getValue }) => formatDate(getValue()),
+        cell: ({ getValue }) => formatFechaEntrega(getValue()),
       },
       {
         accessorKey: "estado",

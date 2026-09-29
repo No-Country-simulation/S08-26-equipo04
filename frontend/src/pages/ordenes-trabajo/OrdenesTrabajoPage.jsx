@@ -10,7 +10,7 @@ import {
   ErrorBanner,
   SkeletonTable,
 } from "../../components/ui";
-import { formatDate } from "../../api/helpers";
+import { formatFechaEntrega } from "../../api/helpers";
 import { useOrdenesTrabajo } from "../../hooks/useOrdenesTrabajo";
 
 const estadoLabel = {
@@ -91,7 +91,7 @@ export const OrdenesTrabajoPage = () => {
       {
         accessorKey: "fecha_esperada_entrega",
         header: "Entrega solicitada",
-        cell: ({ getValue }) => formatDate(getValue()),
+        cell: ({ getValue }) => formatFechaEntrega(getValue()),
       },
     ],
     [],

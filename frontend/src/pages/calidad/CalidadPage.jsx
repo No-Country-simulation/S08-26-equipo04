@@ -11,7 +11,7 @@ import {
   LoadingSpinner,
   Title,
 } from "../../components/ui";
-import { formatDate, formatDateTime } from "../../api/helpers";
+import { formatDateTime, formatFechaEntrega } from "../../api/helpers";
 
 /**
  * Panel de control de calidad con formato planta (mobile-first, igual
@@ -50,7 +50,7 @@ const OrdenCardMobile = ({ orden, onAuditar }) => (
       <div className="flex justify-between gap-3">
         <dt>Entrega solicitada</dt>
         <dd className="whitespace-nowrap tabular-nums text-ink">
-          {formatDate(orden.fecha_esperada_entrega)}
+          {formatFechaEntrega(orden.fecha_esperada_entrega)}
         </dd>
       </div>
     </dl>
