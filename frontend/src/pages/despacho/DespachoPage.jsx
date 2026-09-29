@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { PackageCheck, Search } from "lucide-react";
+import { PackageCheck, RefreshCw, Search } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "../../context/AuthContext";
@@ -198,17 +198,31 @@ export const DespachoPage = () => {
     <div className="mx-auto max-w-7xl space-y-6">
       <Title>Despacho</Title>
 
-      <div>
-        <h1 className="text-h1 text-ink">Despacho</h1>
-        <p className="mt-1 text-body text-text-secondary">
-          Órdenes listas para entregar.{" "}
-          <Link
-            to="/ordenes-entregadas"
-            className="text-primary hover:underline"
-          >
-            Ver historial de entregadas
-          </Link>
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-h1 text-ink">Despacho</h1>
+          <p className="mt-1 text-body text-text-secondary">
+            Órdenes listas para entregar.{" "}
+            <Link
+              to="/ordenes-entregadas"
+              className="text-primary hover:underline"
+            >
+              Ver historial de entregadas
+            </Link>
+          </p>
+        </div>
+        <Button
+          variant="secondary"
+          onClick={recargar}
+          loading={cargando}
+          aria-label="Actualizar despacho"
+        >
+          <RefreshCw
+            className={`h-4 w-4 ${cargando ? "hidden" : ""}`}
+            aria-hidden={cargando}
+          />
+          Actualizar
+        </Button>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
