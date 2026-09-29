@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Search } from "lucide-react";
+import { RefreshCw, Search } from "lucide-react";
 import {
   Badge,
+  Button,
   Card,
   DataTable,
   EmptyState,
@@ -98,7 +99,21 @@ export const OrdenesTrabajoPage = () => {
 
   return (
     <div className="mx-auto max-w-[1360px] space-y-6">
-      <h1 className="text-h1 text-ink">Órdenes de trabajo</h1>
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="text-h1 text-ink">Órdenes de trabajo</h1>
+        <Button
+          variant="secondary"
+          onClick={recargar}
+          loading={cargando}
+          aria-label="Actualizar órdenes de trabajo"
+        >
+          <RefreshCw
+            className={`h-4 w-4 ${cargando ? "hidden" : ""}`}
+            aria-hidden={cargando}
+          />
+          Actualizar
+        </Button>
+      </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <label className="relative flex-1" htmlFor="ot-busqueda">

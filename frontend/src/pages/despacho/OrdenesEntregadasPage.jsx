@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
-import { PackageCheck, Search } from "lucide-react";
+import { PackageCheck, RefreshCw, Search } from "lucide-react";
 import { useOrdenesTrabajo } from "../../hooks/useOrdenesTrabajo";
 import {
+  Button,
   Card,
   DataTable,
   EmptyState,
@@ -88,11 +89,25 @@ export const OrdenesEntregadasPage = () => {
     <div className="mx-auto max-w-7xl space-y-6">
       <Title>Órdenes entregadas</Title>
 
-      <div>
-        <h1 className="text-h1 text-ink">Órdenes entregadas</h1>
-        <p className="mt-1 text-body text-text-secondary">
-          Historial de órdenes de trabajo entregadas (solo lectura).
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-h1 text-ink">Órdenes entregadas</h1>
+          <p className="mt-1 text-body text-text-secondary">
+            Historial de órdenes de trabajo entregadas (solo lectura).
+          </p>
+        </div>
+        <Button
+          variant="secondary"
+          onClick={recargar}
+          loading={cargando}
+          aria-label="Actualizar órdenes entregadas"
+        >
+          <RefreshCw
+            className={`h-4 w-4 ${cargando ? "hidden" : ""}`}
+            aria-hidden={cargando}
+          />
+          Actualizar
+        </Button>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

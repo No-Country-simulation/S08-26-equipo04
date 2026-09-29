@@ -328,11 +328,24 @@ export const NoConformidadesPage = () => {
   return (
     <div className="mx-auto w-full max-w-4xl space-y-4 py-2">
       <Title>No conformidades</Title>
-      <header>
-        <h1 className="text-h1 text-ink">No conformidades</h1>
-        <p className="mt-1 text-body text-text-secondary">
-          Órdenes rechazadas por Calidad, listas para derivar a rehacer.
-        </p>
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-h1 text-ink">No conformidades</h1>
+          <p className="mt-1 text-body text-text-secondary">
+            Órdenes rechazadas por Calidad, listas para derivar a rehacer.
+          </p>
+        </div>
+        {!cargando && ordenesFiltradas.length > 0 && (
+          <Button
+            variant="secondary"
+            onClick={recargar}
+            loading={cargando}
+            aria-label="Actualizar no conformidades"
+          >
+            <RefreshCcw className="h-4 w-4" aria-hidden="true" />
+            Actualizar
+          </Button>
+        )}
       </header>
 
       <label className="relative block" htmlFor="noconf-busqueda">
