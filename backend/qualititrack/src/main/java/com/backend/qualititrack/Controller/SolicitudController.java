@@ -61,7 +61,7 @@ public class SolicitudController {
                 .anyMatch(a -> a.getAuthority().equals("ROLE_JEFE_PRODUCCION"));
         List<SolicitudDTO> lista = esJefe
                 ? solicitudService.obtenerPendientes()
-                : solicitudService.obtenerTodas();
+                : solicitudService.obtenerPorVendedor(authentication.getName());
         return ResponseEntity.ok().body(lista);
     }
 

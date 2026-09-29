@@ -12,4 +12,5 @@ import com.backend.qualititrack.modelos.Solicitud;
 public interface SolicitudRepository extends JpaRepository<Solicitud,Long> {
 
     List<Solicitud> findByEstado(EstadoSolicitud estado);
+    List<Solicitud> findByVendedorEmail(String email);
 }
