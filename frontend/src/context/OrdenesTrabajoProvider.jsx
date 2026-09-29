@@ -1,16 +1,33 @@
 import { useCallback, useEffect, useState } from "react";
-import { apiGet } from "../api";
+import { apiGet, apiPost } from "../api";
 import { useAuth } from "./AuthContext";
 import { OrdenesTrabajoContext } from "./OrdenesTrabajoContext";
 
 const mapItem = (item) => ({
   ...item,
-  numero_ot: item.numero_ot ?? item.numeroOT ?? "OT-—",
+  numero_ot: item.numero_ot ?? item.numeroOT ?? item.numero_o_t ?? "OT-—",
   cliente_razon_social: item.cliente_razon_social ?? item.cliente ?? "—",
   descripcion_pieza: item.descripcion_pieza ?? item.pieza_trabajo ?? "—",
-  receptor_nombre: item.receptor_nombre ?? null,
-  created_at: item.created_at ?? null,
-  updated_at: item.updated_at ?? null,
+  receptor_nombre: item.receptor_nombre ?? item.receptorNombre ?? null,
+  fecha_entrega:
+    item.fecha_entrega ??
+    item.fechaEntrega ??
+    item.fecha_termino_real ??
+    item.fechaTerminoReal ??
+    null,
+  // El DTO de OT manda fecha_creacion/fecha_actualizacion, no created_at.
+  created_at:
+    item.created_at ??
+    item.createdAt ??
+    item.fecha_creacion ??
+    item.fechaCreacion ??
+    null,
+  updated_at:
+    item.updated_at ??
+    item.updatedAt ??
+    item.fecha_actualizacion ??
+    item.fechaActualizacion ??
+    null,
 });
 
 export const OrdenesTrabajoProvider = ({ children }) => {
@@ -77,14 +94,43 @@ export const OrdenesTrabajoProvider = ({ children }) => {
             "DESPACHO",
             "ENTREGADA",
           ];
-          const respuestas = await Promise.all(
-            estados.map((estado) =>
+          // El DTO de OT no trae cliente: se enriquece con las cotizaciones
+          // (el Jefe tiene permiso a GET /api/cotizaciones), igual que en la
+          // rama Vendedor. Sin esto la actividad reciente muestra "—".
+          const [cotizacionesResponse, ...respuestas] = await Promise.all([
+            apiGet("/api/cotizaciones").catch(() => null),
+            ...estados.map((estado) =>
               apiGet("/api/ordenes-trabajo", { params: { estado } }),
             ),
+          ]);
+          const cotizacionesPorId = new Map(
+            (cotizacionesResponse?.data ?? []).map((cotizacion) => [
+              cotizacion.id,
+              cotizacion,
+            ]),
           );
           ordenes = respuestas.flatMap(({ data }) =>
             Array.isArray(data) ? data : [],
-          );
+          ).map((orden) => {
+            const cotizacion = cotizacionesPorId.get(
+              orden.cotizacionId ?? orden.cotizacion_id,
+            );
+            // Igual que en la rama Vendedor: el resumen no trae pieza,
+            // cantidad ni fecha solicitada; se completan por cotización.
+            if (cotizacion == null) return orden;
+            return {
+              ...orden,
+              cliente_razon_social:
+                cotizacion.cliente_razon_social ?? orden.cliente ?? "—",
+              descripcion_pieza:
+                cotizacion.descripcion_pieza ?? orden.pieza_trabajo ?? "—",
+              cantidad: cotizacion.cantidad ?? orden.cantidad ?? "—",
+              fecha_esperada_entrega:
+                cotizacion.fecha_esperada_entrega ??
+                orden.fecha_esperada_entrega ??
+                null,
+            };
+          });
         }
 
         if (!cancelado) {
@@ -136,8 +182,8 @@ export const OrdenesTrabajoProvider = ({ children }) => {
   const registrarEntrega = useCallback(
     async ({ id, receptor_nombre }) => {
       // RBAC espejo del backend (issue #157): solo VENDEDOR ejecuta entregas.
-      // El backend debe exponer POST /api/ordenes-trabajo/{id}/entrega con
-      // @PreAuthorize("hasRole('VENDEDOR')") y retornar 403 para otros roles.
+      // POST /api/ordenes-trabajo/{id}/entrega exige rol VENDEDOR y
+      // retorna 403 para otros roles.
       if (user?.rol !== "VENDEDOR") {
         const forbidden = new Error("No tienes permisos para esta acción.");
         forbidden.status = 403;
@@ -164,17 +210,23 @@ export const OrdenesTrabajoProvider = ({ children }) => {
         throw new Error("Debe indicar el nombre del receptor.");
       }
 
-      const fechaEntrega = new Date().toISOString();
+      const nombreNormalizado = receptor_nombre.trim();
 
-      const respuestaMock = {
+      // Issue #210: la entrega se registra contra la API. El backend
+      // (Jackson SNAKE_CASE) espera `{ receptor_nombre }` y responde un
+      // OrdenTrabajoDTO que ya incluye `receptor_nombre` y las fechas de
+      // pase; se fusiona con los datos locales enriquecidos (cliente,
+      // pieza) que el DTO no trae.
+      const { data } = await apiPost(
+        `/api/ordenes-trabajo/${orden.id}/entrega`,
+        { receptor_nombre: nombreNormalizado },
+      );
+
+      return fusionar({
         ...orden,
-        estado: "ENTREGADA",
-        receptor_nombre: receptor_nombre.trim(),
-        fecha_entrega: fechaEntrega,
-        updated_at: fechaEntrega,
-      };
-
-      return fusionar(respuestaMock);
+        ...data,
+        receptor_nombre: nombreNormalizado,
+      });
     },
     [ordenesTrabajo, fusionar, user?.rol],
   );

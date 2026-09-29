@@ -22,14 +22,15 @@ import com.backend.qualititrack.repository.UsuarioRepository;
 @Service
 public class FaseService {
 
-    @Autowired
-    private FaseRepository faseRepository;
+    private final FaseRepository faseRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final FaseOperarioHabilitadoRepository faseOperarioRepository;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
-
-    @Autowired
-    private FaseOperarioHabilitadoRepository faseOperarioRepository;
+    public FaseService(FaseRepository faseRepository, UsuarioRepository usuarioRepository, FaseOperarioHabilitadoRepository faseOperarioRepository) {
+        this.faseRepository = faseRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.faseOperarioRepository = faseOperarioRepository;
+    }
 
     // lista las fases, ya sea todas (para el gerente) o las que tienen operarios habilitados (para el jefe)
     public List<FaseCatalogo> listarFases(boolean soloConOperarios) {
@@ -69,11 +70,21 @@ public class FaseService {
     // Actualizar campos de una fase existente
     public FaseCatalogo actualizarFase(Long id, FaseCatalogo detallesFase) {
         FaseCatalogo fase = faseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Fase no encontrada con ID: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Fase no encontrada con ID: " + id));
 
-        // Actualiza los campos necesarios según la entidad Fase
-        fase.setNombre(detallesFase.getNombre());
-        // Agrega aquí los demás campos que tenga la entidad Fase
+        // Se actualizan los campos que lleguen no nulos en detallesFase
+        if (detallesFase.getNombre() != null) {
+            fase.setNombre(detallesFase.getNombre());
+        }
+        if (detallesFase.getCodigo() != null) {
+            fase.setCodigo(detallesFase.getCodigo());
+        }
+        if (detallesFase.getDescripcion() != null) {
+            fase.setDescripcion(detallesFase.getDescripcion());
+        }
+        if (detallesFase.getActivo() != null) {
+            fase.setActivo(detallesFase.getActivo());
+        }
 
         return faseRepository.save(fase);
     }

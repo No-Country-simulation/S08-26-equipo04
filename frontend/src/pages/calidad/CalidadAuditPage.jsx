@@ -11,14 +11,11 @@ import {
 import { toast } from "sonner";
 import { useAuditorias } from "../../hooks/useAuditorias";
 import {
-  Badge,
   Button,
   Card,
-  CardTitle,
   EmptyState,
   Title,
 } from "../../components/ui";
-import { formatDateTime } from "../../api/helpers";
 import {
   CRITERIOS_CHECKLIST,
   OPCIONES_CHECKLIST,
@@ -50,52 +47,10 @@ const VEREDICTO_ESTILOS = {
   NO_CONFORME: "border-error bg-error-light text-error",
 };
 
-const HistorialAuditorias = ({ historial }) => {
-  if (historial.length === 0) {
-    return null;
-  }
-
-  return (
-    <Card>
-      <CardTitle className="text-label font-medium">
-        Auditorías previas ({historial.length})
-      </CardTitle>
-      <ul className="mt-3 space-y-2">
-        {historial.map((auditoria) => (
-          <li
-            key={auditoria.id}
-            className="flex flex-wrap items-center gap-2 text-body text-text-secondary"
-          >
-            <Badge
-              variant={
-                auditoria.resultado === "CONFORME" ? "approved" : "production"
-              }
-              type="inline"
-            >
-              {auditoria.resultado === "CONFORME" ? "Conforme" : "No conforme"}
-            </Badge>
-            <span>
-              {auditoria.fecha_veredicto
-                ? formatDateTime(auditoria.fecha_veredicto)
-                : "—"}
-            </span>
-            {auditoria.observaciones_generales && (
-              <span className="w-full text-metadata text-text-muted">
-                {auditoria.observaciones_generales}
-              </span>
-            )}
-          </li>
-        ))}
-      </ul>
-    </Card>
-  );
-};
-
 export const CalidadAuditPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { obtenerOrdenTrabajo, auditoriasDeOT, registrarAuditoria } =
-    useAuditorias();
+  const { obtenerOrdenTrabajo, registrarAuditoria } = useAuditorias();
 
   const [respuestas, setRespuestas] = useState({});
   const [veredicto, setVeredicto] = useState("");
@@ -107,10 +62,6 @@ export const CalidadAuditPage = () => {
   const [paso, setPaso] = useState(0);
 
   const orden = useMemo(() => obtenerOrdenTrabajo(id), [obtenerOrdenTrabajo, id]);
-  const historial = useMemo(
-    () => (orden ? auditoriasDeOT(orden.id) : []),
-    [auditoriasDeOT, orden],
-  );
 
   const volver = () => navigate("/calidad");
 
@@ -157,9 +108,17 @@ export const CalidadAuditPage = () => {
       volver();
     } catch (err) {
       const message =
-        err?.message || "No se pudo guardar la auditoría. Reintente.";
-      setSubmitError(message);
-      toast.error(message);
+        err?.response?.data?.mensaje ||
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "No se pudo guardar la auditoría. Reintente.";
+      const detalles = Array.isArray(err?.response?.data?.detalles)
+        ? ` ${err.response.data.detalles.join(" ")}`
+        : "";
+      const fullMessage = `${message}${detalles}`.trim();
+      setSubmitError(fullMessage);
+      toast.error(fullMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -189,7 +148,6 @@ export const CalidadAuditPage = () => {
           description={`La orden ${orden.numero_ot} se encuentra en estado ${orden.estado}. Solo pueden auditarse órdenes pendientes de control.`}
           action={<Button onClick={volver}>Volver al panel</Button>}
         />
-        <HistorialAuditorias historial={historial} />
       </div>
     );
   }
@@ -217,8 +175,6 @@ export const CalidadAuditPage = () => {
           {orden.cantidad ?? "—"}
         </p>
       </div>
-
-      <HistorialAuditorias historial={historial} />
 
       {/* Progreso del checklist: mismo patrón de encabezado simple que
           las tarjetas de operario, con barra accesible. */}

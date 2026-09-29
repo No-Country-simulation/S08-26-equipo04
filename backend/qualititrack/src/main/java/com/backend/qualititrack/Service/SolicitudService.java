@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.backend.qualititrack.DTO.SolicitudDTO;
 import com.backend.qualititrack.DTO.SolicitudResponseDTO;
 import com.backend.qualititrack.Enum.EstadoSolicitud;
+import com.backend.qualititrack.exception.EntityNotFoundException;
 import com.backend.qualititrack.exception.InvalidStateException;
 import com.backend.qualititrack.modelos.Cliente;
 import com.backend.qualititrack.modelos.Solicitud;
@@ -17,7 +18,6 @@ import com.backend.qualititrack.repository.ClienteRepository;
 import com.backend.qualititrack.repository.SolicitudRepository;
 import com.backend.qualititrack.repository.UsuarioRepository;
 
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 
 @Service
