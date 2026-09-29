@@ -230,6 +230,16 @@ public class OtFaseService {
                                 .sorted(java.util.Comparator.comparing(p -> p.anterior().getNumeroSecuencia()))
                                 .toList();
 
+                // Validar que ninguna posición (numero_secuencia) venga repetida en el pedido
+                java.util.Set<Integer> secuenciasPedidas = new java.util.HashSet<>();
+                for (Pedido p : pedidos) {
+                        if (!secuenciasPedidas.add(p.anterior().getNumeroSecuencia())) {
+                                throw new IllegalArgumentException(
+                                        "La posición " + p.anterior().getNumeroSecuencia()
+                                                + " viene repetida en el pedido: cada fase se puede rehacer una sola vez");
+                        }
+                }
+
                 List<OtFase> nuevasFasesRehacer = new java.util.ArrayList<>();
                 boolean primera = true;
 
@@ -245,6 +255,14 @@ public class OtFaseService {
                         }
 
                         // Solo se puede rehacer lo que ya se terminó
+                        OtFase ultimaVersion = otFaseRepository
+                                .findFirstByOrdenTrabajoIdAndNumeroSecuenciaOrderByCicloIteracionDesc(
+                                        ordenTrabajo.getId(), faseAnterior.getNumeroSecuencia())
+                                .orElse(faseAnterior);
+                        if (!ultimaVersion.getId().equals(faseAnterior.getId())) {
+                                throw new InvalidStateException("La fase con ID " + faseAnterior.getId()
+                                        + " ya fue rehecha: hay que elegir su versión más reciente");
+                        }
                         if (faseAnterior.getEstado() != EstadoOtFase.TERMINADO) {
                                 throw new InvalidStateException(
                                                 "La fase con ID " + faseAnterior.getId() + " no está TERMINADA");

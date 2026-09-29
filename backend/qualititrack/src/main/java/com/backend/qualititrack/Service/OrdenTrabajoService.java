@@ -228,7 +228,7 @@ public class OrdenTrabajoService {
                 .orElseThrow(() -> new EntityNotFoundException("La Orden de Trabajo con ID " + id + " no existe"));
 
         if (ot.getEstado() != EstadoOT.DESPACHO) {
-            throw new IllegalStateException(
+            throw new InvalidStateException(
                     "La Orden de Trabajo no se encuentra en estado DESPACHO y no puede ser entregada.");
         }
 
