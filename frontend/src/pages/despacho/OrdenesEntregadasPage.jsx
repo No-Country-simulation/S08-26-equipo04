@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { PackageCheck, Search } from "lucide-react";
 import { useOrdenesTrabajo } from "../../hooks/useOrdenesTrabajo";
 import {
-  Badge,
   Card,
   DataTable,
   EmptyState,
@@ -81,15 +80,6 @@ export const OrdenesEntregadasPage = () => {
         header: "Entrega solicitada",
         cell: ({ getValue }) => formatDate(getValue()),
       },
-      {
-        accessorKey: "estado",
-        header: "Estado",
-        cell: () => (
-          <Badge variant="approved" type="inline">
-            Entregada
-          </Badge>
-        ),
-      },
     ],
     [],
   );
@@ -126,7 +116,7 @@ export const OrdenesEntregadasPage = () => {
 
       <Card>
         {cargando ? (
-          <SkeletonTable columns={8} rows={5} />
+          <SkeletonTable columns={7} rows={5} />
         ) : error ? (
           <ErrorBanner message={error} onRetry={recargar} />
         ) : ordenesFiltradas.length === 0 ? (

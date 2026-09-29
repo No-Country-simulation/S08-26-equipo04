@@ -16,7 +16,13 @@ import { useNoConformidades } from "../../hooks/useNoConformidades";
 // Lista OTs en NO_CONFORME con las observaciones de Calidad y permite
 // mandar fases a rehacer con operario, tiempo estimado y notas.
 
-const RehacerForm = ({ orden, cargarFasesOt, cargarOperarios, enviarARehacer, onEnviado }) => {
+const RehacerForm = ({
+  orden,
+  cargarFasesOt,
+  cargarOperarios,
+  enviarARehacer,
+  onEnviado,
+}) => {
   const [fases, setFases] = useState(null);
   const [errorFases, setErrorFases] = useState(null);
   const [seleccionadas, setSeleccionadas] = useState({});
@@ -35,7 +41,9 @@ const RehacerForm = ({ orden, cargarFasesOt, cargarOperarios, enviarARehacer, on
       },
       (err) => {
         if (cancelado) return;
-        setErrorFases(extractApiMessage(err, "No se pudieron cargar las fases."));
+        setErrorFases(
+          extractApiMessage(err, "No se pudieron cargar las fases."),
+        );
       },
     );
     return () => {
@@ -56,7 +64,8 @@ const RehacerForm = ({ orden, cargarFasesOt, cargarOperarios, enviarARehacer, on
       });
       return;
     }
-    const tiempoPrevio = fase.tiempo_estimado_minutos ?? fase.tiempoEstimadoMinutos;
+    const tiempoPrevio =
+      fase.tiempo_estimado_minutos ?? fase.tiempoEstimadoMinutos;
     setSeleccionadas((prev) => ({
       ...prev,
       [faseId]: {
@@ -85,7 +94,10 @@ const RehacerForm = ({ orden, cargarFasesOt, cargarOperarios, enviarARehacer, on
                 previo != null &&
                 habilitados.has(String(previo))
               ) {
-                siguiente[id] = { ...siguiente[id], operarioId: String(previo) };
+                siguiente[id] = {
+                  ...siguiente[id],
+                  operarioId: String(previo),
+                };
               }
             });
             return siguiente;
@@ -121,7 +133,9 @@ const RehacerForm = ({ orden, cargarFasesOt, cargarOperarios, enviarARehacer, on
         selecciones: idsSeleccionados.map((id) => ({
           faseId: Number(id),
           operarioId: Number(seleccionadas[id].operarioId),
-          tiempoEstimadoMinutos: Number(seleccionadas[id].tiempoEstimadoMinutos),
+          tiempoEstimadoMinutos: Number(
+            seleccionadas[id].tiempoEstimadoMinutos,
+          ),
           nota: seleccionadas[id].nota,
         })),
       });
@@ -129,7 +143,9 @@ const RehacerForm = ({ orden, cargarFasesOt, cargarOperarios, enviarARehacer, on
         `${orden.numero_ot} vuelve a producción con ${idsSeleccionados.length} fase(s) a rehacer.`,
       );
       if (notasFallidas.length > 0) {
-        toast.warning("El rehacer se registró, pero alguna nota no se pudo guardar.");
+        toast.warning(
+          "El rehacer se registró, pero alguna nota no se pudo guardar.",
+        );
       }
       onEnviado();
     } catch (err) {
@@ -167,8 +183,14 @@ const RehacerForm = ({ orden, cargarFasesOt, cargarOperarios, enviarARehacer, on
         const catalogoId = fase.fase_catalogo_id ?? fase.faseCatalogoId;
         const operarios = operariosPorFase[catalogoId] ?? null;
         return (
-          <div key={fase.id} className="rounded-lg border border-border px-3 py-3">
-            <label className="flex cursor-pointer items-center gap-3" htmlFor={`rehacer-${fase.id}`}>
+          <div
+            key={fase.id}
+            className="rounded-lg border border-border px-3 py-3"
+          >
+            <label
+              className="flex cursor-pointer items-center gap-3"
+              htmlFor={`rehacer-${fase.id}`}
+            >
               <input
                 id={`rehacer-${fase.id}`}
                 type="checkbox"
@@ -188,16 +210,25 @@ const RehacerForm = ({ orden, cargarFasesOt, cargarOperarios, enviarARehacer, on
             </label>
             {marcada && (
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <label className="block space-y-1.5" htmlFor={`operario-${fase.id}`}>
-                  <span className="block text-label text-text-secondary">Operario *</span>
+                <label
+                  className="block space-y-1.5"
+                  htmlFor={`operario-${fase.id}`}
+                >
+                  <span className="block text-label text-text-secondary">
+                    Operario *
+                  </span>
                   <select
                     id={`operario-${fase.id}`}
                     className="input"
                     value={seleccionadas[id].operarioId}
-                    onChange={(event) => actualizar(id, "operarioId", event.target.value)}
+                    onChange={(event) =>
+                      actualizar(id, "operarioId", event.target.value)
+                    }
                     disabled={operarios === null}
                   >
-                    <option value="">{operarios === null ? "Cargando…" : "Seleccionar…"}</option>
+                    <option value="">
+                      {operarios === null ? "Cargando…" : "Seleccionar…"}
+                    </option>
                     {(operarios ?? []).map((operario) => (
                       <option key={operario.id} value={operario.id}>
                         {operario.nombre ?? `Operario #${operario.id}`}
@@ -210,26 +241,48 @@ const RehacerForm = ({ orden, cargarFasesOt, cargarOperarios, enviarARehacer, on
                     </span>
                   )}
                 </label>
-                <label className="block space-y-1.5" htmlFor={`tiempo-${fase.id}`}>
-                  <span className="block text-label text-text-secondary">Tiempo estimado (min) *</span>
+                <label
+                  className="block space-y-1.5"
+                  htmlFor={`tiempo-${fase.id}`}
+                >
+                  <span className="block text-label text-text-secondary">
+                    Tiempo estimado (min) *
+                  </span>
                   <input
                     id={`tiempo-${fase.id}`}
                     type="number"
                     min={1}
                     className="input"
-                    placeholder={String(fase.tiempo_estimado_minutos ?? fase.tiempoEstimadoMinutos ?? "")}
+                    placeholder={String(
+                      fase.tiempo_estimado_minutos ??
+                        fase.tiempoEstimadoMinutos ??
+                        "",
+                    )}
                     value={seleccionadas[id].tiempoEstimadoMinutos}
-                    onChange={(event) => actualizar(id, "tiempoEstimadoMinutos", event.target.value)}
+                    onChange={(event) =>
+                      actualizar(
+                        id,
+                        "tiempoEstimadoMinutos",
+                        event.target.value,
+                      )
+                    }
                   />
                 </label>
-                <label className="block space-y-1.5 sm:col-span-2" htmlFor={`nota-${fase.id}`}>
-                  <span className="block text-label text-text-secondary">Nota para el operario</span>
+                <label
+                  className="block space-y-1.5 sm:col-span-2"
+                  htmlFor={`nota-${fase.id}`}
+                >
+                  <span className="block text-label text-text-secondary">
+                    Nota para el operario
+                  </span>
                   <textarea
                     id={`nota-${fase.id}`}
                     className="input min-h-[64px]"
                     placeholder="Indicaciones del retrabajo"
                     value={seleccionadas[id].nota}
-                    onChange={(event) => actualizar(id, "nota", event.target.value)}
+                    onChange={(event) =>
+                      actualizar(id, "nota", event.target.value)
+                    }
                   />
                 </label>
               </div>
@@ -302,7 +355,10 @@ export const NoConformidadesPage = () => {
       {error && !cargando && <ErrorBanner message={error} onRetry={recargar} />}
 
       {cargando ? (
-        <ul className="grid grid-cols-1 gap-4" aria-label="Cargando no conformidades">
+        <ul
+          className="grid grid-cols-1 gap-4"
+          aria-label="Cargando no conformidades"
+        >
           {[0, 1, 2].map((index) => (
             <li key={index}>
               <SkeletonCard rows={3} />
@@ -338,24 +394,30 @@ export const NoConformidadesPage = () => {
               return (
                 <li key={orden.id}>
                   <Card>
-                    <p className="text-label font-semibold text-ink">{orden.numero_ot}</p>
+                    <p className="text-label font-semibold text-ink">
+                      {orden.numero_ot}
+                    </p>
                     <p className="mt-1 text-body text-text-secondary">
                       {orden.cliente_razon_social} · {orden.descripcion_pieza}
-                      {orden.cantidad != null ? ` · ${orden.cantidad} piezas` : ""}
+                      {orden.cantidad != null
+                        ? ` · ${orden.cantidad} piezas`
+                        : ""}
                     </p>
                     {observaciones && (
-                      <p className="mt-2 rounded-lg bg-error-light px-3 py-2 text-label text-error">
+                      <p className="mt-2 w-fit rounded-lg bg-error-light px-3 py-2 text-label text-error">
                         Defecto: {observaciones}
                       </p>
                     )}
                     <Button
                       type="button"
-                      variant="secondary"
+                      variant={abierta ? "secondary" : "primary"}
                       className="mt-3"
                       onClick={() => setExpandida(abierta ? null : orden.id)}
                       aria-expanded={abierta}
                     >
-                      {abierta ? "Ocultar fases" : "Seleccionar fases a rehacer"}
+                      {abierta
+                        ? "Ocultar fases"
+                        : "Seleccionar fases a rehacer"}
                     </Button>
                     {abierta && (
                       <div className="mt-3 border-t border-border pt-3">
@@ -375,7 +437,9 @@ export const NoConformidadesPage = () => {
           </ul>
           <p className="text-metadata text-text-muted">
             {ordenesFiltradas.length}{" "}
-            {ordenesFiltradas.length === 1 ? "orden no conforme" : "órdenes no conformes"}
+            {ordenesFiltradas.length === 1
+              ? "orden no conforme"
+              : "órdenes no conformes"}
           </p>
         </>
       )}
