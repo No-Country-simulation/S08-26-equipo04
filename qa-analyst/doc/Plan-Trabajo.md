@@ -5,7 +5,7 @@
 **Documento:** Plan de Trabajo QA
 **Versión:** 1.0
 **Fecha:** 08/09/2026
-**Estado:** Pendiente de aprobación PM
+**Estado:** Aprobado PM
 
 ---
 
@@ -125,7 +125,17 @@ QA no modifica directamente implementaciones de Backend o Frontend ni redefine d
 
 ## 5. Cronograma general QA
 
-El trabajo de QA se organiza en cinco semanas, alineadas con el cronograma general del proyecto.
+Modificacion decisiones 25/9/26
+
+| Semana | Actividad QA | Estado |
+|---|---|---|
+| S1 | Revisión y revalidación del análisis funcional | Completado |
+| S2 | Diseño de casos de prueba | En curso: Fase A diseñada (51 casos, v1.2); B, C y D pendientes |
+| S3 | Ejecución funcional e integración | En curso: ejecución de la Fase A por HU; primer defecto reportado (#198, corregido) |
+| S4 | Pruebas E2E, negativas y regresión | Proyectado |
+| S5 | Regresión final, evidencias y cierre | Proyectado |
+
+El trabajo de QA inicial se organiza en cinco semanas, alineadas con el cronograma general del proyecto.
 
 | Semana | Actividad QA | Estado |
 |---|---|---|
@@ -135,7 +145,7 @@ El trabajo de QA se organiza en cinco semanas, alineadas con el cronograma gener
 | S4 | Pruebas E2E, negativas y regresión | Proyectado |
 | S5 | Regresión final, evidencias y cierre | Proyectado |
 
-La planificación de QA se encuentra condicionada por la disponibilidad efectiva de las funcionalidades.
+La planificación de QA se encuentra condicionada por la disponibilidad efectiva de las funcionalidades. Decisiones del 25/09 en el PR #228
 
 El calendario no implica que una prueba deba ejecutarse automáticamente por encontrarse en una semana determinada.
 

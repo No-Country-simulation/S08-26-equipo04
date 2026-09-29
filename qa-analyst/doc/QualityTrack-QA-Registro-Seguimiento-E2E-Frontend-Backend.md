@@ -82,3 +82,10 @@ Considerando que el MVP dispone de cinco semanas de desarrollo, QA continuará r
 El objetivo será detectar tempranamente cualquier diferencia que pueda transformarse posteriormente en un defecto de integración, bloqueo de flujo o pérdida de trazabilidad.
 
 Este registro queda como **constancia del seguimiento preventivo realizado desde QA** y podrá utilizarse como referencia durante las pruebas de integración, E2E y regresión del MVP.
+
+## Defectos y bloqueos detectados
+
+| Fecha | Referencia | Caso / HU | Descripción | Estado |
+|---|---|---|---|---|
+| 26/09 | #198 | HU-2.1 | El importe de la cotización no tenía un formato claro. | Corregido (PR #212) |
+| 26/09 | #217 | TC-A-1.3-03 y siguientes | El Vendedor no puede registrar la aprobación si una fase de la cotización no tiene operarios. | Cerrado; resuelto con #205 (PR #227, mergeado el 27/09) |
