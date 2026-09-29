@@ -93,6 +93,7 @@ erDiagram
     CLIENTES {
         bigint id PK
         varchar razon_social
+        varchar cuit UK
         varchar contacto_nombre
         varchar telefono
         varchar direccion
@@ -132,6 +133,7 @@ erDiagram
         varchar mime_type
         bigint tamanio_bytes
         varchar ruta_almacenamiento
+        bytea contenido
         bigint subido_por_id FK
     }
     COTIZACIONES {
@@ -240,10 +242,11 @@ Los 5 roles del sistema en una sola tabla. **Todos los usuarios se cargan en la 
 |---|---|---|---|---|---|
 | `id` | BIGINT IDENTITY | NO | PK | | |
 | `razon_social` | VARCHAR(150) | NO | | | Nombre del cliente (HU-1.1) |
+| `cuit` | VARCHAR(20) | NO | UK | | Identifica al cliente; no se repite (25/09 — D-4) |
 | `contacto_nombre` | VARCHAR(120) | NO | | | Persona de contacto (HU-1.1) |
 | `telefono` | VARCHAR(30) | NO | | | Obligatorio por HU-1.1 |
 | `direccion` | VARCHAR(255) | NO | | | Obligatorio por HU-1.1 |
-| `email` | VARCHAR(150) | SÍ | | | Canal para enviar la cotización |
+| `email` | VARCHAR(150) | SÍ | | | Canal para enviar la cotización. Obligatorio desde la aplicación (25/09 — D-4); la columna admite nulos por los registros previos |
 | `activo` | BOOLEAN | NO | | `TRUE` | |
 | `created_at` / `updated_at` | TIMESTAMPTZ | NO | | `CURRENT_TIMESTAMP` | |
 
@@ -304,7 +307,8 @@ Documentación de la solicitud. El Jefe y el Operario la alcanzan navegando desd
 | `tipo_archivo` | VARCHAR(50) | NO | | `PLANO`, `CERTIFICADO`, `ESPECIFICACION`, `OTRO` | Etiqueta; no habilita funcionalidad |
 | `mime_type` | VARCHAR(100) | NO | | Ej. `application/pdf` | |
 | `tamanio_bytes` | BIGINT | NO | | CHECK `> 0` | |
-| `ruta_almacenamiento` | VARCHAR(500) | NO | | | URI o path del storage |
+| `ruta_almacenamiento` | VARCHAR(500) | NO | | | URI o path del storage. Con el archivo guardado en la base queda con el valor `bd` |
+| `contenido` | BYTEA | SÍ | | | Archivo completo, máximo 10 MB. Se guarda en la base porque el disco de Render se borra en cada reinicio (25/09 — D-6). Nulo en adjuntos anteriores al cambio |
 | `subido_por_id` | BIGINT | NO | FK | `usuarios(id)` | |
 | `created_at` | TIMESTAMPTZ | NO | | `CURRENT_TIMESTAMP` | |
 
@@ -532,6 +536,7 @@ CREATE TABLE usuarios (
 CREATE TABLE clientes (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     razon_social VARCHAR(150) NOT NULL,
+    cuit VARCHAR(20) NOT NULL UNIQUE,                       -- 25/09 — D-4
     contacto_nombre VARCHAR(120) NOT NULL,
     telefono VARCHAR(30) NOT NULL,
     direccion VARCHAR(255) NOT NULL,
@@ -598,6 +603,7 @@ CREATE TABLE adjuntos (
     mime_type VARCHAR(100) NOT NULL,
     tamanio_bytes BIGINT NOT NULL CHECK (tamanio_bytes > 0),
     ruta_almacenamiento VARCHAR(500) NOT NULL,
+    contenido BYTEA NULL,                                    -- 25/09 — D-6, máximo 10 MB
     subido_por_id BIGINT NOT NULL REFERENCES usuarios(id) ON DELETE RESTRICT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

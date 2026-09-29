@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { PackageCheck } from "lucide-react";
+import { PackageCheck, Search } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "../../context/AuthContext";
@@ -98,10 +98,16 @@ export const DespachoPage = () => {
         cell: ({ getValue }) => getValue() ?? "—",
       },
       {
-        accessorKey: "fecha_pase_calidad",
+        accessorKey: "fecha_pase_despacho",
         header: "Aprobada por Calidad",
-        cell: ({ getValue }) => {
-          const value = getValue();
+        cell: ({ row }) => {
+          // fecha_pase_despacho se graba al dar CONFORME (CalidadService);
+          // fecha_pase_calidad es solo la entrada a Calidad. Fallback a
+          // camelCase por si el DTO llegara sin snake_case.
+          const value =
+            row.original.fecha_pase_despacho ??
+            row.original.fechaPaseDespacho ??
+            null;
 
           return value ? formatDateTime(value) : "—";
         },
@@ -172,12 +178,17 @@ export const DespachoPage = () => {
         return;
       }
       const message =
+        err?.response?.data?.mensaje ||
         err?.response?.data?.message ||
         err?.response?.data?.error ||
         err?.message ||
         "No se pudo registrar la entrega. Reintente.";
-      setSubmitError(message);
-      toast.error(message);
+      const detalles = Array.isArray(err?.response?.data?.detalles)
+        ? ` ${err.response.data.detalles.join(" ")}`
+        : "";
+      const fullMessage = `${message}${detalles}`.trim();
+      setSubmitError(fullMessage);
+      toast.error(fullMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -200,17 +211,23 @@ export const DespachoPage = () => {
         </p>
       </div>
 
-      <div className="max-w-xl">
-        <input
-          id="entregas-busqueda"
-          name="busqueda"
-          type="search"
-          className="input w-full"
-          value={busqueda}
-          onChange={(event) => setBusqueda(event.target.value)}
-          placeholder="Buscar por OT, cliente o pieza"
-          aria-label="Buscar por OT, cliente o pieza"
-        />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <label className="relative flex-1" htmlFor="entregas-busqueda">
+          <Search
+            className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted"
+            aria-hidden="true"
+          />
+          <input
+            id="entregas-busqueda"
+            name="busqueda"
+            type="search"
+            className="input h-11 w-full pl-10 text-body"
+            value={busqueda}
+            onChange={(event) => setBusqueda(event.target.value)}
+            placeholder="Buscar por OT, cliente o pieza"
+            aria-label="Buscar por OT, cliente o pieza"
+          />
+        </label>
       </div>
 
       <Card>

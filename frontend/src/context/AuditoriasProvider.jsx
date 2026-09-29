@@ -1,17 +1,29 @@
 import { useCallback, useEffect, useState } from "react";
+import { apiGet, apiPost } from "../api";
 import { useAuth } from "./AuthContext";
 import { AuditoriasContext } from "./AuditoriasContext";
-import ordenesTrabajoMock from "../mocks/ordenes-trabajo.json";
-import auditoriasMock from "../mocks/auditorias.json";
 import { CRITERIOS_CHECKLIST } from "../pages/calidad/checklist";
 
 const mapOrden = (item) => ({
   ...item,
-  numero_ot: item.numero_ot ?? item.numeroOT ?? "OT-—",
+  // El DTO de OT manda `numeroOT` (llega como `numero_o_t` por el
+  // SNAKE_CASE global del backend), no `numero_ot`.
+  numero_ot: item.numero_ot ?? item.numeroOT ?? item.numero_o_t ?? "OT-—",
   cliente_razon_social: item.cliente_razon_social ?? item.cliente ?? "—",
   descripcion_pieza: item.descripcion_pieza ?? item.pieza_trabajo ?? "—",
-  created_at: item.created_at ?? null,
-  updated_at: item.updated_at ?? null,
+  // El DTO manda fecha_creacion/fecha_actualizacion, no created_at.
+  created_at:
+    item.created_at ??
+    item.createdAt ??
+    item.fecha_creacion ??
+    item.fechaCreacion ??
+    null,
+  updated_at:
+    item.updated_at ??
+    item.updatedAt ??
+    item.fecha_actualizacion ??
+    item.fechaActualizacion ??
+    null,
 });
 
 const VALORES_CHECKLIST = ["CUMPLE", "NO_CUMPLE", "NO_APLICA"];
@@ -21,45 +33,111 @@ export const AuditoriasProvider = ({ children }) => {
 
   const puedeConsultar = user?.rol === "CALIDAD";
 
-  const [ordenesTrabajo, setOrdenesTrabajo] = useState(() =>
-    ordenesTrabajoMock.map(mapOrden),
-  );
-  const [auditorias, setAuditorias] = useState(() => [...auditoriasMock]);
+  const [ordenesTrabajo, setOrdenesTrabajo] = useState([]);
 
   const [error, setError] = useState(null);
   const [cargando, setCargando] = useState(true);
 
-  // Simula la carga inicial del mock hasta que exista endpoint real.
+  // Issue #208: el panel lista las OT pendientes con GET /api/calidad.
+  // El DTO no trae cliente/pieza/cantidad: se enriquece con la cotización
+  // por id (GET /api/cotizaciones/{id} permite CALIDAD; solo el listado
+  // está reservado a VENDEDOR/JEFE).
   useEffect(() => {
-    const timer = setTimeout(() => setCargando(false), 400);
+    let cancelado = false;
 
-    return () => clearTimeout(timer);
-  }, []);
+    const cargar = async () => {
+      if (!isAuthenticated || !puedeConsultar) {
+        setOrdenesTrabajo([]);
+        setCargando(false);
+        return;
+      }
+
+      setCargando(true);
+      try {
+        const { data } = await apiGet("/api/calidad");
+        const lista = Array.isArray(data) ? data : [];
+
+        const cotizaciones = await Promise.all(
+          lista.map((orden) => {
+            const cotizacionId =
+              orden.cotizacionId ?? orden.cotizacion_id ?? null;
+            if (cotizacionId == null) return null;
+            return apiGet(`/api/cotizaciones/${cotizacionId}`)
+              .then(({ data: cotizacion }) => cotizacion ?? null)
+              .catch(() => null);
+          }),
+        );
+        const cotizacionesPorId = new Map();
+        cotizaciones.forEach((cotizacion) => {
+          if (cotizacion?.id != null) cotizacionesPorId.set(cotizacion.id, cotizacion);
+        });
+
+        const enriquecidas = lista.map((orden) => {
+          const cotizacion = cotizacionesPorId.get(
+            orden.cotizacionId ?? orden.cotizacion_id,
+          );
+          if (!cotizacion) return orden;
+          return {
+            ...orden,
+            cliente_razon_social:
+              cotizacion.cliente_razon_social ??
+              cotizacion.clienteRazonSocial ??
+              orden.cliente ??
+              "—",
+            descripcion_pieza:
+              cotizacion.descripcion_pieza ??
+              cotizacion.descripcionPieza ??
+              orden.pieza_trabajo ??
+              "—",
+            cantidad: cotizacion.cantidad ?? orden.cantidad ?? null,
+            fecha_esperada_entrega:
+              cotizacion.fecha_esperada_entrega ??
+              cotizacion.fechaEsperadaEntrega ??
+              orden.fecha_esperada_entrega ??
+              null,
+          };
+        });
+
+        if (!cancelado) {
+          setOrdenesTrabajo(enriquecidas.map(mapOrden));
+          setError(null);
+          setCargando(false);
+        }
+      } catch (err) {
+        if (!cancelado) {
+          setError(
+            err?.response?.data?.mensaje ||
+              err?.response?.data?.message ||
+              err?.response?.data?.error ||
+              "No se pudieron cargar las órdenes en calidad.",
+          );
+          setCargando(false);
+        }
+      }
+    };
+
+    const manejarRecarga = () => cargar();
+    window.addEventListener("qualitytrack:auditorias-recargar", manejarRecarga);
+    cargar();
+    return () => {
+      cancelado = true;
+      window.removeEventListener(
+        "qualitytrack:auditorias-recargar",
+        manejarRecarga,
+      );
+    };
+  }, [isAuthenticated, puedeConsultar]);
 
   const recargar = useCallback(() => {
     setError(null);
     setCargando(true);
 
-    setOrdenesTrabajo(ordenesTrabajoMock.map(mapOrden));
-    setAuditorias([...auditoriasMock]);
-    setCargando(false);
+    window.dispatchEvent(new Event("qualitytrack:auditorias-recargar"));
   }, []);
 
   const obtenerOrdenTrabajo = useCallback(
     (id) => ordenesTrabajo.find((item) => item.id === Number(id)) ?? null,
     [ordenesTrabajo],
-  );
-
-  const auditoriasDeOT = useCallback(
-    (ordenTrabajoId) =>
-      auditorias
-        .filter((item) => item.orden_trabajo_id === Number(ordenTrabajoId))
-        .sort((a, b) =>
-          String(b.fecha_veredicto ?? "").localeCompare(
-            String(a.fecha_veredicto ?? ""),
-          ),
-        ),
-    [auditorias],
   );
 
   const registrarAuditoria = useCallback(
@@ -80,7 +158,6 @@ export const AuditoriasProvider = ({ children }) => {
 
       const respuestas = CRITERIOS_CHECKLIST.map((criterio) => ({
         item_numero: criterio.item_numero,
-        criterio_nombre: criterio.criterio_nombre,
         resultado_item: checklist?.[criterio.item_numero] ?? null,
       }));
 
@@ -94,55 +171,33 @@ export const AuditoriasProvider = ({ children }) => {
         throw new Error("Debe seleccionar un veredicto final.");
       }
 
-      if (resultado === "NO_CONFORME" && !observaciones?.trim()) {
+      const observacionesNormalizadas = observaciones?.trim() ?? "";
+
+      if (resultado === "NO_CONFORME" && !observacionesNormalizadas) {
         throw new Error(
           "Las observaciones son obligatorias si el veredicto es No conforme.",
         );
       }
 
-      const ahora = new Date().toISOString();
-      const previas = auditorias.filter(
-        (item) => item.orden_trabajo_id === Number(orden_trabajo_id),
-      );
-
-      const nueva = {
-        id: Math.max(0, ...auditorias.map((item) => item.id)) + 1,
-        orden_trabajo_id: Number(orden_trabajo_id),
-        ot_numero: orden.numero_ot,
-        auditor_id: user?.id ?? null,
-        auditor_nombre: user?.nombre ?? null,
-        numero_auditoria:
-          Math.max(0, ...previas.map((item) => item.numero_auditoria ?? 0)) + 1,
+      // Definición del 25/09 (issue #208): el checklist no se guarda de a
+      // poco; las 7 respuestas se envían todo junto al confirmar el
+      // veredicto (SNAKE_CASE global en el backend).
+      const segmento = resultado === "CONFORME" ? "conforme" : "no-conforme";
+      const { data } = await apiPost(`/api/calidad/${orden.id}/${segmento}`, {
+        respuestas,
         resultado,
-        observaciones_generales: observaciones?.trim() || null,
-        fecha_veredicto: ahora,
-        created_at: ahora,
-        checklist: respuestas,
-      };
+        observaciones_generales: observacionesNormalizadas || null,
+      });
 
-      setAuditorias((prev) => [...prev, nueva]);
-
-      // Derivación según veredicto (HU-4.3): Conforme → Despacho,
-      // No conforme → vuelve al Jefe de producción.
+      // Después del veredicto la OT sale del listado sin recargar la página
+      // (CONFORME → DESPACHO, NO_CONFORME → Jefe de producción).
       setOrdenesTrabajo((prev) =>
-        prev.map((item) =>
-          item.id === Number(orden_trabajo_id)
-            ? {
-                ...item,
-                estado: resultado === "CONFORME" ? "DESPACHO" : "NO_CONFORME",
-                // Solo Calidad fecha el pase; el ingreso a Despacho lo
-                // registra el backend al migrar el endpoint.
-                fecha_pase_calidad:
-                  resultado === "CONFORME" ? ahora : item.fecha_pase_calidad,
-                updated_at: ahora,
-              }
-            : item,
-        ),
+        prev.filter((item) => item.id !== Number(orden_trabajo_id)),
       );
 
-      return nueva;
+      return data;
     },
-    [ordenesTrabajo, auditorias, user],
+    [ordenesTrabajo],
   );
 
   const ordenesDisponibles =
@@ -152,13 +207,11 @@ export const AuditoriasProvider = ({ children }) => {
     <AuditoriasContext.Provider
       value={{
         ordenesTrabajo: ordenesDisponibles,
-        auditorias,
         cargando,
         error,
         recargar,
         registrarAuditoria,
         obtenerOrdenTrabajo,
-        auditoriasDeOT,
       }}
     >
       {children}

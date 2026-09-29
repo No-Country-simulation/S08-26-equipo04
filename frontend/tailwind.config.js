@@ -1,6 +1,20 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  // `Badge` arma la clase como `badge-${variant}` (Badge.jsx), asi que el
+  // escaner de Tailwind no ve ninguna de las variantes al purgar
+  // `@layer components` en index.css y las eliminaba del CSS final: quedaban
+  // solo `.badge-production` y `.badge-queue`, que ademas estan escritas a mano
+  // en ExpedientePage.jsx. Sin safelist, los badges salian sin fondo ni color.
+  safelist: [
+    "badge-pending",
+    "badge-quoted",
+    "badge-approved",
+    "badge-production",
+    "badge-quality",
+    "badge-completed",
+    "badge-queue",
+  ],
   theme: {
     extend: {
       colors: {

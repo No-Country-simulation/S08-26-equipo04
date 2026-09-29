@@ -1,17 +1,31 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Users } from 'lucide-react';
-import { mocks } from '../../mocks';
-import { Button, Card, CardHeader, CardTitle, DataTable, Toggle, Title } from '../../components/ui';
+import { Plus, Pencil, Users, Inbox } from 'lucide-react';
+import { apiGet, apiPost, apiPut } from '../../api';
+import { Button, Card, CardHeader, CardTitle, DataTable, EmptyState, ErrorBanner, SkeletonTable, Toggle, Title } from '../../components/ui';
 import { FaseFormModal } from '../../components/FaseFormModal';
 import { toast } from 'sonner';
 
 export const CatalogoFasesPage = () => {
   const navigate = useNavigate();
-  const [fases, setFases] = useState(mocks.fases);
+  const [fases, setFases] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingFase, setEditingFase] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    apiGet('/api/fases')
+      .then(({ data }) => {
+        setFases(data ?? []);
+        setCargando(false);
+      })
+      .catch((err) => {
+        setError(err?.response?.data?.message || 'No se pudieron cargar las fases.');
+        setCargando(false);
+      });
+  }, []);
 
   const handleCreate = () => {
     setEditingFase(null);
@@ -23,43 +37,55 @@ export const CatalogoFasesPage = () => {
     setModalOpen(true);
   };
 
-  const handleSubmit = (data) => {
+  const handleSubmit = async (data) => {
     setSaving(true);
-    setTimeout(() => {
+    try {
+      // Al crear, el backend exige operarios_ids (al menos uno); al editar
+      // los operarios no se tocan (pantalla de operarios por fase).
+      const response = editingFase
+        ? await apiPut(`/api/fases/${editingFase.id}`, {
+            codigo: data.codigo,
+            nombre: data.nombre,
+            descripcion: data.descripcion,
+          })
+        : await apiPost('/api/fases', {
+            codigo: data.codigo,
+            nombre: data.nombre,
+            descripcion: data.descripcion,
+            operarios_ids: data.operarios_ids,
+          });
       if (editingFase) {
         setFases((prev) =>
           prev.map((f) =>
             f.id === editingFase.id
-              ? { ...f, ...data, updated_at: new Date().toISOString() }
+              ? response.data
               : f
           )
         );
         toast.success('Fase actualizada correctamente');
       } else {
-        const newFase = {
-          id: Math.max(...fases.map((f) => f.id)) + 1,
-          ...data,
-          activo: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        setFases((prev) => [...prev, newFase]);
+        setFases((prev) => [...prev, response.data]);
         toast.success('Fase creada correctamente');
       }
-      setSaving(false);
       setModalOpen(false);
-    }, 400);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || err?.response?.data?.error || 'No se pudo guardar la fase.');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleToggleActivo = (fase) => {
-    setFases((prev) =>
-      prev.map((f) =>
-        f.id === fase.id
-          ? { ...f, activo: !f.activo, updated_at: new Date().toISOString() }
-          : f
-      )
-    );
-    toast.success(fase.activo ? 'Fase desactivada' : 'Fase activada');
+  const handleToggleActivo = async (fase) => {
+    try {
+      const { data } = await apiPut(`/api/fases/${fase.id}`, {
+        ...fase,
+        activo: !fase.activo,
+      });
+      setFases((prev) => prev.map((item) => item.id === fase.id ? data : item));
+      toast.success(fase.activo ? 'Fase desactivada' : 'Fase activada');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || err?.response?.data?.error || 'No se pudo cambiar el estado de la fase.');
+    }
   };
 
   const columns = useMemo(() => [
@@ -140,10 +166,14 @@ export const CatalogoFasesPage = () => {
         <CardHeader>
           <CardTitle>Fases registradas</CardTitle>
         </CardHeader>
-        {fases.length === 0 ? (
-          <p className="py-8 text-center text-body text-text-muted">
-            No hay fases configuradas
-          </p>
+        {error ? <ErrorBanner message={error} /> : cargando ? (
+          <SkeletonTable columns={5} rows={5} />
+        ) : fases.length === 0 ? (
+          <EmptyState
+            icon={Inbox}
+            title="Sin fases configuradas"
+            description="Cuando se creen fases de producción, aparecerán aquí."
+          />
         ) : (
           <DataTable
             columns={columns}

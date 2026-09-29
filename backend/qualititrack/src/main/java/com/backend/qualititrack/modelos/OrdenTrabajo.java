@@ -68,26 +68,19 @@ public class OrdenTrabajo {
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "cotizacion_id", nullable = false)
     private Cotizacion cotizacion;
 
-    @OneToMany(
-            mappedBy = "ordenTrabajo",
-            cascade = CascadeType.REMOVE,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY
-    )
+    @OneToMany(mappedBy = "ordenTrabajo", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<OtFase> fases;
 
-    @OneToOne(
-            mappedBy = "ordenTrabajo",
-            cascade = CascadeType.REMOVE,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY
-    )
-    private AuditoriaCalidad calidadChecklist;
+    // Una OT puede tener más de una auditoría: una por cada vuelta a Calidad
+    // después de un retrabajo (#223). Con @OneToOne, la segunda auditoría
+    // rompe cualquier consulta de la OT ("more than one row with the given
+    // identifier"), así que la relación es una lista.
+    @OneToMany(mappedBy = "ordenTrabajo", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<AuditoriaCalidad> auditorias;
 
     @PrePersist
     protected void onCreate() {
@@ -175,12 +168,12 @@ public class OrdenTrabajo {
         this.fases = fases;
     }
 
-    public AuditoriaCalidad getCalidadChecklist() {
-        return calidadChecklist;
+    public List<AuditoriaCalidad> getAuditorias() {
+        return auditorias;
     }
 
-    public void setCalidadChecklist(AuditoriaCalidad calidadChecklist) {
-        this.calidadChecklist = calidadChecklist;
+    public void setAuditorias(List<AuditoriaCalidad> auditorias) {
+        this.auditorias = auditorias;
     }
 
 }

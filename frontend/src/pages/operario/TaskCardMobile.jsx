@@ -20,15 +20,30 @@ export const TaskCardMobile = ({ tarea, accionEnCurso = false, onIniciar, onFina
     <Card className="w-full p-4 sm:p-5" data-testid={`task-card-${tarea.id}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-metadata text-text-muted">{tarea.ot_numero}</p>
-          <h3 className="truncate text-h2 text-ink">{tarea.fase_nombre}</h3>
-          <p className="mt-0.5 text-label text-text-secondary">
-            Fase {tarea.numero_secuencia}
-            {tarea.tiempo_estimado_minutos ? ` · ~${tarea.tiempo_estimado_minutos} min` : ''}
-          </p>
+          <p className="text-label text-primary">{tarea.ot_numero ?? "—"}</p>
+          <h3 className="truncate text-h2 text-ink">{tarea.fase_nombre ?? "Fase sin nombre"}</h3>
         </div>
         <Badge variant={estado.variant}>{estado.label}</Badge>
       </div>
+
+      {/* Cada dato con su etiqueta: sin esto "Tope de caja 10 mm" al lado de un
+          codigo de OT no deja claro cual es la pieza y cual la fase. */}
+      {(tarea.descripcion_pieza || tarea.cantidad != null) && (
+        <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-label">
+          {tarea.descripcion_pieza && (
+            <>
+              <dt className="text-text-muted">Pieza</dt>
+              <dd className="min-w-0 break-words text-ink">{tarea.descripcion_pieza}</dd>
+            </>
+          )}
+          {tarea.cantidad != null && (
+            <>
+              <dt className="text-text-muted">Cantidad</dt>
+              <dd className="text-ink">{tarea.cantidad} uds</dd>
+            </>
+          )}
+        </dl>
+      )}
 
       {tarea.fecha_vencimiento && (
         <p className="mt-3 flex items-center gap-1.5 text-label text-text-secondary">
@@ -43,7 +58,7 @@ export const TaskCardMobile = ({ tarea, accionEnCurso = false, onIniciar, onFina
           variant="ghost"
           onClick={() => onVerDetalle?.(tarea)}
           className="min-h-[56px] w-full text-base font-semibold"
-          aria-label={`Ver detalle de ${tarea.fase_nombre} de ${tarea.ot_numero}`}
+          aria-label={`Ver detalle de ${tarea.fase_nombre ?? "la fase"} de ${tarea.ot_numero ?? "la OT"}`}
         >
           <Eye className="h-5 w-5" aria-hidden="true" />
           Ver detalle
@@ -54,7 +69,7 @@ export const TaskCardMobile = ({ tarea, accionEnCurso = false, onIniciar, onFina
             onClick={() => onIniciar?.(tarea)}
             loading={accionEnCurso}
             className="min-h-[56px] w-full text-base font-semibold"
-            aria-label={`Iniciar ${tarea.fase_nombre} de ${tarea.ot_numero}`}
+            aria-label={`Iniciar ${tarea.fase_nombre ?? "la fase"} de ${tarea.ot_numero ?? "la OT"}`}
           >
             <Play className="h-5 w-5" aria-hidden="true" />
             Iniciar
@@ -67,7 +82,7 @@ export const TaskCardMobile = ({ tarea, accionEnCurso = false, onIniciar, onFina
             onClick={() => onFinalizar?.(tarea)}
             loading={accionEnCurso}
             className="min-h-[56px] w-full text-base font-semibold"
-            aria-label={`Terminar ${tarea.fase_nombre} de ${tarea.ot_numero}`}
+            aria-label={`Terminar ${tarea.fase_nombre ?? "la fase"} de ${tarea.ot_numero ?? "la OT"}`}
           >
             <CheckCheck className="h-5 w-5" aria-hidden="true" />
             Terminar

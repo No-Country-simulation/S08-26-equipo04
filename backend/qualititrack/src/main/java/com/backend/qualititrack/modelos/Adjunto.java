@@ -54,6 +54,9 @@ public class Adjunto {
     @Column(name = "ruta_almacenamiento", nullable = false, length = 500)
     private String rutaAlmacenamiento;
 
+    @Column(name = "contenido", columnDefinition = "bytea")
+    private byte[] contenido;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subido_por_id", nullable = false)
     private Usuario subidoPor;

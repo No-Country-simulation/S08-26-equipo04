@@ -1,10 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { addMinutes, differenceInMinutes, format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { ChevronDown, Clock3, FileText, MessagesSquare } from "lucide-react";
-import { mocks } from "../../mocks";
+import { Eye } from "lucide-react";
+import {
+  extractApiMessage,
+  listarAdjuntos,
+  listarNotasFase,
+  verAdjunto,
+} from "../../api";
+import { mensajeErrorAdjunto } from "../../utils/adjuntos";
 import {
   Badge,
+  Button,
   EmptyState,
   ErrorBanner,
   LoadingSpinner,
@@ -19,59 +26,162 @@ const estadoConfig = {
 
 const formatFecha = (value) => {
   try {
-    return format(parseISO(value), "dd/MM/yyyy HH:mm", { locale: es });
+    const fecha = typeof value === "string" ? parseISO(value) : value;
+    return format(fecha, "d MMM yyyy · HH:mm", { locale: es });
   } catch {
     return value;
   }
 };
 
-const formatBytes = (bytes) => {
-  if (!bytes && bytes !== 0) return "";
-  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+// Minutos que sigue viva la URL del blob: la pestaña que la abrio ya la
+// cargo, pero revocarla de inmediato la rompe.
+const REVOCACION_MS = 60_000;
+
+// El backend agrupa las notas por origen (OrigenNota) y siempre manda las dos
+// claves.
+const mapNotas = (data) => {
+  const agrupadas = data && typeof data === "object" ? data : {};
+  const de = (clave) => (Array.isArray(agrupadas[clave]) ? agrupadas[clave] : []);
+  return { notasCalidad: de("CALIDAD"), notasProduccion: de("JEFE_PRODUCCION") };
 };
 
 /**
  * Detalle de tarea del operario (HU-3.2/3.3/3.4). Solo lectura:
- * adjuntos/planos de la solicitud, vencimiento calculado y notas
- * separadas por origen. El operario no puede crear notas.
+ * vencimiento calculado, adjuntos/planos de la solicitud y notas separadas
+ * por origen. Sin mocks y sin cadena OT -> cotizacion: la tarea ya trae
+ * `descripcion_pieza`, `cantidad` y `solicitud_id` en el DTO (BE #219), y
+ * las notas salen de GET /api/ot-fases/{id}/notas. Un id real jamas debe
+ * cruzarse con datos inventados. El operario no puede crear notas.
  */
 export const TaskDetailModal = ({ tarea, open, onClose }) => {
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState(null);
+  // Los adjuntos vienen de la API (GET /api/solicitudes/{id}/documentos),
+  // con el solicitud_id que ya trae la tarea. El estado guarda a que
+  // solicitud pertenece cada respuesta para no necesitar setState dentro
+  // del efecto.
+  const [adjuntosState, setAdjuntosState] = useState({
+    solicitudId: null,
+    lista: [],
+    error: null,
+  });
+  const [versionAdjuntos, setVersionAdjuntos] = useState(0);
+  const [abriendoId, setAbriendoId] = useState(null);
+  const [errorDocumento, setErrorDocumento] = useState(null);
+  // Notas de la fase (GET /api/ot-fases/{id}/notas), con la misma proteccion
+  // contra respuestas de otra tarea.
+  const [notasState, setNotasState] = useState({
+    otFaseId: null,
+    notasCalidad: [],
+    notasProduccion: [],
+    error: null,
+  });
+  const [versionNotas, setVersionNotas] = useState(0);
+  const blobsAbiertos = useRef([]);
+
+  const otFaseId = tarea?.id ?? null;
+  const esDeEstaFase = notasState.otFaseId === otFaseId;
+  const notasCalidad = esDeEstaFase ? notasState.notasCalidad : [];
+  const notasProduccion = esDeEstaFase ? notasState.notasProduccion : [];
+  const errorNotas = esDeEstaFase ? notasState.error : null;
+  const cargandoNotas = open && otFaseId != null && !esDeEstaFase;
 
   useEffect(() => {
-    if (!open) return undefined;
-    // Los mocks son sincronos; se simula latencia para ejercitar
-    // los estados de UI segun spec §7.1 (reemplazar por GET reales).
-    const timer = setTimeout(() => {
-      setError(null);
-      setCargando(false);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [open, tarea?.id]);
+    if (!open || otFaseId == null) return undefined;
+    let cancelado = false;
+    listarNotasFase(otFaseId).then(
+      (data) => {
+        if (cancelado) return;
+        setNotasState({ otFaseId, ...mapNotas(data), error: null });
+      },
+      (err) => {
+        if (cancelado) return;
+        setNotasState({
+          otFaseId,
+          notasCalidad: [],
+          notasProduccion: [],
+          error: extractApiMessage(err, "No se pudieron cargar las notas."),
+        });
+      },
+    );
+    return () => {
+      cancelado = true;
+    };
+  }, [open, otFaseId, versionNotas]);
 
-  const detalle = useMemo(() => {
-    if (!tarea) return null;
-    const ot = mocks.ordenesTrabajo.find(
-      (item) => item.id === tarea.orden_trabajo_id,
+  // BE #219: la tarea ya trae el solicitud_id, sin resolver la cadena
+  // OT -> cotizacion -> solicitud.
+  const solicitudId = tarea?.solicitud_id ?? tarea?.solicitudId ?? null;
+  const esDeEstaSolicitud = adjuntosState.solicitudId === solicitudId;
+  const adjuntos = esDeEstaSolicitud ? adjuntosState.lista : [];
+  const errorAdjuntos = esDeEstaSolicitud ? adjuntosState.error : null;
+  const cargandoAdjuntos =
+    open && solicitudId != null && !esDeEstaSolicitud;
+
+  useEffect(() => {
+    if (!open || solicitudId == null) return undefined;
+    let cancelado = false;
+    listarAdjuntos(solicitudId).then(
+      (lista) => {
+        if (cancelado) return;
+        setAdjuntosState({ solicitudId, lista, error: null });
+      },
+      (err) => {
+        if (cancelado) return;
+        setAdjuntosState({
+          solicitudId,
+          lista: [],
+          error: extractApiMessage(err, "No se pudieron cargar los adjuntos."),
+        });
+      },
     );
-    const cotizacion = ot
-      ? mocks.cotizaciones.find((item) => item.id === ot.cotizacion_id)
-      : null;
-    const solicitudId = cotizacion?.solicitud_id ?? null;
-    const adjuntos =
-      solicitudId == null
-        ? []
-        : mocks.adjuntos.filter((item) => item.solicitud_id === solicitudId);
-    const notas = mocks.notas.filter(
-      (item) => item.ot_fase_id === tarea.id,
-    );
-    const notasCalidad = notas.filter((item) => item.origen === "CALIDAD");
-    const notasProduccion = notas.filter(
-      (item) => item.origen !== "CALIDAD",
-    );
-    return { ot, cotizacion, adjuntos, notasCalidad, notasProduccion };
-  }, [tarea]);
+    return () => {
+      cancelado = true;
+    };
+  }, [open, solicitudId, versionAdjuntos]);
+
+  // Libera los object URLs de los documentos que se abrieron.
+  useEffect(
+    () => () => {
+      blobsAbiertos.current.forEach((item) => {
+        clearTimeout(item.timer);
+        URL.revokeObjectURL(item.url);
+      });
+      blobsAbiertos.current = [];
+    },
+    [],
+  );
+
+  const verDocumento = async (adjunto) => {
+    setAbriendoId(adjunto.id);
+    setErrorDocumento(null);
+    try {
+      const blob = await verAdjunto(adjunto.id);
+      const url = URL.createObjectURL(blob);
+      const ventana = window.open(url, "_blank");
+      if (ventana) {
+        ventana.opener = null;
+      } else {
+        // Popup bloqueado: se reintenta con un ancla.
+        const enlace = document.createElement("a");
+        enlace.href = url;
+        enlace.target = "_blank";
+        enlace.rel = "noopener noreferrer";
+        enlace.click();
+      }
+      const timer = setTimeout(() => {
+        URL.revokeObjectURL(url);
+        blobsAbiertos.current = blobsAbiertos.current.filter(
+          (item) => item.url !== url,
+        );
+      }, REVOCACION_MS);
+      blobsAbiertos.current = [...blobsAbiertos.current, { url, timer }];
+    } catch (err) {
+      setErrorDocumento(
+        await mensajeErrorAdjunto(err, "No se pudo abrir el documento."),
+      );
+    } finally {
+      setAbriendoId(null);
+    }
+  };
 
   const vencimiento = useMemo(() => {
     if (!tarea?.tiempo_estimado_minutos) return null;
@@ -85,10 +195,19 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
     return { limite, restantes };
   }, [tarea]);
 
+  const reintentarNotas = () => {
+    setNotasState({
+      otFaseId: null,
+      notasCalidad: [],
+      notasProduccion: [],
+      error: null,
+    });
+    setVersionNotas((v) => v + 1);
+  };
+
   const reintentar = () => {
-    setError(null);
-    setCargando(true);
-    setTimeout(() => setCargando(false), 300);
+    setAdjuntosState({ solicitudId: null, lista: [], error: null });
+    setVersionAdjuntos((v) => v + 1);
   };
 
   const estado = tarea
@@ -96,9 +215,7 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
     : null;
 
   const renderContenido = () => {
-    if (cargando) return <LoadingSpinner label="Cargando detalle" />;
-    if (error) return <ErrorBanner message={error} onRetry={reintentar} />;
-    if (!tarea || !detalle) {
+    if (!tarea) {
       return (
         <EmptyState
           title="Sin detalle"
@@ -106,165 +223,223 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
         />
       );
     }
-    return (
-      <div className="space-y-6">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-metadata text-text-muted">{tarea.ot_numero}</p>
-            <p className="text-label text-text-secondary">
-              Fase {tarea.numero_secuencia}
-              {detalle.ot ? ` · ${detalle.ot.cliente_razon_social}` : ""}
-            </p>
-          </div>
-          <Badge variant={estado.variant} className="shrink-0 whitespace-nowrap">{estado.label}</Badge>
-        </div>
+    // BE #219: pieza y cantidad ya vienen en la tarea, sin cadena OT ->
+    // cotizacion. Vencimiento de la tarea o calculado.
+    const descripcionPieza = tarea.descripcion_pieza ?? null;
+    const cantidad = tarea.cantidad ?? null;
+    const venceTexto =
+      tarea.fecha_vencimiento != null
+        ? formatFecha(tarea.fecha_vencimiento)
+        : vencimiento
+          ? formatFecha(vencimiento.limite.toISOString())
+          : null;
+    const sinInstrucciones =
+      !cargandoNotas &&
+      !errorNotas &&
+      notasCalidad.length === 0 &&
+      notasProduccion.length === 0;
 
-        <section aria-labelledby="detalle-vencimiento">
+    return (
+      <div className="space-y-4">
+        <section
+          aria-labelledby="detalle-datos"
+          className="rounded-xl border border-border bg-surface p-4"
+        >
           <h3
-            id="detalle-vencimiento"
-            className="flex items-center gap-2 text-label font-semibold text-ink"
+            id="detalle-datos"
+            className="text-body font-semibold text-ink"
           >
-            <Clock3 className="h-4 w-4" aria-hidden="true" />
-            Vencimiento
+            Datos del trabajo
           </h3>
-          {vencimiento ? (
-            <div className="mt-2 rounded-xl bg-canvas p-3 text-label text-text-secondary">
-              <p>Tiempo estimado: {tarea.tiempo_estimado_minutos} min</p>
-              <p>Limite: {formatFecha(vencimiento.limite.toISOString())}</p>
-              <p className="mt-1 font-semibold text-ink">
-                {vencimiento.restantes >= 0
-                  ? `Te quedan ${vencimiento.restantes} min`
-                  : `Vencida hace ${Math.abs(vencimiento.restantes)} min`}
+          {descripcionPieza && (
+            <p className="mt-2 text-body text-ink">{descripcionPieza}</p>
+          )}
+          {cantidad != null && (
+            <p className="mt-1 text-body text-ink">{cantidad} piezas</p>
+          )}
+          {tarea.tiempo_estimado_minutos != null && (
+            <div className="mt-3">
+              <p className="text-label text-text-muted">Tiempo estimado</p>
+              <p className="mt-0.5 text-body font-semibold text-ink">
+                {tarea.tiempo_estimado_minutos} min
               </p>
             </div>
-          ) : (
-            <p className="mt-2 text-label text-text-secondary">
-              Sin tiempo estimado cargado.
-            </p>
           )}
-          {tarea.fecha_vencimiento && (
-            <p className="mt-1 text-label text-text-secondary">
-              Vence: {formatFecha(tarea.fecha_vencimiento)}
-            </p>
+          {venceTexto && (
+            <div className="mt-3">
+              <p className="text-label text-text-muted">Vence</p>
+              <p className="mt-0.5 text-body font-semibold text-ink">
+                {venceTexto}
+              </p>
+            </div>
           )}
         </section>
 
-        <section aria-labelledby="detalle-adjuntos">
+        <section
+          aria-labelledby="detalle-instrucciones"
+          className="rounded-xl border border-border bg-surface p-4"
+        >
           <h3
-            id="detalle-adjuntos"
-            className="flex items-center gap-2 text-label font-semibold text-ink"
+            id="detalle-instrucciones"
+            className="text-body font-semibold text-ink"
           >
-            <FileText className="h-4 w-4" aria-hidden="true" />
-            Adjuntos de la solicitud
+            Instrucciones
           </h3>
-          {detalle.adjuntos.length === 0 ? (
-            <p className="mt-2 rounded-xl bg-canvas p-3 text-label text-text-secondary">
-              Sin adjuntos: esta solicitud no tiene planos ni documentos.
+          {cargandoNotas && (
+            <p className="mt-2 text-label text-text-secondary">
+              Cargando instrucciones...
             </p>
-          ) : (
-            <ul className="mt-2 space-y-2">
-              {detalle.adjuntos.map((adjunto) => (
-                <li
-                  key={adjunto.id}
-                  className="flex items-center justify-between gap-3 rounded-xl bg-canvas p-3"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-label font-medium text-ink">
-                      {adjunto.nombre_original}
+          )}
+          {!cargandoNotas && errorNotas && (
+            <ErrorBanner
+              message={errorNotas}
+              onRetry={reintentarNotas}
+              className="mt-2"
+            />
+          )}
+          {sinInstrucciones && (
+            <p className="mt-2 text-label text-text-secondary">
+              Sin instrucciones registradas en esta fase.
+            </p>
+          )}
+          {!cargandoNotas && !errorNotas && !sinInstrucciones && (
+            <div className="mt-3 space-y-4">
+              {notasProduccion.length > 0 && (
+                <div className="border-l-[3px] border-border pl-3">
+                  <p className="text-label font-medium text-text-muted">
+                    Jefe de Producción
+                  </p>
+                  {notasProduccion.map((nota) => (
+                    <p
+                      key={nota.id}
+                      className="mt-1 text-body leading-relaxed text-ink"
+                    >
+                      {nota.contenido}
                     </p>
-                    <p className="text-metadata text-text-secondary">
-                      {adjunto.tipo_archivo} · {formatBytes(adjunto.tamanio_bytes)}
+                  ))}
+                </div>
+              )}
+              {notasCalidad.length > 0 && (
+                <div className="border-l-[3px] border-border pl-3">
+                  <p className="text-label font-medium text-text-muted">
+                    Calidad
+                  </p>
+                  {notasCalidad.map((nota) => (
+                    <p
+                      key={nota.id}
+                      className="mt-1 text-body leading-relaxed text-ink"
+                    >
+                      {nota.contenido}
                     </p>
-                  </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+
+        <section
+          aria-labelledby="detalle-documentos"
+          className="rounded-xl border border-border bg-surface p-4"
+        >
+          <h3
+            id="detalle-documentos"
+            className="text-body font-semibold text-ink"
+          >
+            Documentos
+          </h3>
+          {solicitudId == null && (
+            <p className="mt-2 text-label text-text-secondary">
+              La tarea no trae solicitud asociada: sin documentos para mostrar.
+            </p>
+          )}
+          {solicitudId != null && cargandoAdjuntos && (
+            <LoadingSpinner
+              label="Cargando documentos"
+              size="sm"
+              className="min-h-0 py-4"
+            />
+          )}
+          {solicitudId != null && !cargandoAdjuntos && errorAdjuntos && (
+            <ErrorBanner
+              message={errorAdjuntos}
+              onRetry={reintentar}
+              className="mt-2"
+            />
+          )}
+          {solicitudId != null &&
+            !cargandoAdjuntos &&
+            !errorAdjuntos &&
+            adjuntos.length === 0 && (
+              <p className="mt-2 text-label text-text-secondary">
+                Sin documentos disponibles por el momento.
+              </p>
+            )}
+          {solicitudId != null &&
+            !cargandoAdjuntos &&
+            !errorAdjuntos &&
+            adjuntos.length > 0 && (
+            <ul className="mt-3 space-y-3">
+              {adjuntos.map((adjunto) => (
+                <li key={adjunto.id}>
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="min-h-[56px] w-full text-base font-semibold"
+                    loading={abriendoId === adjunto.id}
+                    aria-label={`Ver ${adjunto.nombre_original ?? "documento"}`}
+                    onClick={() => verDocumento(adjunto)}
+                  >
+                    <Eye className="h-5 w-5 shrink-0" aria-hidden="true" />
+                    <span className="min-w-0 truncate">
+                      Ver {adjunto.nombre_original ?? "documento"}
+                    </span>
+                  </Button>
                 </li>
               ))}
             </ul>
           )}
-        </section>
-
-        <section aria-labelledby="detalle-notas">
-          <h3
-            id="detalle-notas"
-            className="flex items-center gap-2 text-label font-semibold text-ink"
-          >
-            <MessagesSquare className="h-4 w-4" aria-hidden="true" />
-            Notas
-          </h3>
-          {detalle.notasCalidad.length === 0 &&
-          detalle.notasProduccion.length === 0 ? (
-            <p className="mt-2 rounded-xl bg-canvas p-3 text-label text-text-secondary">
-              Sin notas: no hay notas de Calidad ni de Produccion para esta
-              tarea.
+          {errorDocumento && (
+            <p
+              role="alert"
+              className="mt-2 rounded-lg bg-error-light p-3 text-label text-error"
+            >
+              {errorDocumento}
             </p>
-          ) : (
-            <div className="mt-2 space-y-2">
-              {detalle.notasCalidad.length > 0 && (
-                <details className="group rounded-xl bg-canvas">
-                  <summary className="flex min-h-[48px] cursor-pointer list-none items-center justify-between gap-2 p-3 text-label font-semibold text-ink [&::-webkit-details-marker]:hidden">
-                    <span className="text-metadata font-semibold uppercase tracking-wide text-text-secondary">
-                      Calidad ({detalle.notasCalidad.length})
-                    </span>
-                    <ChevronDown
-                      className="h-5 w-5 shrink-0 transition-transform group-open:rotate-180"
-                      aria-hidden="true"
-                    />
-                  </summary>
-                  <ul className="space-y-2 px-3 pb-3">
-                    {detalle.notasCalidad.map((nota) => (
-                      <li
-                        key={nota.id}
-                        className="rounded-xl bg-surface p-3 text-label text-text-secondary"
-                      >
-                        <p>{nota.contenido}</p>
-                        <p className="mt-1 text-metadata">
-                          {nota.usuario_nombre} · {formatFecha(nota.created_at)}
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              )}
-              {detalle.notasProduccion.length > 0 && (
-                <details className="group rounded-xl bg-canvas">
-                  <summary className="flex min-h-[48px] cursor-pointer list-none items-center justify-between gap-2 p-3 text-label font-semibold text-ink [&::-webkit-details-marker]:hidden">
-                    <span className="text-metadata font-semibold uppercase tracking-wide text-text-secondary">
-                      Produccion ({detalle.notasProduccion.length})
-                    </span>
-                    <ChevronDown
-                      className="h-5 w-5 shrink-0 transition-transform group-open:rotate-180"
-                      aria-hidden="true"
-                    />
-                  </summary>
-                  <ul className="space-y-2 px-3 pb-3">
-                    {detalle.notasProduccion.map((nota) => (
-                      <li
-                        key={nota.id}
-                        className="rounded-xl bg-surface p-3 text-label text-text-secondary"
-                      >
-                        <p>{nota.contenido}</p>
-                        <p className="mt-1 text-metadata">
-                          {nota.usuario_nombre} · {formatFecha(nota.created_at)}
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              )}
-            </div>
           )}
         </section>
       </div>
     );
   };
 
+  // El encabezado del modal replica la cabecera del diseño: OT en teal,
+  // fase en grande y badge con punto al lado.
+  const tituloModal = tarea ? (
+    <span className="block">
+      <span className="block text-label font-semibold text-primary">
+        {tarea.ot_numero ?? "—"}
+      </span>
+      <span className="mt-1 flex flex-wrap items-center gap-2">
+        <span className="text-h1 text-ink">
+          {tarea.fase_nombre ?? "Fase sin nombre"}
+        </span>
+        {estado && (
+          <Badge variant={estado.variant} className="whitespace-nowrap">
+            <span
+              className="h-1.5 w-1.5 rounded-full bg-current"
+              aria-hidden="true"
+            />
+            {estado.label}
+          </Badge>
+        )}
+      </span>
+    </span>
+  ) : (
+    "Detalle de tarea"
+  );
+
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title={
-        tarea ? `${tarea.ot_numero} · ${tarea.fase_nombre}` : "Detalle de tarea"
-      }
-    >
+    <Modal open={open} onClose={onClose} title={tituloModal}>
       <div className="max-h-[70vh] overflow-y-auto">{renderContenido()}</div>
     </Modal>
   );

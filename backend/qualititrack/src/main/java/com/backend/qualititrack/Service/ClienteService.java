@@ -26,12 +26,21 @@ public class ClienteService {
         if (clienteRepository.findByEmail(clienteDTO.getEmail()).isPresent()) {
             throw new InvalidStateException("El email " + clienteDTO.getEmail() + " ya está registrado");
         }
+        
+        // valida si el cuit ya existe
+        if (clienteRepository.findByCuit(clienteDTO.getCuit()).isPresent()) {
+            throw new InvalidStateException("El cuit " + clienteDTO.getCuit() + " ya está registrado en un cliente existente");
+        }
 
         Cliente cliente = new Cliente();
         cliente.setContactoNombre(clienteDTO.getContactoNombre());
+        cliente.setCuit(clienteDTO.getCuit());
+        cliente.setDireccion(clienteDTO.getDireccion());
         cliente.setEmail(clienteDTO.getEmail());
         cliente.setTelefono(clienteDTO.getTelefono());
+        cliente.setRazonSocial(clienteDTO.getRazonSocial());
         cliente.setCreatedAt(OffsetDateTime.now());
+        cliente.setActivo(true);
 
         Cliente clienteGuardado = clienteRepository.save(cliente);
 
@@ -95,10 +104,9 @@ public class ClienteService {
         Cliente cliente = clienteRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cliente con ID " + id + " no encontrado"));
 
-        // Borrado lógico - se puede implementar con un campo 'activo' si es necesario
-        // Por ahora, hacemos borrado físico ya que Cliente no tiene solicitudes
-        // críticas
-        clienteRepository.delete(cliente);
+        // Borrado lógico mediante campo "activo"
+        cliente.setActivo(false);
+        clienteRepository.save(cliente);
     }
 
     private ClienteDTO convertirADTO(Cliente cliente) {
@@ -106,6 +114,7 @@ public class ClienteService {
         dto.setId(cliente.getId());
         dto.setContactoNombre(cliente.getContactoNombre());
         dto.setEmail(cliente.getEmail());
+        dto.setCuit(cliente.getCuit());
         dto.setTelefono(cliente.getTelefono());
         dto.setCreatedAt(cliente.getCreatedAt());
         dto.setUpdatedAt(cliente.getUpdatedAt());

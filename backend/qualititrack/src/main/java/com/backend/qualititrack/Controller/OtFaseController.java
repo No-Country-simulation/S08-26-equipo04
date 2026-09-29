@@ -11,49 +11,46 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.backend.qualititrack.DTO.OtFaseReasignacionRequestDTO;
 import com.backend.qualititrack.DTO.OtFaseReasignacionResponseDTO;
 import com.backend.qualititrack.DTO.OtFaseResponseDTO;
+import com.backend.qualititrack.DTO.RehacerFasesRequestDTO;
 import com.backend.qualititrack.Service.OtFaseService;
 
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/ot-fases")
 public class OtFaseController {
-    
+
     private final OtFaseService otFaseService;
 
     public OtFaseController(OtFaseService otFaseService) {
         this.otFaseService = otFaseService;
     }
 
-    // GET /api/ot-fases 
+    // GET /api/ot-fases (?orden_trabajo_id=X filtro opcional)
     // Obtener lista de fases (Jefe? -> todas | Operario? -> las propias).
     // solo accesible a roles Operario y Jefe de Producción
     @GetMapping
     @PreAuthorize("hasAnyRole('OPERARIO', 'JEFE_PRODUCCION')")
-    public ResponseEntity<List<OtFaseResponseDTO>> listarFasesOperario(Long operarioId, Authentication authentication) {
-        // Obtenemos las authorities (roles) del usuario autenticado
+    public ResponseEntity<List<OtFaseResponseDTO>> listarFasesOperario(
+            @RequestParam(name = "orden_trabajo_id", required = false) Long ordenTrabajoId,
+            Authentication authentication) {
         boolean esJefe = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_JEFE_PRODUCCION"));
         List<OtFaseResponseDTO> lista;
-        
-        // Jefe -> todas las fases
         if (esJefe) {
-            lista = otFaseService.listarFases();
+            lista = ordenTrabajoId != null
+                    ? otFaseService.listarFasesDeOt(ordenTrabajoId)
+                    : otFaseService.listarFases();
+        } else {
+            lista = otFaseService.listarFasesOperario(authentication.getName());
         }
-        // Operario -> solo sus fases
-        else {
-            // Obtener mail del usuario actual para luego identificar su id en el servicio
-            String operarioMail = authentication.getName();
-            // Buscar fases del usuario actual en el servicio
-            lista = otFaseService.listarFasesOperario(operarioMail);
-        }
-
-        // HTTP 201 Created (recurso creado exitosamente)
-        return ResponseEntity.status(HttpStatus.CREATED).body(lista);
+        return ResponseEntity.ok(lista);
     }
 
     // POST /api/ot-fases/{id}/iniciar
@@ -75,10 +72,22 @@ public class OtFaseController {
         OtFaseResponseDTO response = otFaseService.finalizarFase(id, authentication.getName());
         return ResponseEntity.ok(response);
     }
-    
+
+    // POST /api/ot-fases
+    // Crea nuevos registros de fases para retrabajo (solo accesible a rol
+    // JEFE_PRODUCCION)
+    @PostMapping
+    @PreAuthorize("hasAnyRole('JEFE_PRODUCCION')")
+    public ResponseEntity<List<OtFaseResponseDTO>> rehacerFases(@Valid @RequestBody RehacerFasesRequestDTO request,
+            Authentication authentication) {
+        List<OtFaseResponseDTO> response = otFaseService.rehacerFases(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
     @PostMapping("/{id}/reasignar")
     @PreAuthorize("hasAnyRole('JEFE_PRODUCCION')")
-    public ResponseEntity<OtFaseReasignacionResponseDTO> reasignarFase(@PathVariable Long id, @RequestBody OtFaseReasignacionRequestDTO dto, Authentication auth) {
+    public ResponseEntity<OtFaseReasignacionResponseDTO> reasignarFase(@PathVariable Long id,
+            @RequestBody OtFaseReasignacionRequestDTO dto, Authentication auth) {
         OtFaseReasignacionResponseDTO response = otFaseService.reasignarFase(id, dto, auth.getName());
         return ResponseEntity.ok(response);
     }

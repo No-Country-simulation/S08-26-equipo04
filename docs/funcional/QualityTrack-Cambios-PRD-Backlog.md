@@ -276,4 +276,107 @@ Surgieron en la discusión y el modelo queda preparado para recibirlas sin redis
 
 ---
 
+## 08. Decisiones del 25/09/2026 · desarrollo, semana 4
+
+Surgieron al contrastar el código y las tareas pendientes contra el PRD v2 y el Backlog v2. Igual que las anteriores, ninguna cambia el flujo acordado. D-1 a D-3 lo precisan o confirman un criterio que el desarrollo había simplificado; D-4 a D-6 registran cambios que ya se hicieron en el código y faltaba documentar. Todas están aplicadas en el PRD, el Backlog, el esquema de base y la especificación técnica de backend, marcadas con *(25/09 — D-n)*.
+
+### D-1 · Una fase en ejecución no se reasigna
+
+**Dónde impacta:** PRD sección 06 (Regla 4) · HU-2.2
+
+La Regla 4 dice que la OT puede reasignarse *"en cualquier momento del ciclo"*. El backend ya bloquea la reasignación de una fase que el operario comenzó.
+
+**Decisión tomada:** se mantiene el bloqueo. Una fase se puede reasignar en cualquier momento **antes de que el operario la comience**.
+
+**Por qué:** si el operario ya marcó "comenzar", la fase tiene registrado su inicio real. Pasarla a otro operario rompe ese registro y la duración real que usan el expediente (HU-1.2) y la vista de Calidad (HU-5.4). Es coherente con DF-4, que ya describe el balanceo de carga como pasar la tarea *"antes de que empiece"*.
+
+**Qué cambia:** la Regla 4 del PRD pasa a decir "en cualquier momento antes de que el operario comience la fase". HU-2.2 suma ese límite como criterio de aceptación.
+
+---
+
+### D-2 · El checklist se envía completo junto con el veredicto
+
+**Dónde impacta:** HU-4.2 · HU-4.3
+
+La especificación técnica de backend preveía guardar las respuestas del checklist a medida que se completaban, antes del veredicto. El backlog no lo pide.
+
+**Decisión tomada:** no hay guardado parcial. Las 7 respuestas se envían junto con el veredicto y las observaciones, en una sola operación (`POST /api/calidad/{id}/conforme` o `/no-conforme`).
+
+**Por qué:** es lo que pide el backlog y simplifica backend y frontend. Además, una auditoría sin veredicto guardada en la base se contaría en el porcentaje de conformidad de HU-5.4.
+
+**Consecuencia a tener presente:** si el auditor sale de la pantalla antes de confirmar, vuelve a completar el checklist. Son 7 puntos, aceptable para el MVP.
+
+**Qué cambia:** la especificación técnica de backend (endpoint `POST /api/calidad/{id}/checklist`) queda sin uso. PRD y Backlog no cambian.
+
+---
+
+### D-3 · Al rehacer, el Jefe elige operario y tiempo por fase
+
+**Dónde impacta:** HU-2.3
+
+El backlog pide que, al mandar a rehacer, el Jefe *"asigne operario(s) y tiempo a cada una"*. La primera implementación solo recibía qué fases rehacer y copiaba el operario y el tiempo de la ejecución anterior.
+
+**Decisión tomada:** se implementa como pide el backlog. Para cada fase que manda a rehacer, el Jefe elige un operario habilitado para esa fase y un tiempo estimado. Por defecto se precargan los de la ejecución anterior.
+
+**Por qué:** es el centro de la historia. Si la pieza salió mal, muchas veces el Jefe quiere que la rehaga otra persona o con otro tiempo.
+
+**Qué cambia:** nada en PRD ni Backlog; se confirma el criterio existente.
+
+---
+
+### D-4 · Datos del cliente: CUIT único y todos los campos obligatorios
+
+**Dónde impacta:** PRD sección 07 (Vendedor, "Levantar pedido") · HU-1.1
+
+El PRD pedía nombre, dirección y teléfono. Durante el desarrollo se sumaron el CUIT y el email, y se hicieron obligatorios (#160, #161, #188).
+
+**Decisión tomada:** el cliente se registra con razón social, CUIT, nombre de contacto, dirección, teléfono y email, todos obligatorios. El CUIT no se repite: si ya existe, el sistema no deja cargar el cliente otra vez.
+
+**Por qué:** evita clientes duplicados y deja el email disponible para enviar la cotización.
+
+**Qué cambia:** PRD 07 y HU-1.1 (datos del cliente y un criterio para el CUIT repetido). Esquema de base: columna `clientes.cuit` única.
+
+---
+
+### D-5 · La fase se crea con sus operarios
+
+**Dónde impacta:** PRD sección 07 (Gerente, "Configuración global") · HU-5.1 · HU-2.1 · HU-2.2
+
+Al aprobar una cotización, el sistema asigna a cada fase un operario habilitado. Si una fase no tenía ninguno, la aprobación fallaba.
+
+**Decisión tomada:** el Gerente elige los operarios en el mismo paso en que crea la fase, y no puede crear una fase sin al menos uno ni deshabilitar al último. El Jefe de producción solo ve para cotizar las fases activas con operarios, y al reasignar solo puede elegir operarios habilitados para esa fase.
+
+**Por qué:** resuelve el problema en el origen con un flujo simple para el MVP.
+
+**Supuesto del MVP:** no se contempla deshabilitar operarios que tienen cotizaciones en curso; queda como mejora.
+
+**Qué cambia:** PRD 07 y HU-5.1, HU-2.1 y HU-2.2 (un criterio cada una).
+
+---
+
+### D-6 · Los adjuntos se guardan en la base de datos
+
+**Dónde impacta:** HU-1.1 · HU-3.2 · Esquema de base
+
+Los archivos se guardaban en el disco del servidor, que en Render se borra en cada despliegue o reinicio.
+
+**Decisión tomada:** el archivo se guarda en la tabla `adjuntos` (columna `contenido`), con un máximo de 10 MB por archivo, y hay un endpoint para verlo desde el navegador (#199).
+
+**Por qué:** es la solución más simple que no pierde archivos con el plan gratuito. Si el producto sigue después del programa, conviene pasar a un servicio de archivos.
+
+**Qué cambia:** HU-1.1 (criterio de archivos guardados y límite de 10 MB). Esquema de base: columna `adjuntos.contenido`.
+
+---
+
+| # | Punto | Tipo | Documento a tocar |
+|---|---|---|---|
+| D-1 | Una fase en ejecución no se reasigna | Definición | PRD 06 (Regla 4) · HU-2.2 |
+| D-2 | Checklist completo junto con el veredicto | Definición | HU-4.2 · Especificación técnica de backend |
+| D-3 | Operario y tiempo por fase al rehacer | Confirmación | HU-2.3 · Especificación técnica de backend |
+| D-4 | CUIT único y datos del cliente obligatorios | Alcance | PRD 07 · HU-1.1 · Esquema |
+| D-5 | La fase se crea con sus operarios | Definición | PRD 07 · HU-5.1 · HU-2.1 · HU-2.2 · Especificación técnica de backend |
+| D-6 | Adjuntos guardados en la base | Técnico | HU-1.1 · Esquema · Especificación técnica de backend |
+
+---
+
 *QualityTrack · NO-Country 2026. Derivado de la consolidación del esquema de base de datos (`docs/datos/QualityTrack-Esquema-Base-Datos-v2.md`) contra la Especificación Funcional v1 y el Backlog v1.*

@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import com.backend.qualititrack.DTO.SolicitudDTO;
 import com.backend.qualititrack.DTO.SolicitudResponseDTO;
 import com.backend.qualititrack.Enum.EstadoSolicitud;
+import com.backend.qualititrack.exception.EntityNotFoundException;
+import com.backend.qualititrack.exception.InvalidStateException;
 import com.backend.qualititrack.modelos.Cliente;
 import com.backend.qualititrack.modelos.Solicitud;
 import com.backend.qualititrack.modelos.Usuario;
@@ -16,7 +18,7 @@ import com.backend.qualititrack.repository.ClienteRepository;
 import com.backend.qualititrack.repository.SolicitudRepository;
 import com.backend.qualititrack.repository.UsuarioRepository;
 
-import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 
 @Service
 public class SolicitudService {
@@ -48,6 +50,12 @@ public class SolicitudService {
         if (dto.getContactoNombre() == null || dto.getContactoNombre().isBlank()) {
             faltantes.add("contactoNombre");
         }
+        if (dto.getEmail() == null || dto.getEmail().isBlank()) {
+            faltantes.add("email");
+        }
+        if (dto.getCuit() == null || dto.getCuit().isBlank()) {
+            faltantes.add("cuit");
+        }
         if (dto.getTelefono() == null || dto.getTelefono().isBlank()) {
             faltantes.add("telefono");
         }
@@ -58,6 +66,7 @@ public class SolicitudService {
     }
 
     // Crea una nueva
+    @Transactional 
     public SolicitudResponseDTO crear(SolicitudDTO dto, String vendedorMail) {
         Cliente cliente;
 
@@ -71,13 +80,19 @@ public class SolicitudService {
             // cliente
             List<String> faltantes = camposFaltantesNuevoCliente(dto);
             if (!faltantes.isEmpty()) {
-                throw new IllegalArgumentException(
+                throw new InvalidStateException(
                         "Faltan datos obligatorios para crear el nuevo cliente: " + String.join(", ", faltantes));
+            }
+            // Chequear que el cuit sea efectivamente único
+            if (clienteRepository.findByCuit(dto.getCuit()).isPresent()) {
+                throw new InvalidStateException(
+                        "El cuit " + dto.getCuit() + " ya está registrado en un cliente existente");
             }
             // si están todos los datos, generar el cliente
             Cliente nuevoCliente = new Cliente();
             nuevoCliente.setRazonSocial(dto.getRazonSocial());
             nuevoCliente.setContactoNombre(dto.getContactoNombre());
+            nuevoCliente.setCuit(dto.getCuit());
             nuevoCliente.setTelefono(dto.getTelefono());
             nuevoCliente.setDireccion(dto.getDireccion());
             nuevoCliente.setEmail(dto.getEmail());
@@ -107,7 +122,7 @@ public class SolicitudService {
         // Retornar nueva solicitud en forma de dto
         return convertirAResponseDTO(guardada);
     }
-        
+
     // (Jefe de producción) Devuelve las solicitudes sin cotizar.
     public List<SolicitudDTO> obtenerPendientes() {
         return solicitudRepository.findByEstado(EstadoSolicitud.PENDIENTE_COTIZACION)

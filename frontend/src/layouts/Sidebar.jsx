@@ -9,6 +9,7 @@ import {
   PackageCheck,
   PanelLeftClose,
   Settings,
+  TriangleAlert,
   Truck,
   Wrench,
   X,
@@ -23,7 +24,7 @@ const items = [
     label: "Solicitudes",
     to: "/solicitudes",
     icon: Clipboard,
-    roles: ["VENDEDOR"],
+    roles: ["VENDEDOR", "JEFE_PRODUCCION"],
   },
   {
     label: "Cotizaciones",
@@ -53,6 +54,12 @@ const items = [
     label: "Planta",
     to: "/planta",
     icon: ClipboardList,
+    roles: ["JEFE_PRODUCCION"],
+  },
+  {
+    label: "No conformidades",
+    to: "/no-conformidades",
+    icon: TriangleAlert,
     roles: ["JEFE_PRODUCCION"],
   },
   {

@@ -6,9 +6,10 @@ import { OperariosFasePage } from "../pages/config/OperariosFasePage";
 import { CotizacionesPage } from "../pages/cotizaciones/CotizacionesPage";
 import { CotizacionFormPage } from "../pages/cotizaciones/CotizacionFormPage";
 import { CotizacionDetailPage } from "../pages/cotizaciones/CotizacionDetailPage";
-import { DashboardPage } from "../pages/DashboardPage";
+import { DashboardPage } from "../pages/dashboard/DashboardPage";
 import { LoginPage } from "../pages/LoginPage";
 import { GestionPlantaPage } from "../pages/planta/GestionPlantaPage";
+import { NoConformidadesPage } from "../pages/jefe/NoConformidadesPage";
 import { SolicitudFormPage } from "../pages/solicitudes/SolicitudFormPage";
 import { SolicitudesPage } from "../pages/solicitudes/SolicitudesPage";
 import { ProtectedRoute } from "./ProtectedRoute";
@@ -50,7 +51,13 @@ export const AppRoutes = () => {
               )
             }
           />
-          <Route element={<ProtectedRoute roles={["VENDEDOR"]} />}>
+          {/* Solicitudes: Vendedor gestiona, Jefe cotiza desde el listado (FE-154).
+              /solicitudes/nueva sigue solo Vendedor. */}
+          <Route
+            element={
+              <ProtectedRoute roles={["VENDEDOR", "JEFE_PRODUCCION"]} />
+            }
+          >
             <Route path="solicitudes" element={<SolicitudesPage />} />
           </Route>
           <Route element={<ProtectedRoute roles={["VENDEDOR"]} />}>
@@ -84,11 +91,8 @@ export const AppRoutes = () => {
           </Route>
           <Route element={<ProtectedRoute roles={["JEFE_PRODUCCION"]} />}>
             <Route path="cotizaciones/nueva" element={<CotizacionFormPage />} />
-            <Route
-              path="cotizaciones/:id/editar"
-              element={<CotizacionFormPage />}
-            />
             <Route path="planta" element={<GestionPlantaPage />} />
+            <Route path="no-conformidades" element={<NoConformidadesPage />} />
           </Route>
           <Route element={<ProtectedRoute roles={["GERENTE"]} />}>
             <Route

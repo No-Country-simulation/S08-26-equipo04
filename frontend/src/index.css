@@ -35,7 +35,7 @@ button:disabled {
   }
 
   .btn-secondary {
-    @apply border border-border text-ink px-4 py-2 rounded-lg text-label hover:bg-canvas transition-colors;
+    @apply border border-border text-ink px-4 py-2 rounded-lg text-label transition-colors hover:bg-primary-tint hover:border-primary hover:text-primary;
   }
 
   .btn-discrete {
@@ -129,6 +129,12 @@ button:disabled {
 
   .badge-queue {
     @apply bg-[#EAEAEA] text-text-secondary;
+  }
+
+  /* El inline es punto + texto, sin fondo: pisa el bg de la variante
+     (esta regla va después para ganar por cascada). */
+  .badge-inline {
+    background-color: transparent;
   }
 
   /* Tablas y Listas */

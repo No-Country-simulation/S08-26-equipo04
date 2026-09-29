@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const faseSchema = z.object({
+const faseBaseSchema = z.object({
   codigo: z
     .string()
     .min(1, 'El codigo es obligatorio')
@@ -17,8 +17,22 @@ export const faseSchema = z.object({
     .or(z.literal('')),
 });
 
+export const faseCreateSchema = faseBaseSchema.extend({
+  // El backend (CrearFaseRequestDTO, @NotEmpty) exige al menos un operario.
+  operarios_ids: z
+    .array(z.number())
+    .min(1, 'Elegí al menos un operario'),
+});
+
+// En edicion los operarios no se tocan (se gestionan desde la pantalla de
+// operarios por fase): el schema no los incluye.
+export const faseEditSchema = faseBaseSchema;
+
+export const faseSchema = faseCreateSchema;
+
 export const faseDefaults = {
   codigo: '',
   nombre: '',
   descripcion: '',
+  operarios_ids: [],
 };
