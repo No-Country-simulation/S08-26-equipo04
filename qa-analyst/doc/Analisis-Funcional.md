@@ -149,7 +149,7 @@ QualityTrack centraliza la trazabilidad de una pieza o trabajo industrial desde 
 
 ## Flujo principal
 
-```text
+```
 Cliente
    ↓
 Solicitud
@@ -381,6 +381,7 @@ Permitir al Vendedor registrar una solicitud de cliente para iniciar el circuito
 
 La solicitud contempla:
 
+-  razón social
 -  nombre del cliente;
 -  dirección;
 -  teléfono;
@@ -391,6 +392,14 @@ La solicitud contempla:
 -  fecha esperada de entrega.
 
 La descripción y la cantidad son datos obligatorios incorporados en V2.
+
+#  Decisiones del 25/09 (D-1 a D-6)
+
+RN-14 Reasignación (D-1): una fase se reasigna en cualquier momento antes de que el operario la comience; en ejecución, no.
+HU-4.2 (D-2): el checklist no se guarda de a poco: las 7 respuestas se envían junto con el veredicto.
+Flujo E2E de retrabajo (§32, D-3): el Jefe elige operario habilitado y tiempo para cada fase a rehacer; la primera queda en cola y el resto en PENDIENTE.
+HU-3.1 (#175): al generarse la OT, solo la primera fase queda EN_COLA; el resto espera en PENDIENTE y el operario no la ve.
+HU-1.1 (D-4), HU-5.1 (D-5) y adjuntos (D-6): si el análisis los menciona, alinearlos con la matriz v1.2.
 
 ## Reglas
 
