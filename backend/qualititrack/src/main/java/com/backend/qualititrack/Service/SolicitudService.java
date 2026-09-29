@@ -132,8 +132,16 @@ public class SolicitudService {
     }
 
     // (Vendedor) Devuelve todas las solicitudes, pendientes y cotizadas.
-    public List<SolicitudDTO> obtenerTodas() {
+    /*public List<SolicitudDTO> obtenerTodas() {
         return solicitudRepository.findAll()
+                .stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
+    }*/
+
+    // (Vendedor) Devuelve solo las solicitudes que cargó el vendedor logueado.
+    public List<SolicitudDTO> obtenerPorVendedor(String emailVendedor) {
+        return solicitudRepository.findByVendedorEmail(emailVendedor)
                 .stream()
                 .map(this::convertirADTO)
                 .collect(Collectors.toList());
