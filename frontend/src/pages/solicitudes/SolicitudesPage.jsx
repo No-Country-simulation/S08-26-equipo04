@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Calculator, Inbox, Plus, RefreshCw, Search } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useSolicitudes } from "../../hooks/useSolicitudes";
+import { formatFechaEntrega } from "../../api/helpers";
 import {
   Badge,
   Button,
@@ -89,7 +90,7 @@ export const SolicitudesPage = () => {
       {
         accessorKey: "fecha_esperada_entrega",
         header: "Entrega esperada",
-        cell: ({ getValue }) => getValue() || "Sin fecha",
+        cell: ({ getValue }) => formatFechaEntrega(getValue()),
       },
     ];
     // Columna Estado solo si NO es Jefe: para el Jefe es redundante porque

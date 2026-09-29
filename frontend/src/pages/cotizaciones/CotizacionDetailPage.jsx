@@ -5,6 +5,7 @@ import { ArrowLeft, Check, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCotizaciones } from '../../hooks/useCotizaciones';
 import { useSolicitudes } from '../../hooks/useSolicitudes';
+import { formatFechaEntrega } from '../../api/helpers';
 import { Button, Card, CardHeader, CardTitle, Badge, EmptyState, ErrorBanner, LoadingSpinner, Modal, Title } from '../../components/ui';
 
 const estadoBadge = {
@@ -200,7 +201,7 @@ export const CotizacionDetailPage = () => {
           </div>
           <div>
             <p className="p-4 pb-1 text-metadata text-text-muted">Fecha de entrega solicitada</p>
-            <p className="px-4 pb-4 text-body font-semibold text-ink">{fechaEntrega ? new Date(`${fechaEntrega}T12:00:00`).toLocaleDateString('es-AR') : '-'}</p>
+            <p className="px-4 pb-4 text-body font-semibold text-ink">{formatFechaEntrega(fechaEntrega)}</p>
           </div>
         </div>
       </Card>

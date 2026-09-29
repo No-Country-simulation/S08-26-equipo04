@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Eye, FileText } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
-import { formatDate, formatDateTime, verAdjunto } from '../../api';
+import { formatDateTime, formatFechaEntrega, verAdjunto } from '../../api';
 import { TIPOS_ARCHIVO, formatBytes, mensajeErrorAdjunto } from '../../utils/adjuntos';
 import { Badge, EmptyState, ErrorBanner, SkeletonCard } from '../../components/ui';
 import { useExpediente } from '../../hooks/useExpediente';
@@ -475,7 +475,7 @@ export const ExpedientePage = () => {
         ['Cliente', cliente || '—'],
         ['Trabajo', trabajo || '—'],
         ['Cantidad', cantidad != null ? `${cantidad} piezas` : '—'],
-        ['Fecha de entrega solicitada', formatDate(fechaSolicitada)],
+        ['Fecha de entrega solicitada', formatFechaEntrega(fechaSolicitada)],
       ].map(([label, value]) => <div key={label} className="border-b border-border px-4 py-3 last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0"><p className="text-metadata text-text-muted">{label}</p><p className="mt-1 text-label font-semibold text-ink">{value}</p></div>)}</div>
       <div className="mt-4 flex flex-wrap gap-1 rounded-xl border border-border bg-canvas p-1">{tabs.map((tab) => <button key={tab} type="button" onClick={() => setActiveTab(tab)} className={`rounded-lg px-3 py-2 text-metadata ${activeTab === tab ? 'bg-surface text-ink shadow-sm' : 'text-text-secondary hover:bg-surface/70'}`}>{tab}</button>)}</div>
       <div className="mt-4">{renderContent()}</div>

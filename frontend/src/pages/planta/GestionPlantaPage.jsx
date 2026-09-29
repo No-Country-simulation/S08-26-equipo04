@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowRightLeft, Clock3, Users } from 'lucide-react';
 import { toast } from 'sonner';
-import { apiGet, apiPost } from '../../api';
+import { apiGet, apiPost, formatFechaEntrega } from '../../api';
 import { Badge, Button, Card, CardHeader, CardTitle, ErrorBanner, Modal, SkeletonCard, Title } from '../../components/ui';
 
 const estadoVariant = {
@@ -191,14 +191,7 @@ export const GestionPlantaPage = () => {
   const irAPagina = (operarioId, pagina) => {
     setPaginaPorOperario((prev) => ({ ...prev, [operarioId]: pagina }));
   };
-  const formatDate = (value) => {
-    if (!value) return 'Sin fecha';
-    return new Intl.DateTimeFormat('es-AR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    }).format(new Date(value));
-  };
+  const formatDate = (value) => formatFechaEntrega(value);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">

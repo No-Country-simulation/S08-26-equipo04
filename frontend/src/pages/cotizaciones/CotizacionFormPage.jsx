@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { DragDropContext, Droppable } from "@hello-pangea/dnd";
 import { toast } from "sonner";
 import { ArrowLeft, Save } from "lucide-react";
-import { apiGet, extractApiMessage } from "../../api";
+import { apiGet, extractApiMessage, formatFechaEntrega } from "../../api";
 import { useCotizaciones } from "../../hooks/useCotizaciones";
 import { useSolicitudes } from "../../hooks/useSolicitudes";
 import { Button, Card, CardTitle, Field, Title } from "../../components/ui";
@@ -48,7 +48,7 @@ const DetalleSolicitud = ({ solicitud }) => (
     <div>
       <p className="text-metadata text-text-muted">Fecha esperada</p>
       <p className="text-body font-medium text-ink">
-        {solicitud.fecha_esperada_entrega}
+        {formatFechaEntrega(solicitud.fecha_esperada_entrega)}
       </p>
     </div>
     {solicitud.notas_comerciales && (
