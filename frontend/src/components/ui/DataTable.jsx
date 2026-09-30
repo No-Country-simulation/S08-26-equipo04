@@ -73,7 +73,13 @@ export const DataTable = ({
       )}
 
       <div className="table-container">
-        <table className={`table ${comfortable ? 'table-comfortable' : ''}`}>
+        <div
+          className="table-scroll"
+          role="region"
+          aria-label="Tabla con desplazamiento lateral"
+          tabIndex={0}
+        >
+          <table className={`table ${comfortable ? 'table-comfortable' : ''}`}>
           <thead>
             {headerGroups.map((headerGroup) => (
               <tr key={headerGroup.id}>
@@ -148,6 +154,7 @@ export const DataTable = ({
             )}
           </tbody>
         </table>
+        </div>
         <div className="table-footer flex items-center justify-between">
           <span>{footerText}</span>
           {pageCount > 1 && (

@@ -140,6 +140,14 @@ button:disabled {
   /* Tablas y Listas */
   .table-container {
     @apply border border-border rounded-xl overflow-hidden;
+    max-width: 100%;
+  }
+
+  /* Región con scroll lateral: solo la tabla scrollea,
+     el footer/paginación quedan fijos fuera. */
+  .table-scroll {
+    @apply block w-full max-w-full overflow-x-auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .table {
