@@ -212,6 +212,11 @@ public class OrdenTrabajoService {
         dto.setFechaInicioProduccion(ordenTrabajo.getFechaInicioProduccion());
         dto.setFechaTerminoReal(ordenTrabajo.getFechaEntrega());
         dto.setEstado(ordenTrabajo.getEstado());
+
+        if (ordenTrabajo.getCotizacion() != null) {
+            dto.setCotizacionId(ordenTrabajo.getCotizacion().getId());
+        }
+
         dto.setCotizacionId(ordenTrabajo.getCotizacion().getId());
         dto.setReceptorNombre(ordenTrabajo.getReceptorNombre());
         dto.setFechaPaseCalidad(ordenTrabajo.getFechaPaseCalidad());
