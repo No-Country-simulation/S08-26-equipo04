@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { MAX_ADJUNTO_BYTES, formatBytes } from './adjuntos';
+import {
+  MAX_ADJUNTO_BYTES,
+  TIPOS_ADJUNTOS_LABEL,
+  esFormatoAdjuntoPermitido,
+  formatBytes,
+} from './adjuntos';
 
 // Formato válido para CUIT: 11 dígitos seguidos o XX-XXXXXXXX-X.
 const cuitRegex = /^(\d{11}|\d{2}-\d{8}-\d)$/;
@@ -21,6 +26,9 @@ export const solicitudSchema = z.object({
     .array(z.custom((file) => file instanceof File, { message: 'Adjunto inválido' }))
     .refine((files) => files.every((file) => file.size <= MAX_ADJUNTO_BYTES), {
       message: `Ningún archivo puede superar los ${formatBytes(MAX_ADJUNTO_BYTES)}`,
+    })
+    .refine((files) => files.every(esFormatoAdjuntoPermitido), {
+      message: `Formato de archivo no permitido. Tipos válidos: ${TIPOS_ADJUNTOS_LABEL}`,
     })
     .optional(),
 }).superRefine((data, context) => {

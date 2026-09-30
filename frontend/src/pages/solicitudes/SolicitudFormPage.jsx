@@ -12,10 +12,13 @@ import {
   solicitudSchema,
 } from "../../utils/solicitudSchema";
 import {
+  ACCEPT_ADJUNTOS,
   MAX_ADJUNTO_BYTES,
   TIPOS_ARCHIVO,
   TIPO_ARCHIVO_POR_DEFECTO,
+  esFormatoAdjuntoPermitido,
   formatBytes,
+  mensajeFormatoNoPermitido,
   mensajeTamanioMaximo,
   superaTamanioMaximo,
 } from "../../utils/adjuntos";
@@ -76,10 +79,18 @@ export const SolicitudFormPage = () => {
 
   const agregarArchivos = (files) => {
     const seleccionados = Array.from(files);
-    // El backend corta en 10 MB por archivo: se rechaza antes de subir.
-    const validos = seleccionados.filter((file) => !superaTamanioMaximo(file));
-    setRechazados(
-      seleccionados.filter(superaTamanioMaximo).map(mensajeTamanioMaximo),
+    // Se intercepta antes del envío: tamaño (10 MB) y formato. El input
+    // lleva `accept`, pero el drag & drop o la selección forzada
+    // (ej. .exe) lo saltean, así que se valida acá también (FE #258).
+    const rechazadosPorTamanio = seleccionados
+      .filter(superaTamanioMaximo)
+      .map(mensajeTamanioMaximo);
+    const rechazadosPorFormato = seleccionados
+      .filter((file) => !esFormatoAdjuntoPermitido(file))
+      .map(mensajeFormatoNoPermitido);
+    setRechazados([...rechazadosPorTamanio, ...rechazadosPorFormato]);
+    const validos = seleccionados.filter(
+      (file) => !superaTamanioMaximo(file) && esFormatoAdjuntoPermitido(file),
     );
     const nuevos = validos.filter(
       (file) => !archivos.some((item) => item.archivo.name === file.name),
@@ -453,15 +464,20 @@ export const SolicitudFormPage = () => {
                   Adjuntar documento
                 </span>
                 <span className="mt-2 block text-metadata text-text-muted">
-                  PDF, imagen o CAD. Hasta {formatBytes(MAX_ADJUNTO_BYTES)} por
-                  archivo.
+                  PDF, Word, Excel, JPG, PNG, DWG o DXF. Hasta{" "}
+                  {formatBytes(MAX_ADJUNTO_BYTES)} por archivo.
                 </span>
                 <input
                   id="adjuntos"
                   type="file"
                   multiple
+                  accept={ACCEPT_ADJUNTOS}
                   className="sr-only"
-                  onChange={(event) => agregarArchivos(event.target.files)}
+                  onChange={(event) => {
+                    agregarArchivos(event.target.files);
+                    // Permite reintentar el mismo archivo si fue rechazado.
+                    event.target.value = "";
+                  }}
                 />
               </div>
               {mensajeArchivos && (

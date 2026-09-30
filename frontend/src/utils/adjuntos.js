@@ -6,6 +6,50 @@
 // archivo, asi que el limite se valida aca antes de subir nada.
 export const MAX_ADJUNTO_BYTES = 10 * 1024 * 1024;
 
+// Formatos permitidos acordados (QA #254 / sub-issue FE #258).
+// Se valida por extensión (minúsculas, con punto) porque los MIME de
+// CAD (.dwg/.dxf) son inconsistentes entre navegadores/SO y suelen
+// llegar como '' u 'application/octet-stream'.
+export const EXTENSIONES_ADJUNTOS_PERMITIDAS = [
+  '.pdf',
+  '.doc',
+  '.docx',
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.dwg',
+  '.dxf',
+  '.xls',
+  '.xlsx',
+];
+
+// Para el atributo `accept` del input: extensiones + MIME comunes.
+// Las extensiones son lo que realmente filtra el diálogo en todos
+// los navegadores; los MIME ayudan en los que sí los respetan.
+export const ACCEPT_ADJUNTOS = [
+  '.pdf,.doc,.docx,.png,.jpg,.jpeg,.dwg,.dxf,.xls,.xlsx',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'image/png',
+  'image/jpeg',
+].join(',');
+
+export const TIPOS_ADJUNTOS_LABEL = 'PDF, Word, Excel, JPG, PNG, DWG, DXF';
+
+export const extensionDe = (nombre = '') => {
+  const indice = nombre.lastIndexOf('.');
+  return indice >= 0 ? nombre.slice(indice).toLowerCase() : '';
+};
+
+export const esFormatoAdjuntoPermitido = (archivo) =>
+  EXTENSIONES_ADJUNTOS_PERMITIDAS.includes(extensionDe(archivo?.name ?? ''));
+
+export const mensajeFormatoNoPermitido = (archivo) =>
+  `${archivo.name}: formato de archivo no permitido. Tipos válidos: ${TIPOS_ADJUNTOS_LABEL}.`;
+
 // Valores del enum Adjunto.TipoArchivo del backend.
 export const TIPOS_ARCHIVO = [
   { value: 'PLANO', label: 'Plano' },
