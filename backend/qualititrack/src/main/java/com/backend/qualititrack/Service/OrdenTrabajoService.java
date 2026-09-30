@@ -196,7 +196,11 @@ public class OrdenTrabajoService {
         dto.setFechaCreacion(ordenTrabajo.getCreatedAt());
         dto.setFechaTerminoReal(ordenTrabajo.getFechaEntrega());
         dto.setEstado(ordenTrabajo.getEstado());
-        dto.setCotizacionId(ordenTrabajo.getCotizacion().getId());
+
+        if (ordenTrabajo.getCotizacion() != null) {
+            dto.setCotizacionId(ordenTrabajo.getCotizacion().getId());
+        }
+
         return dto;
     }
 

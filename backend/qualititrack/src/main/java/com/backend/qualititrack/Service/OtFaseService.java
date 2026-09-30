@@ -49,6 +49,7 @@ public class OtFaseService {
     }
 
     // GET /api/ot-fases (Jefe)
+    @Transactional
     public List<OtFaseResponseDTO> listarFases() {
         // Retornar todas las fases, mapeadas a DTOs
         return otFaseRepository.findAll()
@@ -184,10 +185,10 @@ public class OtFaseService {
     private OtFaseResponseDTO convertirADTO(OtFase otFase) {
         return OtFaseResponseDTO.builder()
                 .id(otFase.getId())
-                .ordenTrabajoId(otFase.getOrdenTrabajo().getId())
-                .faseCatalogoId(otFase.getFaseCatalogo().getId())
+                .ordenTrabajoId(otFase.getOrdenTrabajo() != null ? otFase.getOrdenTrabajo().getId() : null)
+                .faseCatalogoId(otFase.getFaseCatalogo() != null ? otFase.getFaseCatalogo().getId() : null)
                 .numeroSecuencia(otFase.getNumeroSecuencia())
-                .operarioId(otFase.getOperario().getId())
+                .operarioId(otFase.getOperario() != null ? otFase.getOperario().getId() : null)
                 .tiempoEstimadoMinutos(otFase.getTiempoEstimadoMinutos())
                 .fechaVencimiento(otFase.getFechaVencimiento())
                 .estado(otFase.getEstado())

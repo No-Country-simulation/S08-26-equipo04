@@ -55,7 +55,8 @@ public class OtFaseController {
         }
 
         // HTTP 201 Created (recurso creado exitosamente)
-        return ResponseEntity.status(HttpStatus.CREATED).body(lista);
+        //return ResponseEntity.status(HttpStatus.CREATED).body(lista);
+        return ResponseEntity.ok(lista);
     }
 
     // POST /api/ot-fases/{id}/iniciar
