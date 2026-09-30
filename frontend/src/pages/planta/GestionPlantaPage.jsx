@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRightLeft, Clock3, Users } from 'lucide-react';
+import { gsap } from 'gsap';
 import { toast } from 'sonner';
 import { apiGet, apiPost, formatFechaEntrega } from '../../api';
 import { Badge, Button, Card, CardHeader, CardTitle, ErrorBanner, Modal, SkeletonCard, Title } from '../../components/ui';
+import { useGsapAnimation } from '../../hooks/useGsapAnimation';
 
 const estadoVariant = {
   PENDIENTE: 'queue',
@@ -42,6 +44,10 @@ export const GestionPlantaPage = () => {
   const [detalleOperarios, setDetalleOperarios] = useState(() => new Map());
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
+  const [faseReasignadaId, setFaseReasignadaId] = useState(null);
+  const operarioListRef = useRef(null);
+  const pendingCountRef = useRef(null);
+  const faseRefs = useRef(new Map());
 
   useEffect(() => {
     let cancelado = false;
@@ -131,7 +137,86 @@ export const GestionPlantaPage = () => {
     return Array.from(grupos.values()).filter((grupo) => grupo.fases.length > 0);
   }, [fasesNormalizadas, operarios]);
 
+  useGsapAnimation(
+    operarioListRef,
+    (gsapInstance, scope) => {
+      const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+      if (media.matches) {
+        gsapInstance.set(scope.children, { autoAlpha: 1, y: 0 });
+        return;
+      }
+      gsapInstance.from(scope.children, {
+        autoAlpha: 0,
+        y: 12,
+        stagger: 0.06,
+        duration: 0.26,
+        ease: 'power2.out',
+        clearProps: 'opacity,visibility,transform',
+      });
+    },
+    cargaPorOperario.length,
+  );
+
   const totalPendientes = fasesNormalizadas.filter((fase) => fase.estado !== 'TERMINADO').length;
+
+  useEffect(() => {
+    const pendingCount = pendingCountRef.current;
+    if (!pendingCount) return undefined;
+
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (media.matches) {
+      pendingCount.textContent = String(totalPendientes);
+      return undefined;
+    }
+
+    const tweenTarget = { value: Number(pendingCount.dataset.value ?? totalPendientes) };
+    const tween = gsap.to(tweenTarget, {
+      value: totalPendientes,
+      duration: 0.35,
+      ease: 'power2.out',
+      onUpdate: () => {
+        pendingCount.textContent = Math.round(tweenTarget.value);
+      },
+      onComplete: () => {
+        pendingCount.textContent = String(totalPendientes);
+        pendingCount.dataset.value = String(totalPendientes);
+      },
+    });
+
+    pendingCount.dataset.value = String(totalPendientes);
+
+    return () => tween.kill();
+  }, [totalPendientes]);
+
+  useEffect(() => {
+    if (!faseReasignadaId) return undefined;
+    const card = faseRefs.current.get(faseReasignadaId);
+    if (!card) return undefined;
+
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (media.matches) {
+      gsap.set(card, { autoAlpha: 1, x: 0, y: 0, scale: 1 });
+      const timeoutId = window.setTimeout(() => setFaseReasignadaId(null), 0);
+      return () => window.clearTimeout(timeoutId);
+    }
+
+    const tween = gsap.fromTo(
+      card,
+      { autoAlpha: 0, x: 14, y: 8, scale: 0.98 },
+      {
+        autoAlpha: 1,
+        x: 0,
+        y: 0,
+        scale: 1,
+        duration: 0.28,
+        ease: 'power2.out',
+        clearProps: 'opacity,visibility,transform',
+        onComplete: () => setFaseReasignadaId(null),
+      },
+    );
+
+    return () => tween.kill();
+  }, [faseReasignadaId]);
 
   const openReasignacion = (fase) => {
     setFaseActual(fase);
@@ -181,6 +266,7 @@ export const GestionPlantaPage = () => {
       setOtFases((prev) => prev.map((fase) => fase.id === faseActual.id
         ? { ...fase, operarioId: Number(operarioDestinoId), operario_id: Number(operarioDestinoId) }
         : fase));
+      setFaseReasignadaId(faseActual.id);
       toast.success('Fase reasignada correctamente.');
       cerrarReasignacion();
     } catch (err) {
@@ -241,7 +327,7 @@ export const GestionPlantaPage = () => {
           </span>
           <div>
             <p className="text-metadata text-text-muted">Fases pendientes</p>
-            <p className="text-2xl font-semibold text-ink">{totalPendientes}</p>
+            <p ref={pendingCountRef} data-value={String(totalPendientes)} className="text-2xl font-semibold text-ink">{totalPendientes}</p>
           </div>
         </Card>
 
@@ -261,7 +347,7 @@ export const GestionPlantaPage = () => {
           <p className="text-body text-text-secondary">No hay operarios activos con carga asignada.</p>
         </Card>
       ) : !error ? (
-        <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
+        <div ref={operarioListRef} className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
           {cargaPorOperario.map((operario) => {
             const totalPaginas = Math.max(
               1,
@@ -287,7 +373,17 @@ export const GestionPlantaPage = () => {
 
               <div className="space-y-3">
                 {visibles.map((fase) => (
-                  <div key={fase.id} className="rounded-lg border border-border bg-canvas p-3">
+                  <div
+                    key={fase.id}
+                    ref={(node) => {
+                      if (node) {
+                        faseRefs.current.set(fase.id, node);
+                      } else {
+                        faseRefs.current.delete(fase.id);
+                      }
+                    }}
+                    className="rounded-lg border border-border bg-canvas p-3"
+                  >
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="text-label text-ink">{fase.ot_numero}</p>
