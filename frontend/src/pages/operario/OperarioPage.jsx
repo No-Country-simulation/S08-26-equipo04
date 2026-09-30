@@ -41,6 +41,11 @@ export const OperarioPage = () => {
       (saliente) => !tareas.some((tarea) => tarea.id === saliente.id),
     ),
   ];
+  // Sin trabajo en paralelo: si hay una tarea en ejecucion, las demas no se
+  // pueden iniciar (evita 3-4 abiertas y confusiones al terminar).
+  const hayEnEjecucion = tareas.some(
+    (tarea) => tarea.estado === "EN_EJECUCION",
+  );
 
   const handleSalidaCompleta = useCallback((id) => {
     setTareasSaliendo((prev) => prev.filter((tarea) => tarea.id !== id));
@@ -164,6 +169,7 @@ export const OperarioPage = () => {
                 tarea={tarea}
                 accionEnCurso={accionId === tarea.id}
                 salida={salida}
+                otraEnEjecucion={hayEnEjecucion}
                 onIniciar={handleIniciar}
                 onFinalizar={handleFinalizar}
                 onSalidaCompleta={handleSalidaCompleta}

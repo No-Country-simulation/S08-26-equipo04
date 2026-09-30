@@ -8,6 +8,7 @@ import {
   listarNotasFase,
   verAdjunto,
 } from "../../api";
+import { useOtFases } from "../../hooks/useOtFases";
 import { mensajeErrorAdjunto } from "../../utils/adjuntos";
 import {
   Badge,
@@ -214,6 +215,23 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
     ? estadoConfig[tarea.estado] || { variant: "queue", label: tarea.estado }
     : null;
 
+  // Trazabilidad de la OT (BE #263): fases de la misma orden, ordenadas por
+  // secuencia, con la actual resaltada. Sale de la lista ya cargada en el
+  // contexto (misma que Mis tareas): sin endpoint nuevo y sin razón social.
+  const { otFases } = useOtFases();
+  const fasesOT = useMemo(() => {
+    const otId = tarea?.orden_trabajo_id ?? tarea?.ordenTrabajoId ?? null;
+    if (otId == null) return [];
+    const secuencia = (fase) =>
+      fase.numero_secuencia ?? fase.numeroSecuencia ?? 0;
+    return otFases
+      .filter(
+        (fase) =>
+          (fase.orden_trabajo_id ?? fase.ordenTrabajoId) === otId,
+      )
+      .sort((a, b) => secuencia(a) - secuencia(b));
+  }, [otFases, tarea]);
+
   const renderContenido = () => {
     if (!tarea) {
       return (
@@ -274,6 +292,59 @@ export const TaskDetailModal = ({ tarea, open, onClose }) => {
             </div>
           )}
         </section>
+
+        {fasesOT.length > 0 && (
+          <section
+            aria-labelledby="detalle-fases"
+            className="rounded-xl border border-border bg-surface p-4"
+          >
+            <h3
+              id="detalle-fases"
+              className="text-body font-semibold text-ink"
+            >
+              Fases de la OT
+            </h3>
+            <ol className="mt-3 space-y-2">
+              {fasesOT.map((fase) => {
+                const esActual = fase.id === tarea.id;
+                const secuencia =
+                  fase.numero_secuencia ?? fase.numeroSecuencia ?? null;
+                const ciclo =
+                  fase.ciclo_iteracion ?? fase.cicloIteracion ?? null;
+                const rehacer =
+                  fase.es_rehacer ?? fase.esRehacer ?? false;
+                const estadoFase =
+                  estadoConfig[fase.estado] || {
+                    variant: "queue",
+                    label: fase.estado,
+                  };
+                return (
+                  <li
+                    key={fase.id}
+                    aria-current={esActual ? "true" : undefined}
+                    className={`flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border px-3 py-2 text-label ${
+                      esActual
+                        ? "border-primary font-semibold text-ink"
+                        : "border-border text-text-secondary"
+                    }`}
+                  >
+                    {secuencia != null && <span>#{secuencia}</span>}
+                    <span className="min-w-0 flex-1 break-words">
+                      {fase.fase_nombre ?? fase.faseNombre ?? "Fase sin nombre"}
+                    </span>
+                    {ciclo != null && <span>Ciclo {ciclo}</span>}
+                    {rehacer === true && (
+                      <Badge variant="quality">Rehacer</Badge>
+                    )}
+                    <Badge variant={estadoFase.variant}>
+                      {esActual ? "Actual" : estadoFase.label}
+                    </Badge>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+        )}
 
         <section
           aria-labelledby="detalle-instrucciones"
