@@ -1,10 +1,13 @@
+import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { gsap } from "gsap";
 import {
   EmptyState,
   ErrorBanner,
   SkeletonCard,
   Title,
 } from "../../components/ui";
+import { useGsapAnimation } from "../../hooks/useGsapAnimation";
 import { ActividadReciente } from "./ActividadReciente";
 
 /**
@@ -21,8 +24,57 @@ import { ActividadReciente } from "./ActividadReciente";
 
 const MetricCard = ({ item, value, onClick }) => {
   const Icon = item.icon;
+  const cardRef = useRef(null);
+  const valueRef = useRef(null);
+
+  useGsapAnimation(
+    cardRef,
+    (gsap, scope) => {
+      gsap.from(scope, {
+        autoAlpha: 0,
+        y: 10,
+        scale: 0.98,
+        duration: 0.28,
+        ease: "power2.out",
+        clearProps: "opacity,visibility,transform",
+      });
+    },
+    item.key,
+  );
+
+  useEffect(() => {
+    const numericValue = Number(value ?? 0);
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    if (!valueRef.current) {
+      return undefined;
+    }
+
+    if (!Number.isFinite(numericValue) || media.matches) {
+      valueRef.current.textContent = numericValue;
+      return undefined;
+    }
+
+    const tweenTarget = { current: 0 };
+    const tween = gsap.to(tweenTarget, {
+      current: numericValue,
+      duration: 0.6,
+      ease: "power2.out",
+      onUpdate: () => {
+        const nextValue = Math.round(tweenTarget.current);
+        valueRef.current.textContent = nextValue;
+      },
+      onComplete: () => {
+        valueRef.current.textContent = numericValue;
+      },
+    });
+
+    return () => tween.kill();
+  }, [value]);
+
   return (
     <button
+      ref={cardRef}
       type="button"
       onClick={onClick}
       className="card flex w-full cursor-pointer items-center gap-4 text-left hover:shadow-card focus:outline-none focus:ring-2 focus:ring-primary"
@@ -36,7 +88,12 @@ const MetricCard = ({ item, value, onClick }) => {
         <span className="block text-metadata text-text-muted">
           {item.label}
         </span>
-        <span className="block text-2xl font-semibold text-ink">{value}</span>
+        <span
+          ref={valueRef}
+          className="block text-2xl font-semibold text-ink"
+        >
+          {Number(value ?? 0)}
+        </span>
       </span>
     </button>
   );
@@ -45,6 +102,23 @@ const MetricCard = ({ item, value, onClick }) => {
 export const PanelResumen = ({ config, values, actividad, cargando, error }) => {
   const navigate = useNavigate();
   const { titulo, eyebrow, encabezado, detalle, cards } = config;
+  const gridRef = useRef(null);
+
+  useGsapAnimation(
+    gridRef,
+    (gsap, scope) => {
+      gsap.from(scope.children, {
+        autoAlpha: 0,
+        y: 12,
+        scale: 0.98,
+        stagger: 0.06,
+        duration: 0.28,
+        ease: "power2.out",
+        clearProps: "opacity,visibility,transform",
+      });
+    },
+    cards.length,
+  );
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -64,7 +138,7 @@ export const PanelResumen = ({ config, values, actividad, cargando, error }) => 
           ))}
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div ref={gridRef} className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {cards.map((item) => (
             <MetricCard
               key={item.key}

@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Eye, FileText } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { formatDateTime, formatFechaEntrega, verAdjunto } from '../../api';
 import { TIPOS_ARCHIVO, formatBytes, mensajeErrorAdjunto } from '../../utils/adjuntos';
 import { Badge, EmptyState, ErrorBanner, SkeletonCard } from '../../components/ui';
+import { useGsapAnimation } from '../../hooks/useGsapAnimation';
 import { useExpediente } from '../../hooks/useExpediente';
 
 const tabs = ['Resumen', 'Documentos', 'Hoja de ruta', 'Calidad', 'Entrega', 'Historial'];
@@ -56,6 +57,45 @@ export const ExpedientePage = () => {
   const [activeTab, setActiveTab] = useState('Resumen');
   const [abriendoId, setAbriendoId] = useState(null);
   const [errorDocumento, setErrorDocumento] = useState(null);
+  const contentRef = useRef(null);
+  const timelineRef = useRef(null);
+
+  useGsapAnimation(
+    contentRef,
+    (gsapInstance, scope) => {
+      const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+      if (media.matches) {
+        gsapInstance.set(scope, { autoAlpha: 1, y: 0 });
+        return;
+      }
+      gsapInstance.fromTo(
+        scope,
+        { autoAlpha: 0, y: 8 },
+        { autoAlpha: 1, y: 0, duration: 0.28, ease: 'power2.out', clearProps: 'opacity,visibility,transform' },
+      );
+    },
+    activeTab,
+  );
+
+  useGsapAnimation(
+    timelineRef,
+    (gsapInstance, scope) => {
+      const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+      if (media.matches) {
+        gsapInstance.set(scope.children, { autoAlpha: 1, y: 0 });
+        return;
+      }
+      gsapInstance.from(scope.children, {
+        autoAlpha: 0,
+        y: 10,
+        stagger: 0.04,
+        duration: 0.18,
+        ease: 'power2.out',
+        clearProps: 'opacity,visibility,transform',
+      });
+    },
+    activeTab,
+  );
 
   const numeroOt = expediente?.numero_ot ?? orden?.numero_ot ?? orden?.numeroOT ?? id;
   const estado = orden?.estado ?? expediente?.estado ?? null;
@@ -437,7 +477,22 @@ export const ExpedientePage = () => {
           </section>
         );
       }
-      return <section className="overflow-hidden rounded-xl border border-border bg-surface"><div className="border-b border-border px-4 py-3 text-h2">Historial</div><div className="px-4 py-2">{historial.map((evento) => <div key={`${evento.fecha}-${evento.texto}`} className="flex gap-8 border-b border-border py-3 text-label last:border-b-0"><span className="w-28 shrink-0 text-text-muted">{formatDateTime(evento.fecha)}</span><span>{evento.texto}</span></div>)}</div></section>;
+      return (
+        <section className="overflow-hidden rounded-xl border border-border bg-surface">
+          <div className="border-b border-border px-4 py-3 text-h2">Historial</div>
+          <div ref={timelineRef} className="px-4 py-2">
+            {historial.map((evento) => (
+              <div
+                key={`${evento.fecha}-${evento.texto}`}
+                className="flex gap-8 border-b border-border py-3 text-label last:border-b-0"
+              >
+                <span className="w-28 shrink-0 text-text-muted">{formatDateTime(evento.fecha)}</span>
+                <span>{evento.texto}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      );
     }
 
     const montoTexto = monto != null ? `$${Number(monto).toLocaleString('es-AR', { minimumFractionDigits: 2 })}` : '—';
@@ -478,7 +533,9 @@ export const ExpedientePage = () => {
         ['Fecha de entrega solicitada', formatFechaEntrega(fechaSolicitada)],
       ].map(([label, value]) => <div key={label} className="border-b border-border px-4 py-3 last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0"><p className="text-metadata text-text-muted">{label}</p><p className="mt-1 text-label font-semibold text-ink">{value}</p></div>)}</div>
       <div className="mt-4 flex flex-wrap gap-1 rounded-xl border border-border bg-canvas p-1">{tabs.map((tab) => <button key={tab} type="button" onClick={() => setActiveTab(tab)} className={`rounded-lg px-3 py-2 text-metadata ${activeTab === tab ? 'bg-surface text-ink shadow-sm' : 'text-text-secondary hover:bg-surface/70'}`}>{tab}</button>)}</div>
-      <div className="mt-4">{renderContent()}</div>
+      <div ref={contentRef} className="mt-4">
+        {renderContent()}
+      </div>
     </div>
   );
 };
