@@ -1,63 +1,68 @@
 package com.qualitytrack.Controller;
 
-import com.qualitytrack.DTO.SolicitudDTO;
-//import com.qualitytrack.Service.CustomUserDetailService;
-import com.qualitytrack.Service.SolicitudService;
-import com.qualitytrack.modelos.Usuario;
-import com.qualitytrack.repository.UsuarioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.qualitytrack.DTO.SolicitudDTO;
+import com.qualitytrack.DTO.SolicitudResponseDTO;
+import com.qualitytrack.Service.SolicitudService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/solicitudes")
 public class SolicitudController {
-
-    @Autowired
-    private SolicitudService solicitudService;
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final SolicitudService solicitudService;
 
     public SolicitudController(SolicitudService solicitudService) {
         this.solicitudService = solicitudService;
     }
 
-
+    // POST /api/solicitudes
+    // Crear una nueva solicitud (y cliente si también es nuevo).
+    // Body (cliente registrado):
+    // {cliente_id, descripcion_pieza, cantidad, fecha_esperada_entrega,
+    // notas_comerciales}
+    // Body (cliente nuevo):
+    // {razon_social, contacto_nombre, telefono, email, direccion,
+    // descripcion_pieza, cantidad, fecha_esperada_entrega, notas_comerciales}.
+    // Respuesta exitosa: {"id"=x, "numero_solicitud"=SOL-XXXX,
+    // "estado"=PENDIENTE_COTIZACION}
+    // Permisos: Vendedor
     @PostMapping
     @PreAuthorize("hasAnyRole('VENDEDOR')")
-    public ResponseEntity<SolicitudDTO> crear(@RequestBody SolicitudDTO dto, Authentication auth) {
+    public ResponseEntity<SolicitudResponseDTO> crear(@RequestBody @Valid SolicitudDTO dto,
+            Authentication authentication) {
 
-        //  vendedorId viene del JWT (del usuario autenticado)
-        Long vendedorId = obtenerIdDelUsuario(auth);
+        // Obtener mail del usuario actual para luego identificar su id en el servicio
+        String emailVendedor = authentication.getName();
+        SolicitudResponseDTO creada = solicitudService.crear(dto, emailVendedor);
 
-        //  clienteId viene en el DTO (del request body)
-        SolicitudDTO creado = solicitudService.crear(dto, vendedorId);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(creado);
+        // HTTP 201 Created (recurso creado exitosamente)
+        return ResponseEntity.status(HttpStatus.CREATED).body(creada);
     }
 
-    private Long obtenerIdDelUsuario(Authentication auth) {
-        String email = auth.getName(); // El "username" es el email
-        Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
-        return usuario.getId();
-    }
-
-    // Crear endpoint GET /api/solicitudes para obtener la lista de solicitudes
-    // pendientes.
-    // Verificar que el endpoint de obtención de solicitudes solo sea accesible por
-    // usuarios con rol Vendedor y Jefe de producción, devolviendo un error de
-    // autorización en caso contrario. (Nota: plan de frontend no menciona acceso a
-    // rol Vendedor, pero puede ser útil para que controle cuáles solicitudes siguen
-    // a la espera de cotizar)
+    // GET /api/solicitudes
+    // Jefe de producción -> solo PENDIENTE_COTIZACION | Vendedor -> todas.
     @GetMapping
     @PreAuthorize("hasAnyRole('VENDEDOR', 'JEFE_PRODUCCION')")
-    public ResponseEntity<List<SolicitudDTO>> obtenerLista(@RequestParam(required = false) String param) {
-        return ResponseEntity.ok().body(solicitudService.listarTodas());
+    public ResponseEntity<List<SolicitudDTO>> obtenerLista(Authentication authentication) {
+        // Verificar si es jefe o no para ver qué método llamar.
+        boolean esJefe = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_JEFE_PRODUCCION"));
+        List<SolicitudDTO> lista = esJefe
+                ? solicitudService.obtenerPendientes()
+                : solicitudService.obtenerPorVendedor(authentication.getName());
+        return ResponseEntity.ok().body(lista);
     }
+
 }

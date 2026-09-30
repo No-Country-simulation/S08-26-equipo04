@@ -1,23 +1,31 @@
 package com.qualitytrack.Controller;
+import java.util.List;
 
-import com.qualitytrack.DTO.CotizacionDTO;
-//import com.backend.qualititrack.Enum.EstadoCotizacion;
-import com.qualitytrack.Service.CotizacionService;
-import com.qualitytrack.modelos.Usuario;
-import com.qualitytrack.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
-import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.qualitytrack.DTO.CotizacionRequestDTO;
+import com.qualitytrack.DTO.CotizacionResponseDTO;
+import com.qualitytrack.Service.CotizacionService;
+import com.qualitytrack.exception.EntityNotFoundException;
+import com.qualitytrack.modelos.Usuario;
+import com.qualitytrack.repository.UsuarioRepository;
 
 
 @RestController
 @RequestMapping("/api/cotizaciones")
-public class CotizacionControlador {
+public class CotizacionController {
     @Autowired
     private CotizacionService cotizacionService;
     @Autowired
@@ -29,9 +37,9 @@ public class CotizacionControlador {
      */
     @PostMapping
     @PreAuthorize("hasAnyRole('JEFE_PRODUCCION')")
-    public ResponseEntity<CotizacionDTO> crear(@RequestBody CotizacionDTO dto) {
+    public ResponseEntity<CotizacionResponseDTO> crear(@RequestBody CotizacionRequestDTO dto) {
         Long jefeId = obtenerIdDelUsuario();
-        CotizacionDTO creada = cotizacionService.crear(dto, jefeId);
+        CotizacionResponseDTO creada = cotizacionService.crear(dto, jefeId);
         return ResponseEntity.status(HttpStatus.CREATED).body(creada);
     }
 
@@ -41,8 +49,8 @@ public class CotizacionControlador {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('JEFE_PRODUCCION', 'VENDEDOR', 'OPERARIO', 'CALIDAD')")
-    public ResponseEntity<CotizacionDTO> obtenerPorId(@PathVariable Long id) {
-        CotizacionDTO cotizacion = cotizacionService.obtenerPorId(id);
+    public ResponseEntity<CotizacionResponseDTO> obtenerPorId(@PathVariable Long id) {
+        CotizacionResponseDTO cotizacion = cotizacionService.obtenerPorId(id);
         return ResponseEntity.ok().body(cotizacion);
     }
 
@@ -52,8 +60,8 @@ public class CotizacionControlador {
      */
     @GetMapping("/solicitud/{solicitudId}")
     @PreAuthorize("hasAnyRole('JEFE_PRODUCCION', 'VENDEDOR')")
-    public ResponseEntity<CotizacionDTO> obtenerPorSolicitud(@PathVariable Long solicitudId) {
-        CotizacionDTO cotizacion = cotizacionService.obtenerPorSolicitud(solicitudId);
+    public ResponseEntity<CotizacionResponseDTO> obtenerPorSolicitud(@PathVariable Long solicitudId) {
+        CotizacionResponseDTO cotizacion = cotizacionService.obtenerPorSolicitud(solicitudId);
         return ResponseEntity.ok().body(cotizacion);
     }
 
@@ -61,22 +69,22 @@ public class CotizacionControlador {
      * 4. LISTAR PENDIENTES - GET /api/cotizaciones/pendientes
      * Solo JEFE_PRODUCCION
      */
-    @GetMapping("/pendientes")
-    @PreAuthorize("hasAnyRole('JEFE_PRODUCCION')")
-    public ResponseEntity<List<CotizacionDTO>> listarPendientes() {
-        List<CotizacionDTO> pendientes = cotizacionService.listarPendientes();
+    @GetMapping
+    @PreAuthorize("hasAnyRole('VENDEDOR', 'JEFE_PRODUCCION')")
+    public ResponseEntity<List<CotizacionResponseDTO>> listarCotizaciones() {
+        List<CotizacionResponseDTO> pendientes = cotizacionService.listarCotizaciones();
         return ResponseEntity.ok().body(pendientes);
     }
 
     /**
-     * 5. ENVIAR AL CLIENTE - PUT /api/cotizaciones/{id}/enviar-cliente
+     * 5. ENVIAR AL CLIENTE - PUT /api/cotizaciones/{id}
      * Solo VENDEDOR
      */
-    @PutMapping("/{id}/enviar-cliente")
+    @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('VENDEDOR')")
-    public ResponseEntity<CotizacionDTO> enviarAlCliente(@PathVariable Long id) {
+    public ResponseEntity<CotizacionResponseDTO> enviarAlCliente(@PathVariable Long id) {
         Long vendedorId = obtenerIdDelUsuario();
-        CotizacionDTO actualizada = cotizacionService.enviarAlCliente(id, vendedorId);
+        CotizacionResponseDTO actualizada = cotizacionService.enviarAlCliente(id, vendedorId);
         return ResponseEntity.ok().body(actualizada);
     }
 
@@ -85,11 +93,11 @@ public class CotizacionControlador {
      * Solo VENDEDOR
      * ⚡ DISPARA: Generación automática de OrdenTrabajo
      */
-    @PutMapping("/{id}/aprobar")
+    @PostMapping("/{id}/aprobar")
     @PreAuthorize("hasAnyRole('VENDEDOR')")
-    public ResponseEntity<CotizacionDTO> aprobarCotizacion(@PathVariable Long id) {
+    public ResponseEntity<CotizacionResponseDTO> aprobarCotizacion(@PathVariable Long id) {
         Long vendedorId = obtenerIdDelUsuario();
-        CotizacionDTO actualizada = cotizacionService.aprobarCotizacion(id, vendedorId);
+        CotizacionResponseDTO actualizada = cotizacionService.aprobarCotizacion(id, vendedorId);
         return ResponseEntity.ok().body(actualizada);
     }
 
@@ -97,13 +105,13 @@ public class CotizacionControlador {
      * 7. RECHAZAR COTIZACIÓN - PUT /api/cotizaciones/{id}/rechazar
      * Solo VENDEDOR
      */
-    @PutMapping("/{id}/rechazar")
+    @PostMapping("/{id}/rechazar")
     @PreAuthorize("hasAnyRole('VENDEDOR')")
-    public ResponseEntity<CotizacionDTO> rechazarCotizacion(
+    public ResponseEntity<CotizacionResponseDTO> rechazarCotizacion(
             @PathVariable Long id,
             @RequestBody MotivoRechazoRequest request) {
         Long vendedorId = obtenerIdDelUsuario();
-        CotizacionDTO actualizada = cotizacionService.rechazarCotizacion(id, request.getMotivo(), vendedorId);
+        CotizacionResponseDTO actualizada = cotizacionService.rechazarCotizacion(id, request.getMotivoRechazoCliente(), vendedorId);
         return ResponseEntity.ok().body(actualizada);
     }
 
@@ -123,7 +131,7 @@ public class CotizacionControlador {
         // TODO: Implementar búsqueda de usuario por email
 
         Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
 
         return usuario.getId();
         //throw new RuntimeException("TODO: Implementar obtención del ID del usuario desde JWT");
@@ -133,14 +141,14 @@ public class CotizacionControlador {
      * Clase interna para recibir el motivo del rechazo
      */
     public static class MotivoRechazoRequest {
-        private String motivo;
+        private String motivoRechazoCliente;
 
-        public String getMotivo() {
-            return motivo;
+        public String getMotivoRechazoCliente() {
+            return motivoRechazoCliente;
         }
 
-        public void setMotivo(String motivo) {
-            this.motivo = motivo;
+        public void setMotivoRechazoCliente(String motivo) {
+            this.motivoRechazoCliente = motivo;
         }
     }
 }

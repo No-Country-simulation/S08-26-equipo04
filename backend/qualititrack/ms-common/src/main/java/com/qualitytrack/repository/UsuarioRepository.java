@@ -3,14 +3,11 @@ package com.qualitytrack.repository;
 import java.util.List;
 import java.util.Optional;
 
-import com.qualitytrack.Enum.NivelRol;
-import com.qualitytrack.modelos.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-
+import com.qualitytrack.Enum.NivelRol;
+import com.qualitytrack.modelos.Usuario;
 
 @Repository
 public interface UsuarioRepository extends JpaRepository<Usuario,Long> {
@@ -19,9 +16,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario,Long> {
      *
      * SELECT * FROM usuario WHERE email = ?
      */
-    //Optional<Usuario> findByEmail(String email);
-    @Query("SELECT u FROM Usuario u WHERE u.email = :email")
-    Optional<Usuario> findByEmail(@Param("email") String email);
+    Optional<Usuario> findByEmail(String email);
+
     /**
      * Buscar usuarios activos por rol (ahora recibe NivelRol enum directamente).
      *

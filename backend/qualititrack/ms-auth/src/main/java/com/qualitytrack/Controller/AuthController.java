@@ -2,7 +2,6 @@ package com.qualitytrack.Controller;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import com.qualitytrack.DTO.LoginDTO;
 import com.qualitytrack.DTO.RegisterDTO;
@@ -13,14 +12,12 @@ import com.qualitytrack.Service.UsuarioService;
 import com.qualitytrack.utils.jwtUtils;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,44 +41,6 @@ public class AuthController {
      * POST /auth/login
      * Autentica con email + password y retorna JWT token
      */
-    @Autowired
-    private Environment env;
-
-    @GetMapping("/debug-db")
-    public ResponseEntity<?> debugDB() {
-        System.out.println("=== DATABASE CONNECTION DEBUG ===");
-        System.out.println("Driver: " + env.getProperty("spring.datasource.driver-class-name"));
-        System.out.println("User: " + env.getProperty("spring.datasource.username"));
-        System.out.println("DB_HOST: " + env.getProperty("DB_HOST"));
-        System.out.println("DB_NAME: " + env.getProperty("DB_NAME"));
-        System.out.println("DB_USER: " + env.getProperty("DB_USER"));
-        return ResponseEntity.ok("Check console");
-    }
-
-    @PostMapping("/test-bcrypt")
-    @Transactional
-    public ResponseEntity<?> testBcrypt(@RequestBody LoginDTO loginDTO) {
-        System.out.println("\n=== TEST BCRYPT ===");
-        System.out.println("Password recibido: " + loginDTO.getPassword());
-        System.out.println("Longitud password: " + loginDTO.getPassword().length());
-
-        Optional<Usuario> usuario = usuarioRepository.findByEmail(loginDTO.getEmail());
-        if (usuario.isEmpty()) {
-            return ResponseEntity.status(401).body("Usuario no encontrado");
-        }
-
-        String hashDB = usuario.get().getPasswordHash();
-        System.out.println("Hash de BD: " + hashDB);
-        System.out.println("Longitud hash: " + hashDB.length());
-
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        boolean matches = encoder.matches(loginDTO.getPassword(), hashDB);
-
-        System.out.println("¿Password matches?: " + matches);
-        System.out.println("===================\n");
-
-        return ResponseEntity.ok(Map.of("matches", matches, "hash", hashDB));
-    }
     @PostMapping("/login")
     @Transactional
     public ResponseEntity<?> login(@RequestBody LoginDTO loginDTO) {

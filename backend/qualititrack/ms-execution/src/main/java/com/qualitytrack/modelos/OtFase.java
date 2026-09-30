@@ -14,6 +14,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
@@ -88,123 +90,14 @@ public class OtFase {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-    public Long getId() {
-        return id;
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = OffsetDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public OrdenTrabajo getOrdenTrabajo() {
-        return ordenTrabajo;
-    }
-
-    public void setOrdenTrabajo(OrdenTrabajo ordenTrabajo) {
-        this.ordenTrabajo = ordenTrabajo;
-    }
-
-    public Integer getNumeroSecuencia() {
-        return numeroSecuencia;
-    }
-
-    public void setNumeroSecuencia(Integer numeroSecuencia) {
-        this.numeroSecuencia = numeroSecuencia;
-    }
-
-    public FaseCatalogo getFaseCatalogo() {
-        return faseCatalogo;
-    }
-
-    public void setFaseCatalogo(FaseCatalogo faseCatalogo) {
-        this.faseCatalogo = faseCatalogo;
-    }
-
-    public Usuario getOperario() {
-        return operario;
-    }
-
-    public void setOperario(Usuario operario) {
-        this.operario = operario;
-    }
-
-    public OffsetDateTime getFechaVencimiento() {
-        return fechaVencimiento;
-    }
-
-    public void setFechaVencimiento(OffsetDateTime fechaVencimiento) {
-        this.fechaVencimiento = fechaVencimiento;
-    }
-
-    public Integer getTiempoEstimadoMinutos() {
-        return tiempoEstimadoMinutos;
-    }
-
-    public void setTiempoEstimadoMinutos(Integer tiempoEstimadoMinutos) {
-        this.tiempoEstimadoMinutos = tiempoEstimadoMinutos;
-    }
-
-    public EstadoOtFase getEstado() {
-        return estado;
-    }
-
-    public void setEstado(EstadoOtFase estado) {
-        this.estado = estado;
-    }
-
-    public OffsetDateTime getFechaFinReal() {
-        return fechaFinReal;
-    }
-
-    public void setFechaFinReal(OffsetDateTime fechaFinReal) {
-        this.fechaFinReal = fechaFinReal;
-    }
-
-    public OffsetDateTime getFechaInicioReal() {
-        return fechaInicioReal;
-    }
-
-    public void setFechaInicioReal(OffsetDateTime fechaInicioReal) {
-        this.fechaInicioReal = fechaInicioReal;
-    }
-
-    public Integer getDuracionRealMinutos() {
-        return duracionRealMinutos;
-    }
-
-    public void setDuracionRealMinutos(Integer duracionRealMinutos) {
-        this.duracionRealMinutos = duracionRealMinutos;
-    }
-
-    public Boolean getEsRehacer() {
-        return esRehacer;
-    }
-
-    public void setEsRehacer(Boolean esRehacer) {
-        this.esRehacer = esRehacer;
-    }
-
-    public Integer getCicloIteracion() {
-        return cicloIteracion;
-    }
-
-    public void setCicloIteracion(Integer cicloIteracion) {
-        this.cicloIteracion = cicloIteracion;
-    }
-
-    public OffsetDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public OffsetDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(OffsetDateTime updatedAt) {
-        this.updatedAt = updatedAt;
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = OffsetDateTime.now();
     }
 }

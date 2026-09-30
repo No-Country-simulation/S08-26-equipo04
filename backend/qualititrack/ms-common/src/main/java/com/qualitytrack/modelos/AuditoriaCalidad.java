@@ -4,6 +4,8 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.qualitytrack.Enum.ResultadoCalidad;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -24,7 +26,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-// 13. Auditorías Calidad[cite: 1]
 @Entity
 @Table(name = "auditorias_calidad", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"orden_trabajo_id", "numero_auditoria"})
@@ -54,7 +55,7 @@ public class AuditoriaCalidad {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private Resultado resultado;
+    private ResultadoCalidad resultado;
 
     @Column(name = "observaciones_generales", columnDefinition = "TEXT")
     private String observacionesGenerales;
@@ -65,11 +66,7 @@ public class AuditoriaCalidad {
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
-    // En la clase AuditoriaCalidad:
     @OneToMany(mappedBy = "auditoria", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AuditoriaChecklistRespuesta> respuestas = new ArrayList<>();
 
-    public enum Resultado {
-        CONFORME, NO_CONFORME
-    }
 }

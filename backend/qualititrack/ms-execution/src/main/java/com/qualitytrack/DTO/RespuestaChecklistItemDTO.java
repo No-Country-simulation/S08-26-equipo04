@@ -1,5 +1,7 @@
 package com.qualitytrack.DTO;
 
+import com.qualitytrack.modelos.AuditoriaChecklistRespuesta.ResultadoItem;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,19 +17,8 @@ public class RespuestaChecklistItemDTO {
     private Integer itemNumero;
 
     @NotNull(message = "El resultado del item es requerido")
-    private String resultadoItem; // CUMPLE, NO_CUMPLE, NO_APLICA
+    private ResultadoItem resultadoItem; // CUMPLE, NO_CUMPLE, NO_APLICA
 
     private String observaciones;
 
-    public Integer getItemNumero() {
-        return itemNumero;
-    }
-
-    public String getResultadoItem() {
-        return resultadoItem;
-    }
-
-    public String getObservaciones() {
-        return observaciones;
-    }
 }

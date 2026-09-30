@@ -2,6 +2,7 @@ package com.qualitytrack.modelos;
 
 import java.time.OffsetDateTime;
 
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -53,12 +54,22 @@ public class Adjunto {
     @Column(name = "ruta_almacenamiento", nullable = false, length = 500)
     private String rutaAlmacenamiento;
 
+    @Column(name = "contenido", columnDefinition = "bytea")
+    private byte[] contenido;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subido_por_id", nullable = false)
     private Usuario subidoPor;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = OffsetDateTime.now();
+        }
+    }
 
     public enum TipoArchivo {
         PLANO, CERTIFICADO, ESPECIFICACION, OTRO

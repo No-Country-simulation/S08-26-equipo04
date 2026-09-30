@@ -1,41 +1,79 @@
 package com.qualitytrack.Service;
 
-import com.qualitytrack.DTO.OrdenTrabajoDTO;
-import com.qualitytrack.Enum.EstadoOT;
-import com.qualitytrack.modelos.Cotizacion;
-import com.qualitytrack.modelos.OrdenTrabajo;
-import com.qualitytrack.repository.CotizacionRepositorio;
-import com.qualitytrack.repository.OrdenTrabajoRepository;
-import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
+import com.qualitytrack.DTO.EntregaOtRequestDTO;
+import com.qualitytrack.DTO.ExpedienteCompletoDTO;
+import com.qualitytrack.DTO.FaseDetalleExpedienteDTO;
+import com.qualitytrack.DTO.OrdenTrabajoDTO;
+import com.qualitytrack.DTO.OrdenTrabajoResumenDTO;
+import com.qualitytrack.Enum.EstadoOT;
+import com.qualitytrack.Enum.EstadoOtFase;
+import com.qualitytrack.Enum.ResultadoCalidad;
+import com.qualitytrack.exception.EntityNotFoundException;
+import com.qualitytrack.exception.InvalidStateException;
+import com.qualitytrack.modelos.Cotizacion;
+import com.qualitytrack.modelos.CotizacionFase;
+import com.qualitytrack.modelos.OrdenTrabajo;
+import com.qualitytrack.modelos.OtFase;
+import com.qualitytrack.modelos.OtFaseReasignacion;
+import com.qualitytrack.modelos.Usuario;
+import com.qualitytrack.repository.AuditoriaCalidadRepository;
+import com.qualitytrack.repository.CotizacionFaseRepository;
+import com.qualitytrack.repository.CotizacionRepository;
+import com.qualitytrack.repository.FaseOperarioHabilitadoRepository;
+import com.qualitytrack.Enum.NivelRol;
+import com.qualitytrack.repository.OrdenTrabajoRepository;
+import com.qualitytrack.repository.OtFaseReasignacionRepository;
+import com.qualitytrack.repository.OtFaseRepository;
+
+import jakarta.transaction.Transactional;
 
 @Service
 @Transactional
 public class OrdenTrabajoService {
+    private final OrdenTrabajoRepository ordenTrabajoRepository;
+    private final CotizacionRepository cotizacionRepository;
+    private final CotizacionFaseRepository cotizacionFaseRepository;
+    private final OtFaseRepository otFaseRepository;
+    private final OtFaseReasignacionRepository otFaseReasignacionRepository;
+    private final AuditoriaCalidadRepository auditoriaCalidadRepository;
+    private final FaseOperarioHabilitadoRepository faseOperarioHabilitadoRepository;
 
-    @Autowired
-    private OrdenTrabajoRepository ordenTrabajoRepositorio;
-
-    @Autowired
-    private CotizacionRepositorio cotizacionRepositorio;
+    public OrdenTrabajoService(OrdenTrabajoRepository ordenTrabajoRepository,
+            CotizacionRepository cotizacionRepository,
+            CotizacionFaseRepository cotizacionFaseRepository,
+            OtFaseRepository otFaseRepository,
+            OtFaseReasignacionRepository otFaseReasignacionRepository,
+            AuditoriaCalidadRepository auditoriaCalidadRepository,
+            FaseOperarioHabilitadoRepository faseOperarioHabilitadoRepository) {
+        this.ordenTrabajoRepository = ordenTrabajoRepository;
+        this.cotizacionRepository = cotizacionRepository;
+        this.cotizacionFaseRepository = cotizacionFaseRepository;
+        this.otFaseRepository = otFaseRepository;
+        this.otFaseReasignacionRepository = otFaseReasignacionRepository;
+        this.auditoriaCalidadRepository = auditoriaCalidadRepository;
+        this.faseOperarioHabilitadoRepository = faseOperarioHabilitadoRepository;
+    }
 
     /**
      * GENERAR DESDE COTIZACIÓN (Auto-trigger cuando se aprueba cotización)
      */
-    public OrdenTrabajoDTO generarDesdeCotzacion(Long cotizacionId) {
+    @Transactional
+    public OrdenTrabajoDTO generarDesdeCotizacion(Long cotizacionId) {
         // Validar que la cotización existe
-        Cotizacion cotizacion = cotizacionRepositorio.findById(cotizacionId)
-                .orElseThrow(() -> new IllegalArgumentException(
+        Cotizacion cotizacion = cotizacionRepository.findById(cotizacionId)
+                .orElseThrow(() -> new EntityNotFoundException(
                         "La cotización con ID " + cotizacionId + " no existe"));
 
         // Validar que no exista una orden de trabajo para esta cotización
-        if (ordenTrabajoRepositorio.findByCotizacionId(cotizacionId).isPresent()) {
-            throw new IllegalArgumentException(
+        if (ordenTrabajoRepository.findByCotizacionId(cotizacionId).isPresent()) {
+            throw new InvalidStateException(
                     "Ya existe una orden de trabajo para esta cotización");
         }
 
@@ -43,12 +81,47 @@ public class OrdenTrabajoService {
         OrdenTrabajo ordenTrabajo = new OrdenTrabajo();
         ordenTrabajo.setNumeroOt(generarNumeroOrden());
         ordenTrabajo.setCotizacion(cotizacion);
-        ordenTrabajo.setEstado(EstadoOT.PENDIENTE);
-        ordenTrabajo.setFechaCreacion(LocalDateTime.now());
-        ordenTrabajo.setFechaVencimiento(cotizacion.getFechaVencimiento());
-        ordenTrabajo.setCliente(cotizacion.getSolicitud().getCliente());
+        ordenTrabajo.setCantidad(cotizacion.getSolicitud().getCantidad());
+        ordenTrabajo.setEstado(EstadoOT.EN_PRODUCCION);
+        ordenTrabajo.setCreatedAt(OffsetDateTime.now());
 
-        OrdenTrabajo guardada = ordenTrabajoRepositorio.save(ordenTrabajo);
+        // Guardar fase de trabajo
+        OrdenTrabajo guardada = ordenTrabajoRepository.save(ordenTrabajo);
+
+        // Obtener fases de cotizacion y pasar para la OT
+        List<CotizacionFase> fasesCotizacion = cotizacionFaseRepository
+                .findByCotizacionIdOrderByNumeroSecuenciaAsc(cotizacionId);
+        List<OtFase> fasesOt = new ArrayList<>();
+
+        // Copiar la secuencia y aplicar la lógica de vencimiento
+        for (CotizacionFase faseCot : fasesCotizacion) {
+            OtFase nuevaFase = new OtFase();
+            nuevaFase.setOrdenTrabajo(guardada);
+            nuevaFase.setFaseCatalogo(faseCot.getFaseCatalogo());
+            int numeroSecuencia = faseCot.getNumeroSecuencia();
+            nuevaFase.setNumeroSecuencia(numeroSecuencia);
+            nuevaFase.setTiempoEstimadoMinutos(faseCot.getTiempoEstimadoMinutos());
+            nuevaFase.setEsRehacer(false);
+            nuevaFase.setCicloIteracion(1);
+            nuevaFase.setEstado(EstadoOtFase.PENDIENTE);
+
+            // Asignar un operario
+            Usuario operarioAsignado = obtenerOperarioHabilitado(faseCot.getFaseCatalogo().getId());
+            nuevaFase.setOperario(operarioAsignado);
+
+            // Lógica exclusiva para la PRIMERA fase de la secuencia
+            if (numeroSecuencia == 1) {
+                OffsetDateTime vencimiento = OffsetDateTime.now()
+                        .plusMinutes(faseCot.getTiempoEstimadoMinutos());
+                nuevaFase.setFechaVencimiento(vencimiento);
+                guardada.setFechaInicioProduccion(OffsetDateTime.now());
+                nuevaFase.setEstado(EstadoOtFase.EN_COLA);
+            } else {
+                nuevaFase.setFechaVencimiento(null);
+            }
+            fasesOt.add(nuevaFase);
+        }
+        otFaseRepository.saveAll(fasesOt);
         return convertirADTO(guardada);
     }
 
@@ -57,7 +130,7 @@ public class OrdenTrabajoService {
      */
     @Transactional()
     public OrdenTrabajoDTO obtenerPorId(Long id) {
-        OrdenTrabajo ordenTrabajo = ordenTrabajoRepositorio.findById(id)
+        OrdenTrabajo ordenTrabajo = ordenTrabajoRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "La orden de trabajo con ID " + id + " no existe"));
         return convertirADTO(ordenTrabajo);
@@ -68,7 +141,7 @@ public class OrdenTrabajoService {
      */
     @Transactional()
     public OrdenTrabajoDTO obtenerPorCotizacion(Long cotizacionId) {
-        OrdenTrabajo ordenTrabajo = ordenTrabajoRepositorio.findByCotizacionId(cotizacionId)
+        OrdenTrabajo ordenTrabajo = ordenTrabajoRepository.findByCotizacionId(cotizacionId)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "No existe orden de trabajo para la cotización con ID " + cotizacionId));
         return convertirADTO(ordenTrabajo);
@@ -77,19 +150,12 @@ public class OrdenTrabajoService {
     /**
      * LISTAR POR ESTADO
      */
-    @Transactional()
+    @Transactional
     public List<OrdenTrabajoDTO> listarPorEstado(EstadoOT estado) {
-        return ordenTrabajoRepositorio.findByEstado(estado.toString()).stream()
-                .map(this::convertirADTO)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * LISTAR POR CLIENTE
-     */
-    @Transactional()
-    public List<OrdenTrabajoDTO> listarPorCliente(Long clienteId) {
-        return ordenTrabajoRepositorio.findByClienteId(clienteId).stream()
+        if (estado == null) {
+            throw new IllegalArgumentException("El estado no puede ser nulo");
+        }
+        return ordenTrabajoRepository.findByEstado(estado).stream()
                 .map(this::convertirADTO)
                 .collect(Collectors.toList());
     }
@@ -99,18 +165,17 @@ public class OrdenTrabajoService {
      */
     @Transactional
     public OrdenTrabajoDTO actualizarEstado(Long id, EstadoOT nuevoEstado) {
-        OrdenTrabajo ordenTrabajo = ordenTrabajoRepositorio.findById(id)
+        OrdenTrabajo ordenTrabajo = ordenTrabajoRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "La orden de trabajo con ID " + id + " no existe"));
 
         ordenTrabajo.setEstado(nuevoEstado);
 
-        // Si el nuevo estado es COMPLETADA, registrar fecha de completación
-        if (nuevoEstado == EstadoOT.COMPLETADA) {
-            ordenTrabajo.setFechaTerminacion(LocalDateTime.now());
+        if (nuevoEstado == EstadoOT.ENTREGADA) {
+            ordenTrabajo.setFechaEntrega(OffsetDateTime.now());
         }
 
-        OrdenTrabajo actualizada = ordenTrabajoRepositorio.save(ordenTrabajo);
+        OrdenTrabajo actualizada = ordenTrabajoRepository.save(ordenTrabajo);
         return convertirADTO(actualizada);
     }
 
@@ -119,14 +184,13 @@ public class OrdenTrabajoService {
      */
     @Transactional
     public OrdenTrabajoDTO cancelar(Long id, String motivo) {
-        OrdenTrabajo ordenTrabajo = ordenTrabajoRepositorio.findById(id)
+        OrdenTrabajo ordenTrabajo = ordenTrabajoRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "La orden de trabajo con ID " + id + " no existe"));
 
         ordenTrabajo.setEstado(EstadoOT.CANCELADA);
-        ordenTrabajo.setNotas("Cancelada: " + motivo);
 
-        OrdenTrabajo actualizada = ordenTrabajoRepositorio.save(ordenTrabajo);
+        OrdenTrabajo actualizada = ordenTrabajoRepository.save(ordenTrabajo);
         return convertirADTO(actualizada);
     }
 
@@ -146,11 +210,166 @@ public class OrdenTrabajoService {
         OrdenTrabajoDTO dto = new OrdenTrabajoDTO();
         dto.setId(ordenTrabajo.getId());
         dto.setNumeroOT(ordenTrabajo.getNumeroOt());
-        dto.setFechaCreacion(ordenTrabajo.getFechaCreacion());
-        dto.setFechaTerminoReal(ordenTrabajo.getFechaTerminacion());
+        dto.setFechaCreacion(ordenTrabajo.getCreatedAt());
+        dto.setFechaInicioProduccion(ordenTrabajo.getFechaInicioProduccion());
+        dto.setFechaTerminoReal(ordenTrabajo.getFechaEntrega());
         dto.setEstado(ordenTrabajo.getEstado());
-        dto.setDescripcion(ordenTrabajo.getNotas());
         dto.setCotizacionId(ordenTrabajo.getCotizacion().getId());
+        dto.setReceptorNombre(ordenTrabajo.getReceptorNombre());
+        dto.setFechaPaseCalidad(ordenTrabajo.getFechaPaseCalidad());
+        dto.setFechaPaseDespacho(ordenTrabajo.getFechaPaseDespacho());
         return dto;
+    }
+
+    /**
+     * Marca una Orden de Trabajo como entregada (Issue #91)
+     */
+    @Transactional
+    public OrdenTrabajoDTO marcarComoEntregada(Long id, EntregaOtRequestDTO request) {
+        OrdenTrabajo ot = ordenTrabajoRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("La Orden de Trabajo con ID " + id + " no existe"));
+
+        if (ot.getEstado() != EstadoOT.DESPACHO) {
+            throw new InvalidStateException(
+                    "La Orden de Trabajo no se encuentra en estado DESPACHO y no puede ser entregada.");
+        }
+
+        ot.setEstado(EstadoOT.ENTREGADA);
+        ot.setFechaEntrega(OffsetDateTime.now());
+        ot.setReceptorNombre(request.getReceptorNombre());
+
+        OrdenTrabajo otGuardada = ordenTrabajoRepository.save(ot);
+        return convertirADTO(otGuardada);
+    }
+
+    /**
+     * 1. LISTAR O FILTRAR ORDENES DE TRABAJO (Para que el vendedor elija el
+     * expediente)
+     */
+    @Transactional()
+    public List<OrdenTrabajoResumenDTO> listarConFiltros(String cliente, String numeroOt) {
+        List<OrdenTrabajo> ordenes = ordenTrabajoRepository.findAll();
+
+        return ordenes.stream()
+                .filter(ot -> {
+                    String razonSocialCliente = "";
+                    if (ot.getCotizacion() != null &&
+                            ot.getCotizacion().getSolicitud() != null &&
+                            ot.getCotizacion().getSolicitud().getCliente() != null) {
+                        razonSocialCliente = ot.getCotizacion().getSolicitud().getCliente().getRazonSocial();
+                    }
+
+                    boolean coincideCliente = (cliente == null || cliente.isBlank()) ||
+                            (!razonSocialCliente.isBlank()
+                                    && razonSocialCliente.toLowerCase().contains(cliente.toLowerCase()));
+
+                    boolean coincideNumero = (numeroOt == null || numeroOt.isBlank()) ||
+                            (ot.getNumeroOt() != null
+                                    && ot.getNumeroOt().toLowerCase().contains(numeroOt.toLowerCase()));
+
+                    return coincideCliente && coincideNumero;
+                })
+                .map(ot -> {
+                    OrdenTrabajoResumenDTO dto = new OrdenTrabajoResumenDTO();
+                    dto.setId(ot.getId());
+                    dto.setNumeroOt(ot.getNumeroOt());
+
+                    String razonSocial = "Sin cliente";
+                    if (ot.getCotizacion() != null &&
+                            ot.getCotizacion().getSolicitud() != null &&
+                            ot.getCotizacion().getSolicitud().getCliente() != null) {
+                        razonSocial = ot.getCotizacion().getSolicitud().getCliente().getRazonSocial();
+                    }
+
+                    dto.setCliente(razonSocial);
+                    dto.setEstado(ot.getEstado());
+                    dto.setFecha(ot.getCreatedAt());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * OBTENER EXPEDIENTE COMPLETO (Trazabilidad detallada de la OT)
+     */
+    @Transactional
+    public ExpedienteCompletoDTO obtenerExpedienteCompleto(Long id) {
+        OrdenTrabajo ot = ordenTrabajoRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("La Orden de Trabajo con ID " + id + " no existe"));
+
+        ExpedienteCompletoDTO expediente = new ExpedienteCompletoDTO();
+
+        expediente.setId(ot.getId());
+        expediente.setNumeroOt(ot.getNumeroOt());
+        expediente.setEstado(ot.getEstado());
+        expediente.setFechaCreacion(ot.getCreatedAt());
+        expediente.setFechaEntrega(ot.getFechaEntrega());
+        expediente.setReceptorNombre(ot.getReceptorNombre());
+
+        if (ot.getCotizacion() != null) {
+            expediente.setCotizacionId(ot.getCotizacion().getId());
+            expediente.setMontoTotal(ot.getCotizacion().getPrecioFinal().doubleValue());
+
+            if (ot.getCotizacion().getSolicitud() != null) {
+                expediente.setSolicitudId(ot.getCotizacion().getSolicitud().getId());
+                if (ot.getCotizacion().getSolicitud().getCliente() != null) {
+                    expediente.setClienteNombre(ot.getCotizacion().getSolicitud().getCliente().getRazonSocial());
+                }
+            }
+        }
+
+        // Una fila por fase, ordenadas por ciclo y secuencia
+        // Las fases rehechas aparecen con numero_intento = su ciclo de iteración
+        List<OtFaseReasignacion> reasignaciones = otFaseReasignacionRepository
+                .findByOtFase_OrdenTrabajo_IdOrderByFechaReasignacionAsc(ot.getId());
+        List<FaseDetalleExpedienteDTO> historial = otFaseRepository.findByOrdenTrabajoIdWithRelaciones(ot.getId())
+                .stream()
+                .map(fase -> {
+                    // Última reasignación de esta fase, si la hubo
+                    OtFaseReasignacion ultima = reasignaciones.stream()
+                            .filter(r -> r.getOtFase().getId().equals(fase.getId()))
+                            .reduce((anterior, siguiente) -> siguiente)
+                            .orElse(null);
+                    return FaseDetalleExpedienteDTO.builder()
+                            .faseId(fase.getId())
+                            .nombreFase(fase.getFaseCatalogo() != null ? fase.getFaseCatalogo().getNombre() : null)
+                            .numeroSecuencia(fase.getNumeroSecuencia())
+                            .estadoFase(fase.getEstado())
+                            .fechaInicio(fase.getFechaInicioReal())
+                            .fechaFin(fase.getFechaFinReal())
+                            .operarioAsignado(fase.getOperario() != null ? fase.getOperario().getNombre() : null)
+                            .numeroIntento(fase.getCicloIteracion())
+                            .motivoReasignacion(ultima != null ? ultima.getMotivo() : null)
+                            .fechaReasignacion(ultima != null ? ultima.getFechaReasignacion() : null)
+                            .build();
+                })
+                .toList();
+
+        expediente.setHistorialFases(historial);
+
+        // Resultado de la última auditoría (Aprobado | Rechazado) o Pendiente
+        expediente.setResultadoCalidad(auditoriaCalidadRepository
+                .findFirstByOrdenTrabajoIdOrderByNumeroAuditoriaDesc(ot.getId())
+                .map(a -> a.getResultado() == ResultadoCalidad.CONFORME ? "Aprobado" : "Rechazado")
+                .orElse("Pendiente"));
+
+        return expediente;
+    }
+
+    /**
+     * Misma lógica que UsuarioService.obtenerOperarioHabilitado (develop).
+     * Se replica aquí para que ms-business y ms-execution no dependan de ms-auth.
+     */
+    private Usuario obtenerOperarioHabilitado(Long faseCatalogoId) {
+        List<Usuario> habilitaciones = faseOperarioHabilitadoRepository
+                .findOperariosHabilitadosByFaseId(faseCatalogoId);
+        if (habilitaciones.isEmpty()) {
+            throw new InvalidStateException("No existen operarios habilitados y activos para asignar a esta fase.");
+        }
+        Usuario operarioAsignado = habilitaciones.get(0);
+        if (operarioAsignado.getRol() != NivelRol.OPERARIO || !operarioAsignado.getActivo()) {
+            throw new InvalidStateException("El usuario asignado a la fase no tiene rol OPERARIO o está inactivo.");
+        }
+        return operarioAsignado;
     }
 }

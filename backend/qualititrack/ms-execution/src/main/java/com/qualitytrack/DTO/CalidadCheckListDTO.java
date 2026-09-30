@@ -1,6 +1,6 @@
 package com.qualitytrack.DTO;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import com.qualitytrack.Enum.ResultadoCalidad;
 
@@ -53,7 +53,7 @@ public class CalidadCheckListDTO {
 
     private String observaciones;
 
-    private LocalDateTime fechaVerificacion;
+    private OffsetDateTime fechaVerificacion;
 
-    private LocalDateTime fechaCreacion;
+    private OffsetDateTime fechaCreacion;
 }

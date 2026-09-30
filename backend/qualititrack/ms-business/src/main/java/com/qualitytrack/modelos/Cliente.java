@@ -32,6 +32,10 @@ public class Cliente {
     @Column(name = "razon_social", nullable = false, length = 150)
     private String razonSocial;
 
+    @NotBlank
+    @Column(nullable = false, unique = true)
+    private String cuit;
+
     @NotBlank(message = "El nombre no puede estar vacio")
     @Column(name = "contacto_nombre", nullable = false, length = 120)
     private String contactoNombre;
@@ -44,9 +48,9 @@ public class Cliente {
     @Column(nullable = false, length = 255)
     private String direccion;
 
-
+    @NotBlank
     @Email(message = "Email invalido")
-    @Column(length = 150)
+    @Column(length = 150) // no se pone nullable = false para evitar inconsistencias con la base, not blank igual cubre los casos que necesitamos
     private String email;
 
     @Column(nullable = false)
@@ -71,75 +75,4 @@ public class Cliente {
         this.updatedAt = OffsetDateTime.now();
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getRazonSocial() {
-        return razonSocial;
-    }
-
-    public void setRazonSocial(String razonSocial) {
-        this.razonSocial = razonSocial;
-    }
-
-    public String getContactoNombre() {
-        return contactoNombre;
-    }
-
-    public void setContactoNombre(String contactoNombre) {
-        this.contactoNombre = contactoNombre;
-    }
-
-    public String getTelefono() {
-        return telefono;
-    }
-
-    public void setTelefono(String telefono) {
-        this.telefono = telefono;
-    }
-
-    public String getDireccion() {
-        return direccion;
-    }
-
-    public void setDireccion(String direccion) {
-        this.direccion = direccion;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public Boolean getActivo() {
-        return activo;
-    }
-
-    public void setActivo(Boolean activo) {
-        this.activo = activo;
-    }
-
-    public OffsetDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public OffsetDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(OffsetDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
 }

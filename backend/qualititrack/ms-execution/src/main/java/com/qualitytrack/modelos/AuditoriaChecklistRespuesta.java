@@ -13,18 +13,20 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
 @Table(name = "auditoria_checklist_respuestas", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"auditoria_id", "item_numero"})
+    @UniqueConstraint(columnNames = {"auditoria_id", "item_numero"})
 })
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class AuditoriaChecklistRespuesta {
 
     @Id
@@ -50,53 +52,5 @@ public class AuditoriaChecklistRespuesta {
 
     public enum ResultadoItem {
         CUMPLE, NO_CUMPLE, NO_APLICA
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public AuditoriaCalidad getAuditoria() {
-        return auditoria;
-    }
-
-    public void setAuditoria(AuditoriaCalidad auditoria) {
-        this.auditoria = auditoria;
-    }
-
-    public Integer getItemNumero() {
-        return itemNumero;
-    }
-
-    public void setItemNumero(Integer itemNumero) {
-        this.itemNumero = itemNumero;
-    }
-
-    public String getCriterioNombre() {
-        return criterioNombre;
-    }
-
-    public void setCriterioNombre(String criterioNombre) {
-        this.criterioNombre = criterioNombre;
-    }
-
-    public ResultadoItem getResultadoItem() {
-        return resultadoItem;
-    }
-
-    public void setResultadoItem(ResultadoItem resultadoItem) {
-        this.resultadoItem = resultadoItem;
-    }
-
-    public String getObservaciones() {
-        return observaciones;
-    }
-
-    public void setObservaciones(String observaciones) {
-        this.observaciones = observaciones;
     }
 }

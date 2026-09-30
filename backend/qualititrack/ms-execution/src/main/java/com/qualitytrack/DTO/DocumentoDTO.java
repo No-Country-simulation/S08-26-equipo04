@@ -1,6 +1,6 @@
 package com.qualitytrack.DTO;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import com.qualitytrack.Enum.TipoDocumento;
 
@@ -38,5 +38,5 @@ public class DocumentoDTO {
 
     private String descripcion;
 
-    private LocalDateTime fechaCarga;
+    private OffsetDateTime fechaCarga;
 }
