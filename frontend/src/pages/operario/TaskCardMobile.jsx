@@ -17,6 +17,8 @@ export const TaskCardMobile = ({
   tarea,
   accionEnCurso = false,
   salida = false,
+  // Otra tarea ya esta en ejecucion: no se puede trabajar en paralelo.
+  otraEnEjecucion = false,
   onIniciar,
   onFinalizar,
   onSalidaCompleta,
@@ -25,6 +27,14 @@ export const TaskCardMobile = ({
   const estado = estadoConfig[tarea.estado] || { variant: 'queue', label: tarea.estado };
   const puedeIniciar = tarea.estado === 'EN_COLA';
   const puedeFinalizar = tarea.estado === 'EN_EJECUCION';
+  // Bloqueo de inicio en paralelo: solo afecta a tareas en cola cuando ya
+  // hay otra en ejecucion. La tarea en curso siempre puede terminarse.
+  const inicioBloqueado = puedeIniciar && otraEnEjecucion;
+  // Trazabilidad de OT ciclicas (retrabajo): el DTO ya trae secuencia, ciclo
+  // y marca de rehacer (BE #263). Solo se muestra lo que trae dato.
+  const numeroSecuencia = tarea.numero_secuencia ?? tarea.numeroSecuencia ?? null;
+  const cicloIteracion = tarea.ciclo_iteracion ?? tarea.cicloIteracion ?? null;
+  const esRehacer = tarea.es_rehacer ?? tarea.esRehacer ?? false;
   const cardRef = useRef(null);
   const badgeRef = useRef(null);
   const pressMediaRef = useRef(null);
@@ -110,6 +120,20 @@ export const TaskCardMobile = ({
         </span>
       </div>
 
+      {(numeroSecuencia != null ||
+        cicloIteracion != null ||
+        esRehacer === true) && (
+        <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-label text-text-secondary">
+          {numeroSecuencia != null && <span>Fase {numeroSecuencia}</span>}
+          {cicloIteracion != null && (
+            <span>
+              {numeroSecuencia != null ? "· " : ""}Ciclo {cicloIteracion}
+            </span>
+          )}
+          {esRehacer === true && <Badge variant="quality">Rehacer</Badge>}
+        </p>
+      )}
+
       {/* Cada dato con su etiqueta: sin esto "Tope de caja 10 mm" al lado de un
           codigo de OT no deja claro cual es la pieza y cual la fase. */}
       {(tarea.descripcion_pieza || tarea.cantidad != null) && (
@@ -148,19 +172,31 @@ export const TaskCardMobile = ({
           Ver detalle
         </Button>
         {puedeIniciar && (
-          <Button
-            size="lg"
-            onClick={(event) => {
-              animarPulsacion(event);
-              onIniciar?.(tarea);
-            }}
-            loading={accionEnCurso}
-            className="min-h-[56px] w-full text-base font-semibold"
-            aria-label={`Iniciar ${tarea.fase_nombre ?? "la fase"} de ${tarea.ot_numero ?? "la OT"}`}
-          >
-            <Play className="h-5 w-5" aria-hidden="true" />
-            Iniciar
-          </Button>
+          <>
+            <Button
+              size="lg"
+              onClick={(event) => {
+                animarPulsacion(event);
+                onIniciar?.(tarea);
+              }}
+              loading={accionEnCurso}
+              disabled={inicioBloqueado}
+              className="min-h-[56px] w-full text-base font-semibold"
+              aria-label={`Iniciar ${tarea.fase_nombre ?? "la fase"} de ${tarea.ot_numero ?? "la OT"}`}
+              aria-describedby={inicioBloqueado ? `bloqueo-inicio-${tarea.id}` : undefined}
+            >
+              <Play className="h-5 w-5" aria-hidden="true" />
+              Iniciar
+            </Button>
+            {inicioBloqueado && (
+              <p
+                id={`bloqueo-inicio-${tarea.id}`}
+                className="text-label text-text-secondary"
+              >
+                Termina la tarea en curso antes de iniciar otra.
+              </p>
+            )}
+          </>
         )}
         {puedeFinalizar && (
           <Button
