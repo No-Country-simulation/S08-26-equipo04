@@ -1,11 +1,12 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Inbox, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Inbox, RefreshCw, Search } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useCotizaciones } from "../../hooks/useCotizaciones";
 import { useSolicitudes } from "../../hooks/useSolicitudes";
 import {
   Badge,
+  Button,
   Card,
   DataTable,
   EmptyState,
@@ -31,13 +32,20 @@ const estadoLabels = {
 
 export const CotizacionesPage = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const { cotizaciones, cargando, error, recargar } = useCotizaciones();
   // El DTO de cotización no trae solicitud_numero/cliente: se enriquece
   // con la lista de solicitudes (igual que solicitudes hace con clientes).
   const { solicitudes } = useSolicitudes();
   const [busqueda, setBusqueda] = useState("");
-  const [estado, setEstado] = useState("TODOS");
+  const estado = searchParams.get("estado") || "TODOS";
+
+  // La lista puede cambiar fuera de esta pantalla (el jefe cotiza en otra
+  // pestaña): se vuelve a pedir cada vez que se entra (FE-4).
+  useEffect(() => {
+    recargar();
+  }, [recargar]);
 
   const solicitudPorId = useMemo(
     () => new Map(solicitudes.map((item) => [item.id, item])),
@@ -94,15 +102,10 @@ export const CotizacionesPage = () => {
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                navigate(
-                  cot.estado === "LISTA_PARA_ENVIAR" &&
-                    user?.rol === "JEFE_PRODUCCION"
-                    ? `/cotizaciones/${cot.id}/editar`
-                    : `/cotizaciones/${cot.id}`,
-                );
+                navigate(`/cotizaciones/${cot.id}`);
               }}
               className="font-medium text-primary hover:underline"
-              aria-label={`${cot.estado === "LISTA_PARA_ENVIAR" && user?.rol === "JEFE_PRODUCCION" ? "Editar" : "Ver"} ${cot.numero_cotizacion}`}
+              aria-label={`Ver ${cot.numero_cotizacion}`}
             >
               {cot.numero_cotizacion}
             </button>
@@ -145,15 +148,19 @@ export const CotizacionesPage = () => {
         ),
       },
     ],
-    [navigate, user?.rol],
+    [navigate],
   );
 
   const handleRowClick = (row) => {
-    navigate(
-      row.estado === "LISTA_PARA_ENVIAR" && user?.rol === "JEFE_PRODUCCION"
-        ? `/cotizaciones/${row.id}/editar`
-        : `/cotizaciones/${row.id}`,
-    );
+    navigate(`/cotizaciones/${row.id}`);
+  };
+
+  const cambiarEstado = (event) => {
+    const value = event.target.value;
+    const next = new URLSearchParams(searchParams);
+    if (value === "TODOS") next.delete("estado");
+    else next.set("estado", value);
+    setSearchParams(next);
   };
 
   return (
@@ -174,6 +181,18 @@ export const CotizacionesPage = () => {
         </div>
         {/* FE-154: sin botón "Nueva cotización". Se cotiza desde
             Solicitudes con el botón "Cotizar" de cada fila. */}
+        <Button
+          variant="secondary"
+          onClick={recargar}
+          loading={cargando}
+          aria-label="Actualizar cotizaciones"
+        >
+          <RefreshCw
+            className={`h-4 w-4 ${cargando ? "hidden" : ""}`}
+            aria-hidden={cargando}
+          />
+          Actualizar
+        </Button>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -197,7 +216,7 @@ export const CotizacionesPage = () => {
           name="estado"
           className="select h-11 sm:w-[220px] sm:max-w-none text-body"
           value={estado}
-          onChange={(e) => setEstado(e.target.value)}
+          onChange={cambiarEstado}
           aria-label="Filtrar por estado"
         >
           <option value="TODOS">Todos los estados</option>

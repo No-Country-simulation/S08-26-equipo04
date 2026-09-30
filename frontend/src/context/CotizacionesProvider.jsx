@@ -1,30 +1,26 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiGet, apiPost, apiPut } from "../api";
 import { useAuth } from "./AuthContext";
-import { mocks } from "../mocks";
 import { CotizacionesContext } from "./CotizacionesContext";
 
-// El DTO de backend trae el nombre de fase como nombre_fase. Se normaliza
-// en cliente (precio_final, motivo_rechazo_cliente, fase_nombre) para no
-// romper las vistas; si falta el nombre se resuelve contra el catálogo
-// local. Se toleran los nombres anteriores por compatibilidad.
-const mapFase = (fase, catalogo = mocks.fases) => ({
+// El DTO de backend siempre trae el nombre de fase como nombre_fase
+// (CotizacionService lo arma desde el catálogo). Se normaliza en cliente
+// (precio_final, motivo_rechazo_cliente, fase_nombre) para no romper las
+// vistas; si falta el nombre queda en null y la vista lo muestra como
+// faltante. Se toleran los nombres anteriores por compatibilidad.
+const mapFase = (fase) => ({
   ...fase,
-  fase_nombre:
-    fase.fase_nombre ??
-    fase.nombre_fase ??
-    catalogo.find((item) => item.id === fase.fase_catalogo_id)?.nombre ??
-    null,
+  fase_nombre: fase.fase_nombre ?? fase.nombre_fase ?? null,
 });
 
-const mapItem = (item, catalogo = mocks.fases) => ({
+const mapItem = (item) => ({
   ...item,
   precio_final: item.precio_final ?? item.precio_total ?? null,
   motivo_rechazo_cliente:
     item.motivo_rechazo_cliente ?? item.motivo_rechazo ?? null,
   created_at: item.created_at ?? item.fecha_creacion ?? null,
   updated_at: item.updated_at ?? item.fecha_actualizacion ?? null,
-  fases: (item.fases ?? []).map((fase) => mapFase(fase, catalogo)),
+  fases: (item.fases ?? []).map((fase) => mapFase(fase)),
 });
 
 const extractMessage = (error, fallback) =>
@@ -78,11 +74,11 @@ export const CotizacionesProvider = ({ children }) => {
     };
   }, [isAuthenticated, puedeConsultar, version]);
 
-  const recargar = () => {
+  const recargar = useCallback(() => {
     setCargando(true);
     setError(null);
     setVersion((v) => v + 1);
-  };
+  }, []);
 
   // Fusiona la respuesta del backend conservando los datos desnormalizados
   // locales (solicitud_numero, cliente) que el DTO no trae.
@@ -130,18 +126,6 @@ export const CotizacionesProvider = ({ children }) => {
         cause: err,
       });
     }
-  };
-
-  // Sin endpoint de edición en backend: la edición de una cotización
-  // LISTA_PARA_ENVIAR queda solo en estado local hasta que BE lo agregue.
-  const actualizarCotizacion = (id, datos) => {
-    setCotizaciones((prev) =>
-      prev.map((c) =>
-        c.id === id
-          ? { ...c, ...datos, updated_at: new Date().toISOString() }
-          : c,
-      ),
-    );
   };
 
   const enviarCotizacion = async (id) => {
@@ -216,7 +200,6 @@ export const CotizacionesProvider = ({ children }) => {
         error,
         recargar,
         agregarCotizacion,
-        actualizarCotizacion,
         enviarCotizacion,
         aprobarCotizacion,
         rechazarCotizacion,

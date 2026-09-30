@@ -1,9 +1,13 @@
 package com.backend.qualititrack.Controller;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -53,5 +57,17 @@ public class AdjuntoController {
 
         return ResponseEntity.ok(
                 adjuntoService.listarPorSolicitud(solicitudId));
+    }
+
+    @GetMapping("/documentos/{id}")
+    @PreAuthorize("hasAnyRole('VENDEDOR', 'JEFE_PRODUCCION', 'OPERARIO')")
+    public ResponseEntity<byte[]> verDocumento(@PathVariable Long id) {
+        Adjunto adjunto = adjuntoService.obtenerParaVer(id);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(adjunto.getMimeType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.inline()
+                        .filename(adjunto.getNombreOriginal(), StandardCharsets.UTF_8)
+                        .build().toString())
+                .body(adjunto.getContenido());
     }
 }

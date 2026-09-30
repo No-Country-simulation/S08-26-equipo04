@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
-import { PackageCheck } from "lucide-react";
+import { PackageCheck, RefreshCw, Search } from "lucide-react";
 import { useOrdenesTrabajo } from "../../hooks/useOrdenesTrabajo";
 import {
-  Badge,
+  Button,
   Card,
   DataTable,
   EmptyState,
@@ -10,7 +10,7 @@ import {
   SkeletonTable,
   Title,
 } from "../../components/ui";
-import { formatDate, formatDateTime } from "../../api/helpers";
+import { formatDateTime, formatFechaEntrega } from "../../api/helpers";
 
 /**
  * Vista de solo lectura del historial de OTs entregadas.
@@ -79,16 +79,7 @@ export const OrdenesEntregadasPage = () => {
       {
         accessorKey: "fecha_esperada_entrega",
         header: "Entrega solicitada",
-        cell: ({ getValue }) => formatDate(getValue()),
-      },
-      {
-        accessorKey: "estado",
-        header: "Estado",
-        cell: () => (
-          <Badge variant="approved" type="inline">
-            Entregada
-          </Badge>
-        ),
+        cell: ({ getValue }) => formatFechaEntrega(getValue()),
       },
     ],
     [],
@@ -98,29 +89,49 @@ export const OrdenesEntregadasPage = () => {
     <div className="mx-auto max-w-7xl space-y-6">
       <Title>Órdenes entregadas</Title>
 
-      <div>
-        <h1 className="text-h1 text-ink">Órdenes entregadas</h1>
-        <p className="mt-1 text-body text-text-secondary">
-          Historial de órdenes de trabajo entregadas (solo lectura).
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-h1 text-ink">Órdenes entregadas</h1>
+          <p className="mt-1 text-body text-text-secondary">
+            Historial de órdenes de trabajo entregadas (solo lectura).
+          </p>
+        </div>
+        <Button
+          variant="secondary"
+          onClick={recargar}
+          loading={cargando}
+          aria-label="Actualizar órdenes entregadas"
+        >
+          <RefreshCw
+            className={`h-4 w-4 ${cargando ? "hidden" : ""}`}
+            aria-hidden={cargando}
+          />
+          Actualizar
+        </Button>
       </div>
 
-      <div className="max-w-xl">
-        <input
-          id="entregadas-busqueda"
-          name="busqueda"
-          type="search"
-          className="input w-full"
-          value={busqueda}
-          onChange={(event) => setBusqueda(event.target.value)}
-          placeholder="Buscar por OT, cliente, pieza o receptor"
-          aria-label="Buscar por OT, cliente, pieza o receptor"
-        />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <label className="relative flex-1" htmlFor="entregadas-busqueda">
+          <Search
+            className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted"
+            aria-hidden="true"
+          />
+          <input
+            id="entregadas-busqueda"
+            name="busqueda"
+            type="search"
+            className="input h-11 w-full pl-10 text-body"
+            value={busqueda}
+            onChange={(event) => setBusqueda(event.target.value)}
+            placeholder="Buscar por OT, cliente, pieza o receptor"
+            aria-label="Buscar por OT, cliente, pieza o receptor"
+          />
+        </label>
       </div>
 
       <Card>
         {cargando ? (
-          <SkeletonTable columns={8} rows={5} />
+          <SkeletonTable columns={7} rows={5} />
         ) : error ? (
           <ErrorBanner message={error} onRetry={recargar} />
         ) : ordenesFiltradas.length === 0 ? (

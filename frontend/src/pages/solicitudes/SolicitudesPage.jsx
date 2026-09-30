@@ -1,8 +1,9 @@
-import { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { Calculator, Inbox, Plus } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Calculator, Inbox, Plus, RefreshCw, Search } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useSolicitudes } from "../../hooks/useSolicitudes";
+import { formatFechaEntrega } from "../../api/helpers";
 import {
   Badge,
   Button,
@@ -35,10 +36,20 @@ const TEXTOS_JEFE = {
 
 export const SolicitudesPage = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const { solicitudes, cargando, error, recargar } = useSolicitudes();
   const esJefe = user?.rol === "JEFE_PRODUCCION";
   const esVendedor = user?.rol === "VENDEDOR";
+  const estadoParam = searchParams.get("estado");
+  const estadoFiltro = estadoParam || (esJefe ? "PENDIENTE_COTIZACION" : "TODOS");
+  const [busqueda, setBusqueda] = useState("");
+
+  // La lista puede cambiar fuera de esta pantalla (otro vendedor o el jefe
+  // cotizando): se vuelve a pedir cada vez que se entra (FE-4).
+  useEffect(() => {
+    recargar();
+  }, [recargar]);
 
   // Orden inicial por rol (el header sigue permitiendo reordenar a mano):
   // Jefe: FIFO, la más antigua primero (más tiempo esperando).
@@ -48,22 +59,28 @@ export const SolicitudesPage = () => {
       const t = Date.parse(item.created_at ?? "");
       return Number.isNaN(t) ? 0 : t;
     };
-    if (esJefe) {
-      return solicitudes
-        .filter((item) => item.estado === "PENDIENTE_COTIZACION")
-        .slice()
-        .sort((a, b) => timestamp(a) - timestamp(b) || a.id - b.id);
-    }
-    if (esVendedor) {
-      return solicitudes
-        .filter(
-          (item) => item.vendedor_id == null || item.vendedor_id === user.id,
+    const propias = esVendedor
+      ? solicitudes.filter((item) => item.vendedor_id == null || Number(item.vendedor_id) === Number(user.id))
+      : solicitudes;
+    const filtradas = estadoFiltro === "TODOS" ? propias : propias.filter((item) => item.estado === estadoFiltro);
+    const texto = busqueda.trim().toLowerCase();
+    const conBusqueda = texto
+      ? filtradas.filter((item) =>
+          [item.numero_solicitud, item.cliente_razon_social, item.descripcion_pieza].some(
+            (value) => value?.toLowerCase().includes(texto),
+          ),
         )
-        .slice()
-        .sort((a, b) => timestamp(b) - timestamp(a) || b.id - a.id);
-    }
-    return solicitudes;
-  }, [solicitudes, esJefe, esVendedor, user]);
+      : filtradas;
+    return conBusqueda.slice().sort((a, b) => (esJefe ? timestamp(a) - timestamp(b) : timestamp(b) - timestamp(a)) || (esJefe ? a.id - b.id : b.id - a.id));
+  }, [solicitudes, esJefe, esVendedor, user, estadoFiltro, busqueda]);
+
+  const cambiarEstado = (event) => {
+    const value = event.target.value;
+    const next = new URLSearchParams(searchParams);
+    if (value === "TODOS") next.delete("estado");
+    else next.set("estado", value);
+    setSearchParams(next);
+  };
 
   const columns = useMemo(() => {
     const base = [
@@ -73,7 +90,7 @@ export const SolicitudesPage = () => {
       {
         accessorKey: "fecha_esperada_entrega",
         header: "Entrega esperada",
-        cell: ({ getValue }) => getValue() || "Sin fecha",
+        cell: ({ getValue }) => formatFechaEntrega(getValue()),
       },
     ];
     // Columna Estado solo si NO es Jefe: para el Jefe es redundante porque
@@ -137,11 +154,50 @@ export const SolicitudesPage = () => {
           <h1 className="text-h1 text-ink">Solicitudes</h1>
           <p className="mt-1 text-body text-text-secondary">{subtitulo}</p>
         </div>
-        {esVendedor && (
-          <Button onClick={() => navigate("/solicitudes/nueva")}>
-            <Plus className="h-4 w-4" />
-            Nueva solicitud
+        <div className="flex items-center gap-3">
+          <Button
+            variant="secondary"
+            onClick={recargar}
+            loading={cargando}
+            aria-label="Actualizar solicitudes"
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${cargando ? "hidden" : ""}`}
+              aria-hidden={cargando}
+            />
+            Actualizar
           </Button>
+          {esVendedor && (
+            <Button onClick={() => navigate("/solicitudes/nueva")}>
+              <Plus className="h-4 w-4" />
+              Nueva solicitud
+            </Button>
+          )}
+        </div>
+      </div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <label className="relative flex-1" htmlFor="solicitudes-busqueda">
+          <Search
+            className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted"
+            aria-hidden="true"
+          />
+          <input
+            id="solicitudes-busqueda"
+            name="busqueda"
+            type="search"
+            className="input h-11 w-full pl-10 text-body"
+            value={busqueda}
+            onChange={(event) => setBusqueda(event.target.value)}
+            placeholder="Buscar por número, cliente o pieza"
+            aria-label="Buscar solicitudes"
+          />
+        </label>
+        {!esJefe && (
+          <select id="solicitudes-estado" name="estado" className="select h-11 sm:w-[220px] sm:max-w-none text-body" value={estadoFiltro} onChange={cambiarEstado} aria-label="Filtrar solicitudes por estado">
+            <option value="TODOS">Todos los estados</option>
+            <option value="PENDIENTE_COTIZACION">Pendiente de cotización</option>
+            <option value="COTIZADA">Cotizada</option>
+          </select>
         )}
       </div>
       <Card>
@@ -173,8 +229,6 @@ export const SolicitudesPage = () => {
           <DataTable
             columns={columns}
             data={solicitudesVisibles}
-            searchable
-            searchPlaceholder="Buscar por numero o cliente..."
             footer={`${solicitudesVisibles.length} ${solicitudesVisibles.length !== 1 ? "solicitudes" : "solicitud"}`}
           />
         )}

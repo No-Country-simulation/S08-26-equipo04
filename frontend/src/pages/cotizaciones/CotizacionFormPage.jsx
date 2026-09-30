@@ -1,29 +1,22 @@
-import { useMemo, useEffect } from "react";
-import { useParams, useNavigate, useSearchParams, Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams, Navigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DragDropContext, Droppable } from "@hello-pangea/dnd";
 import { toast } from "sonner";
 import { ArrowLeft, Save } from "lucide-react";
-import { mocks } from "../../mocks";
+import { apiGet, extractApiMessage, formatFechaEntrega } from "../../api";
 import { useCotizaciones } from "../../hooks/useCotizaciones";
 import { useSolicitudes } from "../../hooks/useSolicitudes";
-import {
-  Button,
-  Card,
-  CardTitle,
-  Field,
-  Title,
-} from "../../components/ui";
+import { Button, Card, CardTitle, Field, Title } from "../../components/ui";
 import { SelectorFases } from "../../components/SelectorFases";
 import { SecuenciaFaseRow } from "../../components/SecuenciaFaseRow";
 import {
   cotizacionSchema,
   cotizacionDefaults,
 } from "../../utils/cotizacionSchema";
+import { IMPORTE_EJEMPLO } from "../../utils/importe";
 import { useWatch } from "react-hook-form";
-
-const ESTADOS_SOLO_LECTURA = ["ENVIADA_A_CLIENTE", "APROBADA", "NO_APROBADA"];
 
 // Banner informativo con los datos de la solicitud (sin edición).
 const DetalleSolicitud = ({ solicitud }) => (
@@ -55,7 +48,7 @@ const DetalleSolicitud = ({ solicitud }) => (
     <div>
       <p className="text-metadata text-text-muted">Fecha esperada</p>
       <p className="text-body font-medium text-ink">
-        {solicitud.fecha_esperada_entrega}
+        {formatFechaEntrega(solicitud.fecha_esperada_entrega)}
       </p>
     </div>
     {solicitud.notas_comerciales && (
@@ -70,37 +63,16 @@ const DetalleSolicitud = ({ solicitud }) => (
 );
 
 export const CotizacionFormPage = () => {
-  const { id } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const esEdicion = Boolean(id);
-  const { cotizaciones, agregarCotizacion, actualizarCotizacion } =
-    useCotizaciones();
+  const { cotizaciones, agregarCotizacion } = useCotizaciones();
   const { obtenerSolicitud, cargando: cargandoSolicitudes } = useSolicitudes();
 
   // FE-154: la solicitud llega por query (?solicitud=<id>) desde el botón
   // "Cotizar" del listado. Sin desplegable: entrar sin id redirige.
   const solicitudIdParam = Number(searchParams.get("solicitud")) || null;
 
-  const cotizacionExistente = esEdicion
-    ? cotizaciones.find((c) => c.id === Number(id))
-    : null;
-
-  useEffect(() => {
-    if (
-      cotizacionExistente &&
-      ESTADOS_SOLO_LECTURA.includes(cotizacionExistente.estado)
-    ) {
-      navigate(`/cotizaciones/${cotizacionExistente.id}`, { replace: true });
-    }
-  }, [cotizacionExistente, navigate]);
-
-  // La solicitud queda fijada por la URL (creación) o por la cotización (edición).
-  // Sin estado local: nunca hay lista de opciones para elegir.
-  const solicitudSeleccionada = esEdicion
-    ? (cotizacionExistente?.solicitud_id ?? null)
-    : solicitudIdParam;
-
+  const solicitudSeleccionada = solicitudIdParam;
   const solicitudActual = solicitudSeleccionada
     ? obtenerSolicitud(solicitudSeleccionada)
     : null;
@@ -108,14 +80,41 @@ export const CotizacionFormPage = () => {
   // Una solicitud deja de estar disponible si ya tiene cotización o su
   // estado ya no es pendiente (solo se evalúa con datos cargados).
   const yaCotizada =
-    !esEdicion &&
     !cargandoSolicitudes &&
     solicitudSeleccionada != null &&
     (solicitudActual == null ||
       solicitudActual.estado !== "PENDIENTE_COTIZACION" ||
       cotizaciones.some((c) => c.solicitud_id === solicitudSeleccionada));
 
-  const fasesCatalogo = useMemo(() => mocks.fases.filter((f) => f.activo), []);
+  // Catálogo real: GET /api/fases ya devuelve al Jefe solo fases activas
+  // con operarios habilitados, asi que no hay filtrado local. Los setState
+  // viven en los callbacks (react-hooks/set-state-in-effect).
+  const [fasesCatalogo, setFasesCatalogo] = useState([]);
+  const [cargandoFases, setCargandoFases] = useState(true);
+  const [errorFases, setErrorFases] = useState(null);
+
+  useEffect(() => {
+    let cancelado = false;
+    apiGet("/api/fases").then(
+      ({ data }) => {
+        if (cancelado) return;
+        setFasesCatalogo(data ?? []);
+        setErrorFases(null);
+        setCargandoFases(false);
+      },
+      (err) => {
+        if (cancelado) return;
+        setFasesCatalogo([]);
+        setErrorFases(
+          extractApiMessage(err, "No se pudieron cargar las fases."),
+        );
+        setCargandoFases(false);
+      },
+    );
+    return () => {
+      cancelado = true;
+    };
+  }, []);
 
   const {
     register,
@@ -127,18 +126,7 @@ export const CotizacionFormPage = () => {
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(cotizacionSchema),
-    defaultValues: cotizacionExistente
-      ? {
-          fases: cotizacionExistente.fases.map((f) => ({
-            fase_catalogo_id: f.fase_catalogo_id,
-            fase_nombre: f.fase_nombre,
-            tiempo_estimado_minutos: f.tiempo_estimado_minutos,
-            instrucciones_fase: f.instrucciones_fase,
-          })),
-          precio_final: cotizacionExistente.precio_final,
-          observaciones: cotizacionExistente.observaciones || "",
-        }
-      : cotizacionDefaults,
+    defaultValues: cotizacionDefaults,
   });
 
   const fases = useWatch({ control, name: "fases" }) ?? [];
@@ -172,26 +160,19 @@ export const CotizacionFormPage = () => {
 
   const onSubmit = async (data) => {
     try {
-      if (esEdicion) {
-        actualizarCotizacion(Number(id), data);
-        toast.success(
-          "Cotización actualizada (solo local, sin endpoint de edición).",
-        );
-      } else {
-        const solicitud = obtenerSolicitud(solicitudSeleccionada);
-        await agregarCotizacion({
-          solicitud_id: solicitudSeleccionada,
-          precio_final: data.precio_final,
-          fases: data.fases.map((fase, index) => ({
-            ...fase,
-            numero_secuencia: fase.numero_secuencia ?? index + 1,
-          })),
-          observaciones: data.observaciones || "",
-          solicitud_numero: solicitud?.numero_solicitud ?? null,
-          cliente_razon_social: solicitud?.cliente_razon_social ?? null,
-        });
-        toast.success("Cotización creada correctamente");
-      }
+      const solicitud = obtenerSolicitud(solicitudSeleccionada);
+      await agregarCotizacion({
+        solicitud_id: solicitudSeleccionada,
+        precio_final: data.precio_final,
+        fases: data.fases.map((fase, index) => ({
+          ...fase,
+          numero_secuencia: fase.numero_secuencia ?? index + 1,
+        })),
+        observaciones: data.observaciones || "",
+        solicitud_numero: solicitud?.numero_solicitud ?? null,
+        cliente_razon_social: solicitud?.cliente_razon_social ?? null,
+      });
+      toast.success("Cotización creada correctamente");
       navigate("/cotizaciones");
     } catch (err) {
       setError("root", {
@@ -202,13 +183,13 @@ export const CotizacionFormPage = () => {
   };
 
   // Sin ?solicitud= no hay nada que cotizar: volver al listado.
-  if (!esEdicion && solicitudIdParam == null) {
+  if (solicitudIdParam == null) {
     return <Navigate to="/solicitudes" replace />;
   }
 
   // Solicitud ya cotizada: vista informativa sin formulario. No se pueden
   // definir fases ni precio; solo datos de la solicitud, leyenda y volver.
-  if (!esEdicion && !cargandoSolicitudes && yaCotizada) {
+  if (!cargandoSolicitudes && yaCotizada) {
     return (
       <div className="mx-auto max-w-4xl space-y-5">
         <Title>Nueva cotización</Title>
@@ -228,7 +209,9 @@ export const CotizacionFormPage = () => {
 
         <Card className="p-0 overflow-hidden">
           <div className="border-b border-border px-4 py-3">
-            <CardTitle className="text-label font-medium">Solicitud asociada</CardTitle>
+            <CardTitle className="text-label font-medium">
+              Solicitud asociada
+            </CardTitle>
           </div>
           <div className="p-4">
             {solicitudActual ? (
@@ -247,10 +230,7 @@ export const CotizacionFormPage = () => {
         </Card>
 
         <div className="flex justify-end">
-          <Button
-            variant="secondary"
-            onClick={() => navigate("/solicitudes")}
-          >
+          <Button variant="secondary" onClick={() => navigate("/solicitudes")}>
             Volver a solicitudes
           </Button>
         </div>
@@ -260,28 +240,18 @@ export const CotizacionFormPage = () => {
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
-      <Title>{esEdicion ? "Editar cotización" : "Nueva cotización"}</Title>
+      <Title>Nueva cotización</Title>
       <div>
         <button
           type="button"
-          onClick={() => navigate(esEdicion ? "/cotizaciones" : "/solicitudes")}
+          onClick={() => navigate("/solicitudes")}
           className="inline-flex items-center gap-1 text-label font-medium text-primary hover:underline"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          {esEdicion ? "Volver a Cotizaciones" : "Volver a Solicitudes"}
+          Volver a Solicitudes
         </button>
         <div>
-          <h1 className="mt-2 text-h1 text-ink">
-            {esEdicion ? "Editar cotización" : "Nueva cotización"}
-          </h1>
-          {cotizacionExistente && (
-            <p className="mt-1 text-body text-text-secondary">
-              {cotizacionExistente.numero_cotizacion} —{" "}
-              {cotizacionExistente.cliente_razon_social ??
-                solicitudActual?.cliente_razon_social ??
-                ""}
-            </p>
-          )}
+          <h1 className="mt-2 text-h1 text-ink">Nueva cotización</h1>
         </div>
       </div>
 
@@ -290,58 +260,26 @@ export const CotizacionFormPage = () => {
         className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_224px] lg:items-start"
       >
         <div className="space-y-5">
-          {!esEdicion && (
-            <Card className="p-0 overflow-hidden">
-              <div className="border-b border-border px-4 py-3">
-                <CardTitle className="text-label font-medium">
-                  Solicitud asociada
-                </CardTitle>
-              </div>
-              <div className="p-4">
-                {cargandoSolicitudes ? (
-                  <p className="text-body text-text-secondary">
-                    Cargando solicitud...
-                  </p>
-                ) : solicitudActual ? (
-                  <DetalleSolicitud solicitud={solicitudActual} />
-                ) : (
-                  <p role="alert" className="text-body text-error">
-                    No se encontró la solicitud solicitada.
-                  </p>
-                )}
-              </div>
-            </Card>
-          )}
-
-          {esEdicion && cotizacionExistente && (
-            <Card className="p-0 overflow-hidden">
-              <div className="border-b border-border px-4 py-3">
-                <CardTitle className="text-label font-medium">
-                  Información de la solicitud
-                </CardTitle>
-              </div>
-              <div className="p-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <p className="text-metadata text-text-muted">Solicitud</p>
-                    <p className="text-body font-medium text-ink">
-                      {cotizacionExistente.solicitud_numero ??
-                        solicitudActual?.numero_solicitud ??
-                        "—"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-metadata text-text-muted">Cliente</p>
-                    <p className="text-body font-medium text-ink">
-                      {cotizacionExistente.cliente_razon_social ??
-                        solicitudActual?.cliente_razon_social ??
-                        "—"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          )}
+          <Card className="p-0 overflow-hidden">
+            <div className="border-b border-border px-4 py-3">
+              <CardTitle className="text-label font-medium">
+                Solicitud asociada
+              </CardTitle>
+            </div>
+            <div className="p-4">
+              {cargandoSolicitudes ? (
+                <p className="text-body text-text-secondary">
+                  Cargando solicitud...
+                </p>
+              ) : solicitudActual ? (
+                <DetalleSolicitud solicitud={solicitudActual} />
+              ) : (
+                <p role="alert" className="text-body text-error">
+                  No se encontró la solicitud solicitada.
+                </p>
+              )}
+            </div>
+          </Card>
 
           <Card className="p-0">
             <div className="border-b border-border px-4 py-3">
@@ -376,12 +314,17 @@ export const CotizacionFormPage = () => {
                 </DragDropContext>
 
                 {errors.fases && (
-                  <p className="text-error text-caption">{errors.fases.message}</p>
+                  <p className="text-error text-caption">
+                    {errors.fases.message}
+                  </p>
                 )}
 
                 <SelectorFases
                   fasesDisponibles={fasesCatalogo}
                   onAgregar={handleAgregarFase}
+                  cargando={cargandoFases}
+                  error={errorFases}
+                  mensajeVacio="No hay fases con operarios habilitados. Pedile al Gerente que las configure."
                 />
               </div>
             </div>
@@ -398,10 +341,16 @@ export const CotizacionFormPage = () => {
                 <Field
                   label="Precio total ($)"
                   id="precio_final"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  {...register("precio_final", { valueAsNumber: true })}
+                  // Texto y no number a proposito: `type="number"` descarta los
+                  // separadores de miles y parseaba "10.000" como 10
+                  // El texto entra crudo al schema, que lo normaliza con
+                  // `parseImporte`; al backend sigue yendo un numero.
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="24.500,50"
+                  helperText={`Podés escribir ${IMPORTE_EJEMPLO}. El último separador es decimal si tiene 1 o 2 dígitos.`}
+                  {...register("precio_final")}
+                  onFocus={(event) => event.currentTarget.select()}
                   error={errors.precio_final?.message}
                 />
 
@@ -438,21 +387,20 @@ export const CotizacionFormPage = () => {
             type="submit"
             loading={isSubmitting}
             disabled={
-              !esEdicion &&
-              (solicitudSeleccionada == null ||
-                cargandoSolicitudes ||
-                yaCotizada ||
-                solicitudActual == null)
+              solicitudSeleccionada == null ||
+              cargandoSolicitudes ||
+              yaCotizada ||
+              solicitudActual == null
             }
             className="w-full"
           >
             <Save className="h-4 w-4" />
-            {esEdicion ? "Guardar cambios" : "Crear cotización"}
+            Crear cotización
           </Button>
           <Button
             type="button"
             variant="secondary"
-            onClick={() => navigate(esEdicion ? "/cotizaciones" : "/solicitudes")}
+            onClick={() => navigate("/solicitudes")}
             className="mt-2 w-full"
           >
             Cancelar

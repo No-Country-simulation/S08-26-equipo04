@@ -1,6 +1,9 @@
 package com.backend.qualititrack.DTO;
 
 import java.util.List;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -14,5 +17,14 @@ public class RehacerFasesRequestDTO {
     private Long ordenTrabajoId;
 
     @NotEmpty(message = "Debe seleccionar al menos una fase para rehacer")
-    private List<Long> fasesIds; // IDs de las fases de la iteración actual que se van a rehacer
+    @Valid
+    private List<FaseRehacerDTO> fases;
+
+    @Getter
+    @Setter
+    public static class FaseRehacerDTO {
+        @NotNull private Long faseId;                    // fase TERMINADA que se rehace
+        @NotNull private Long operarioId;                // elegido por el Jefe
+        @NotNull @Min(1) private Integer tiempoEstimadoMinutos;
+    }
 }

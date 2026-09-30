@@ -149,6 +149,7 @@ Otros detalles a tener en cuenta:
   - [ ] Debe recibir la información de las fases, tiempos y precio final establecidos. Exigir que exista el precio_final para su creación.
   - [ ] Verificar que se permita elegir una misma fase más de una vez en la secuencia.
   - [ ] Verificar que la información persista en cotizaciones y cotizacion_fases.
+  - [ ] Al crear la cotización, actualizar la solicitud asociada a `estado = COTIZADA` en la misma transacción. *(27/09 — #156)*
 
 #### Tarea 2.2. [BE] feat: generar automáticamente OT al aprobar cotización (HU-1.3 Cotizaciones derivadas)
 

@@ -14,7 +14,8 @@ export const SkeletonTable = ({
     className={`table-container animate-pulse ${className}`}
     {...props}
   >
-    <table className="table" aria-hidden="true">
+    <div className="table-scroll">
+      <table className="table" aria-hidden="true">
       <thead>
         <tr>
           {Array.from({ length: columns }).map((_, index) => (
@@ -39,6 +40,7 @@ export const SkeletonTable = ({
         ))}
       </tbody>
     </table>
+    </div>
     <span className="sr-only">Cargando tabla...</span>
   </div>
 );

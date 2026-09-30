@@ -75,12 +75,12 @@ public class OrdenTrabajo {
     @OneToMany(mappedBy = "ordenTrabajo", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<OtFase> fases;
 
-    @OneToOne(mappedBy = "ordenTrabajo", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    private AuditoriaCalidad calidadChecklist;
-
-    // Atributo añadido para resolver el error de getDocumentos/setDocumentos
-    @OneToMany(mappedBy = "ordenTrabajo", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Adjunto> documentos;
+    // Una OT puede tener más de una auditoría: una por cada vuelta a Calidad
+    // después de un retrabajo (#223). Con @OneToOne, la segunda auditoría
+    // rompe cualquier consulta de la OT ("more than one row with the given
+    // identifier"), así que la relación es una lista.
+    @OneToMany(mappedBy = "ordenTrabajo", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<AuditoriaCalidad> auditorias;
 
     @PrePersist
     protected void onCreate() {
@@ -168,19 +168,12 @@ public class OrdenTrabajo {
         this.fases = fases;
     }
 
-    public AuditoriaCalidad getCalidadChecklist() {
-        return calidadChecklist;
+    public List<AuditoriaCalidad> getAuditorias() {
+        return auditorias;
     }
 
-    public void setCalidadChecklist(AuditoriaCalidad calidadChecklist) {
-        this.calidadChecklist = calidadChecklist;
+    public void setAuditorias(List<AuditoriaCalidad> auditorias) {
+        this.auditorias = auditorias;
     }
 
-    public List<Adjunto> getDocumentos() {
-        return documentos;
-    }
-
-    public void setDocumentos(List<Adjunto> documentos) {
-        this.documentos = documentos;
-    }
 }

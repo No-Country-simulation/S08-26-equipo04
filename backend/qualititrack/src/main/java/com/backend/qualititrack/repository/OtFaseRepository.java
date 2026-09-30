@@ -4,12 +4,32 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.backend.qualititrack.Enum.EstadoOtFase;
 import com.backend.qualititrack.modelos.OtFase;
 
 public interface OtFaseRepository extends JpaRepository<OtFase, Long> {
-        List<OtFase> findByOperario_Id(Long operarioId);
+        // Trae en una sola consulta todo lo que usa convertirADTO (OT, cotización,
+        // solicitud y fase)
+        @Query("SELECT f FROM OtFase f " + "JOIN FETCH f.ordenTrabajo ot " + "JOIN FETCH ot.cotizacion c "
+                        + "JOIN FETCH c.solicitud " + "JOIN FETCH f.faseCatalogo")
+        List<OtFase> findAllWithRelaciones();
+
+        @Query("SELECT f FROM OtFase f " +
+                        "JOIN FETCH f.ordenTrabajo ot " +
+                        "JOIN FETCH ot.cotizacion c " +
+                        "JOIN FETCH c.solicitud " +
+                        "JOIN FETCH f.faseCatalogo " +
+                        "WHERE ot.id = :ordenTrabajoId " +
+                        "ORDER BY f.cicloIteracion, f.numeroSecuencia")
+        List<OtFase> findByOrdenTrabajoIdWithRelaciones(@Param("ordenTrabajoId") Long ordenTrabajoId);
+
+        @Query("SELECT f FROM OtFase f " + "JOIN FETCH f.ordenTrabajo ot " + "JOIN FETCH ot.cotizacion c "
+                        + "JOIN FETCH c.solicitud " + "JOIN FETCH f.faseCatalogo "
+                        + "WHERE f.operario.id = :operarioId")
+        List<OtFase> findByOperario_Id(@Param("operarioId") Long operarioId);
 
         OtFase findByOrdenTrabajoIdAndNumeroSecuencia(Long ordenTrabajoId, Integer numeroSecuencia);
 
@@ -30,4 +50,11 @@ public interface OtFaseRepository extends JpaRepository<OtFase, Long> {
                         Integer cicloIteracion,
                         Integer numeroSecuencia,
                         EstadoOtFase estado);
+
+        // Busca la siguiente, aunque no sea consecutiva (por cuestiones de retrabajo)
+
+        @Query("SELECT o FROM OtFase o WHERE o.ordenTrabajo.id = :ordenTrabajoId AND o.numeroSecuencia > :numeroSecuencia AND o.estado != 'TERMINADO' ORDER BY o.numeroSecuencia ASC, o.cicloIteracion DESC LIMIT 1")
+        Optional<OtFase> findNextFase(@Param("ordenTrabajoId") Long ordenTrabajoId,
+                        @Param("cicloIteracion") Integer cicloIteracion,
+                        @Param("numeroSecuencia") Integer numeroSecuencia);
 }
