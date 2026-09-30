@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { ClipboardList, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
 import { useOtFases } from "../../hooks/useOtFases";
@@ -22,6 +22,7 @@ export const OperarioPage = () => {
   const [accionId, setAccionId] = useState(null);
   const [errorAccion, setErrorAccion] = useState(null);
   const [detalleId, setDetalleId] = useState(null);
+  const [tareasSaliendo, setTareasSaliendo] = useState([]);
 
   const tareas = useMemo(
     () =>
@@ -33,6 +34,16 @@ export const OperarioPage = () => {
         }),
     [otFases],
   );
+  const tareasVisibles = [
+    ...tareas,
+    ...tareasSaliendo.filter(
+      (saliente) => !tareas.some((tarea) => tarea.id === saliente.id),
+    ),
+  ];
+
+  const handleSalidaCompleta = useCallback((id) => {
+    setTareasSaliendo((prev) => prev.filter((tarea) => tarea.id !== id));
+  }, []);
 
   const handleIniciar = async (tarea) => {
     setAccionId(tarea.id);
@@ -53,8 +64,16 @@ export const OperarioPage = () => {
   const handleFinalizar = async (tarea) => {
     setAccionId(tarea.id);
     setErrorAccion(null);
+    setTareasSaliendo((prev) => [
+      ...prev.filter((item) => item.id !== tarea.id),
+      tarea,
+    ]);
     try {
-      const { otEstado, siguienteMia } = await finalizarFase(tarea.id);
+      const { terminada, otEstado, siguienteMia } = await finalizarFase(tarea.id);
+      setTareasSaliendo((prev) => [
+        ...prev.filter((item) => item.id !== tarea.id),
+        { ...tarea, ...terminada, estado: "TERMINADO" },
+      ]);
       const referencia = tarea.ot_numero ?? "La tarea";
       if (siguienteMia) {
         toast.success(
@@ -66,6 +85,7 @@ export const OperarioPage = () => {
         toast.success(`${referencia} terminada · derivada al siguiente puesto`);
       }
     } catch (err) {
+      setTareasSaliendo((prev) => prev.filter((item) => item.id !== tarea.id));
       setErrorAccion(err.message);
       toast.error(err.message);
     } finally {
@@ -109,7 +129,7 @@ export const OperarioPage = () => {
             </li>
           ))}
         </ul>
-      ) : tareas.length === 0 ? (
+      ) : tareasVisibles.length === 0 ? (
         <EmptyState
           icon={ClipboardList}
           title="No hay tareas asignadas"
@@ -128,17 +148,22 @@ export const OperarioPage = () => {
         />
       ) : (
         <ul className="grid grid-cols-1 gap-4">
-          {tareas.map((tarea) => (
+          {tareasVisibles.map((tarea) => {
+            const salida = tarea.estado === "TERMINADO";
+            return (
             <li key={tarea.id}>
               <TaskCardMobile
                 tarea={tarea}
                 accionEnCurso={accionId === tarea.id}
+                salida={salida}
                 onIniciar={handleIniciar}
                 onFinalizar={handleFinalizar}
+                onSalidaCompleta={handleSalidaCompleta}
                 onVerDetalle={(item) => setDetalleId(item.id)}
               />
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
       <TaskDetailModal
