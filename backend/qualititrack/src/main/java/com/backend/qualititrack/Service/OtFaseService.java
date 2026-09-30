@@ -30,427 +30,353 @@ import jakarta.transaction.Transactional;
 
 @Service
 public class OtFaseService {
-        private final OtFaseRepository otFaseRepository;
-        private final UsuarioRepository usuarioRepository;
-        private final OrdenTrabajoRepository ordenTrabajoRepository;
-        private final OtFaseReasignacionRepository otFaseReasignacionRepository;
-        private final FaseOperarioHabilitadoRepository faseOperarioHabilitadoRepository;
+    private final OtFaseRepository otFaseRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final OrdenTrabajoRepository ordenTrabajoRepository;
+    private final OtFaseReasignacionRepository otFaseReasignacionRepository;
+    private final FaseOperarioHabilitadoRepository faseOperarioHabilitadoRepository;
 
-        public OtFaseService(OtFaseRepository otFaseRepository, UsuarioRepository usuarioRepository,
-                        OrdenTrabajoRepository ordenTrabajoRepository,
-                        OtFaseReasignacionRepository otFaseReasignacionRepository,
-                        FaseOperarioHabilitadoRepository faseOperarioHabilitadoRepository) {
-                this.otFaseRepository = otFaseRepository;
-                this.usuarioRepository = usuarioRepository;
-                this.ordenTrabajoRepository = ordenTrabajoRepository;
-                this.otFaseReasignacionRepository = otFaseReasignacionRepository;
-                this.faseOperarioHabilitadoRepository = faseOperarioHabilitadoRepository;
+    public OtFaseService(OtFaseRepository otFaseRepository, UsuarioRepository usuarioRepository,
+            OrdenTrabajoRepository ordenTrabajoRepository, OtFaseReasignacionRepository otFaseReasignacionRepository,
+            FaseOperarioHabilitadoRepository faseOperarioHabilitadoRepository) {
+        this.otFaseRepository = otFaseRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.ordenTrabajoRepository = ordenTrabajoRepository;
+        this.otFaseReasignacionRepository = otFaseReasignacionRepository;
+        this.faseOperarioHabilitadoRepository = faseOperarioHabilitadoRepository;
+    }
+
+    // GET /api/ot-fases (Jefe)
+    @Transactional
+    public List<OtFaseResponseDTO> listarFases() {
+        // Retornar todas las fases, mapeadas a DTOs usando el método con relaciones
+        return otFaseRepository.findAllWithRelaciones()
+                .stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<OtFaseResponseDTO> listarFasesDeOt(Long ordenTrabajoId) {
+        if (!ordenTrabajoRepository.existsById(ordenTrabajoId)) {
+            throw new EntityNotFoundException("OT no encontrada con ID: " + ordenTrabajoId);
+        }
+        return otFaseRepository.findByOrdenTrabajoIdWithRelaciones(ordenTrabajoId).stream()
+                .map(this::convertirADTO)
+                .toList();
+    }
+
+    // GET /api/ot-fases (Operario)
+    @Transactional
+    public List<OtFaseResponseDTO> listarFasesOperario(String operarioMail) {
+        Usuario operario = usuarioRepository.findByEmail(operarioMail)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "El operario con email " + operarioMail + " no existe"));
+
+        return otFaseRepository.findByOperario_Id(operario.getId())
+                .stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
+    }
+
+    // POST /api/ot-fases/{id}/iniciar
+    @Transactional
+    public OtFaseResponseDTO iniciarFase(Long id, String operarioMail) {
+        Usuario operario = usuarioRepository.findByEmail(operarioMail)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "El operario con email " + operarioMail + " no existe"));
+
+        OtFase otFase = otFaseRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "La fase con ID " + id + " no existe"));
+
+        validarOperarioEnFase(otFase, operario.getId());
+
+        if (otFase.getEstado() != EstadoOtFase.EN_COLA) {
+            throw new InvalidStateException(
+                    "La fase con ID " + id + " no está en estado EN_COLA y no puede ser iniciada");
         }
 
-        // GET /api/ot-fases (Jefe)
-        @Transactional
-        public List<OtFaseResponseDTO> listarFases() {
-                // Retornar todas las fases, mapeadas a DTOs
-                return otFaseRepository.findAllWithRelaciones()
-                                .stream()
-                                .map(this::convertirADTO)
-                                .collect(Collectors.toList());
+        if (!validarFaseAnteriorTerminada(otFase)) {
+            throw new InvalidStateException(
+                    "La fase anterior a la fase con ID " + id
+                            + " no está en estado TERMINADO y no puede iniciarse esta fase");
         }
 
-        public List<OtFaseResponseDTO> listarFasesDeOt(Long ordenTrabajoId) {
-                if (!ordenTrabajoRepository.existsById(ordenTrabajoId)) {
-                        throw new EntityNotFoundException("OT no encontrada con ID: " + ordenTrabajoId);
-                }
-                return otFaseRepository.findByOrdenTrabajoIdWithRelaciones(ordenTrabajoId).stream()
-                                .map(this::convertirADTO)
-                                .toList();
+        otFase.setEstado(EstadoOtFase.EN_EJECUCION);
+        otFase.setFechaInicioReal(OffsetDateTime.now());
+
+        OrdenTrabajo ot = otFase.getOrdenTrabajo();
+        if (ot != null && ot.getFechaInicioProduccion() == null && otFase.getNumeroSecuencia() == 1) {
+            ot.setFechaInicioProduccion(otFase.getFechaInicioReal());
+            ordenTrabajoRepository.save(ot);
         }
 
-        // GET /api/ot-fases (Operario)
-        @Transactional
-        public List<OtFaseResponseDTO> listarFasesOperario(String operarioMail) {
-                // Validar y obtener el id del operario ingresado desde la BD
-                Usuario operario = usuarioRepository.findByEmail(operarioMail)
+        OtFase guardada = otFaseRepository.save(otFase);
+        return convertirADTO(guardada);
+    }
+
+    // POST /api/ot-fases/{id}/finalizar
+    @Transactional
+    public OtFaseResponseDTO finalizarFase(Long id, String operarioMail) {
+        Usuario operario = usuarioRepository.findByEmail(operarioMail)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "El operario con email " + operarioMail + " no existe"));
+
+        OtFase otFase = otFaseRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "La fase con ID " + id + " no existe"));
+
+        if (otFase.getOperario() == null || !otFase.getOperario().getId().equals(operario.getId())) {
+            throw new AccessDeniedException(
+                    "El operario con email " + operarioMail + " no está asignado a la fase con ID " + id);
+        }
+
+        if (otFase.getEstado() != EstadoOtFase.EN_EJECUCION) {
+            throw new InvalidStateException(
+                    "La fase con ID " + id + " no está en estado EN_EJECUCION y no puede ser finalizada");
+        } else {
+            otFase.setEstado(EstadoOtFase.TERMINADO);
+        }
+
+        otFase.setFechaFinReal(OffsetDateTime.now());
+        if (otFase.getFechaInicioReal() != null) {
+            long duracion = java.time.Duration
+                    .between(otFase.getFechaInicioReal(), otFase.getFechaFinReal())
+                    .toMinutes();
+            otFase.setDuracionRealMinutos((int) duracion);
+        } else {
+            throw new InvalidStateException("La fase no tiene una fecha de inicio real establecida.");
+        }
+
+        OtFase guardada = otFaseRepository.save(otFase);
+
+        OtFase faseSiguiente = otFaseRepository.findNextFase(
+                otFase.getOrdenTrabajo().getId(),
+                otFase.getCicloIteracion(),
+                otFase.getNumeroSecuencia())
+                .orElse(null);
+
+        if (faseSiguiente != null) {
+            faseSiguiente.setEstado(EstadoOtFase.EN_COLA);
+            faseSiguiente.setFechaVencimiento(OffsetDateTime.now()
+                    .plusMinutes(faseSiguiente.getTiempoEstimadoMinutos()));
+            otFaseRepository.save(faseSiguiente);
+        } else {
+            otFase.getOrdenTrabajo().setEstado(EstadoOT.EN_CALIDAD);
+            otFase.getOrdenTrabajo().setFechaPaseCalidad(OffsetDateTime.now());
+            ordenTrabajoRepository.save(otFase.getOrdenTrabajo());
+        }
+        return convertirADTO(guardada);
+    }
+
+    // POST /api/ot-fases (Jefe de Producción - Fases de Retrabajo)
+    @Transactional
+    public List<OtFaseResponseDTO> rehacerFases(RehacerFasesRequestDTO request) {
+        var ordenTrabajo = ordenTrabajoRepository.findById(request.getOrdenTrabajoId())
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "La Orden de Trabajo con ID " + request.getOrdenTrabajoId() + " no existe"));
+
+        if (ordenTrabajo.getEstado() != EstadoOT.NO_CONFORME) {
+            throw new InvalidStateException("Solo se pueden rehacer fases de una OT no conforme");
+        }
+
+        int nuevoCiclo = otFaseRepository.findByOrdenTrabajoId(ordenTrabajo.getId()).stream()
+                .mapToInt(OtFase::getCicloIteracion)
+                .max().orElse(1) + 1;
+
+        record Pedido(OtFase anterior, RehacerFasesRequestDTO.FaseRehacerDTO datos) {
+        }
+
+        List<Pedido> pedidos = request.getFases().stream()
+                .map(f -> new Pedido(
+                        otFaseRepository.findById(f.getFaseId())
                                 .orElseThrow(() -> new EntityNotFoundException(
-                                                "El operario con email " + operarioMail + " no existe"));
+                                        "La fase con ID " + f.getFaseId() + " no existe")),
+                        f))
+                .sorted(java.util.Comparator.comparing(p -> p.anterior().getNumeroSecuencia()))
+                .toList();
 
-                // Retornar las fases que matcheen con el id de dicho operario, mapeadas a DTOs
-                return otFaseRepository.findByOperario_Id(operario.getId())
-                                .stream()
-                                .map(this::convertirADTO)
-                                .collect(Collectors.toList());
+        java.util.Set<Integer> secuenciasPedidas = new java.util.HashSet<>();
+        for (Pedido p : pedidos) {
+            if (!secuenciasPedidas.add(p.anterior().getNumeroSecuencia())) {
+                throw new IllegalArgumentException(
+                        "La posición " + p.anterior().getNumeroSecuencia()
+                                + " viene repetida en el pedido: cada fase se puede rehacer una sola vez");
+            }
         }
 
-        // POST /api/ot-fases/{id}/iniciar
-        @Transactional
-        public OtFaseResponseDTO iniciarFase(Long id, String operarioMail) {
-                // Validar y obtener el id del operario ingresado desde la BD
-                Usuario operario = usuarioRepository.findByEmail(operarioMail)
-                                .orElseThrow(() -> new EntityNotFoundException(
-                                                "El operario con email " + operarioMail + " no existe"));
+        List<OtFase> nuevasFasesRehacer = new java.util.ArrayList<>();
+        boolean primera = true;
 
-                // Validar y obtener la fase ingresada
-                OtFase otFase = otFaseRepository.findById(id)
-                                .orElseThrow(() -> new EntityNotFoundException(
-                                                "La fase con ID " + id + " no existe"));
+        for (Pedido p : pedidos) {
+            OtFase faseAnterior = p.anterior();
 
-                // Validar que el operario que intenta iniciar la fase sea el mismo que está
-                // asignado a la fase
-                validarOperarioEnFase(otFase, operario.getId());
+            if (!faseAnterior.getOrdenTrabajo().getId().equals(ordenTrabajo.getId())) {
+                throw new IllegalArgumentException(
+                        "La fase con ID " + faseAnterior.getId() + " no pertenece a la Orden de Trabajo especificada");
+            }
 
-                // Validar que la fase en cuestión esta en estado EN_COLA
-                if (otFase.getEstado() != EstadoOtFase.EN_COLA) {
-                        throw new InvalidStateException(
-                                        "La fase con ID " + id + " no está en estado EN_COLA y no puede ser iniciada");
-                }
+            OtFase ultimaVersion = otFaseRepository
+                    .findFirstByOrdenTrabajoIdAndNumeroSecuenciaOrderByCicloIteracionDesc(
+                            ordenTrabajo.getId(), faseAnterior.getNumeroSecuencia())
+                    .orElse(faseAnterior);
+            if (!ultimaVersion.getId().equals(faseAnterior.getId())) {
+                throw new InvalidStateException("La fase con ID " + faseAnterior.getId()
+                        + " ya fue rehecha: hay que elegir su versión más reciente");
+            }
+            if (faseAnterior.getEstado() != EstadoOtFase.TERMINADO) {
+                throw new InvalidStateException(
+                        "La fase con ID " + faseAnterior.getId() + " no está TERMINADA");
+            }
 
-                // Validar que la fase anterior (de existir) esté en estado TERMINADO
-                if (!validarFaseAnteriorTerminada(otFase)) {
-                        throw new InvalidStateException(
-                                        "La fase anterior a la fase con ID " + id
-                                                        + " no está en estado TERMINADO y no puede iniciarse esta fase");
-                }
+            Usuario operario = usuarioRepository.findById(p.datos().getOperarioId())
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Operario no encontrado con ID: " + p.datos().getOperarioId()));
+            if (!faseOperarioHabilitadoRepository.existsByFaseCatalogoIdAndOperarioIdAndHabilitadoTrue(
+                    faseAnterior.getFaseCatalogo().getId(), operario.getId())) {
+                throw new InvalidStateException("El operario " + operario.getNombre()
+                        + " no está habilitado para la fase " + faseAnterior.getFaseCatalogo().getNombre());
+            }
 
-                // Cambiar el estado de la fase a EN_EJECUCION y establecer la fecha de inicio
-                // real
-                otFase.setEstado(EstadoOtFase.EN_EJECUCION);
-                otFase.setFechaInicioReal(OffsetDateTime.now());
+            int tiempo = p.datos().getTiempoEstimadoMinutos();
+            OffsetDateTime ahora = OffsetDateTime.now();
 
-                // Si es la primera ejecucion de la primera fase de la OT, debe registrarse como
-                // el inicio de ella
-                OrdenTrabajo ot = otFase.getOrdenTrabajo();
-                if (ot != null && ot.getFechaInicioProduccion() == null && otFase.getNumeroSecuencia() == 1) {
-                        ot.setFechaInicioProduccion(otFase.getFechaInicioReal());
-                        ordenTrabajoRepository.save(ot);
-                }
+            OtFase nuevaFase = OtFase.builder()
+                    .ordenTrabajo(ordenTrabajo)
+                    .faseCatalogo(faseAnterior.getFaseCatalogo())
+                    .numeroSecuencia(faseAnterior.getNumeroSecuencia())
+                    .operario(operario)
+                    .tiempoEstimadoMinutos(tiempo)
+                    .estado(primera ? EstadoOtFase.EN_COLA : EstadoOtFase.PENDIENTE)
+                    .fechaVencimiento(primera ? OffsetDateTime.now().plusMinutes(tiempo) : null)
+                    .esRehacer(true)
+                    .cicloIteracion(nuevoCiclo)
+                    .createdAt(ahora)
+                    .updatedAt(ahora)
+                    .build();
 
-                // Guardar los cambios en la base de datos
-                OtFase guardada = otFaseRepository.save(otFase);
-                return convertirADTO(guardada);
+            nuevasFasesRehacer.add(otFaseRepository.save(nuevaFase));
+            primera = false;
         }
 
-        // POST /api/ot-fases/{id}/finalizar
-        @Transactional
-        public OtFaseResponseDTO finalizarFase(Long id, String operarioMail) {
-                // Validar y obtener el id del operario ingresado desde la BD
-                Usuario operario = usuarioRepository.findByEmail(operarioMail)
-                                .orElseThrow(() -> new EntityNotFoundException(
-                                                "El operario con email " + operarioMail + " no existe"));
+        ordenTrabajo.setEstado(EstadoOT.EN_PRODUCCION);
+        ordenTrabajoRepository.save(ordenTrabajo);
 
-                // Validar y obtener la fase ingresada
-                OtFase otFase = otFaseRepository.findById(id)
-                                .orElseThrow(() -> new EntityNotFoundException(
-                                                "La fase con ID " + id + " no existe"));
+        return nuevasFasesRehacer.stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
+    }
 
-                // Validar que el operario que intenta finalizar la fase sea el mismo que está
-                // asignado a la fase
-                if (otFase.getOperario() == null || !otFase.getOperario().getId().equals(operario.getId())) {
-                        throw new AccessDeniedException(
-                                        "El operario con email " + operarioMail + " no está asignado a la fase con ID "
-                                                        + id);
-                }
+    public void validarOperarioEnFase(OtFase otFase, Long operarioId) {
+        if (otFase.getOperario() == null || !otFase.getOperario().getId().equals(operarioId)) {
+            throw new AccessDeniedException(
+                    "El operario de ID " + operarioId + " no está asignado a la fase con ID " + otFase.getId());
+        }
+    }
 
-                // Validar que la fase en cuestión esta en estado EN_EJECUCION antes de TERMINAR
-                if (otFase.getEstado() != EstadoOtFase.EN_EJECUCION) {
-                        throw new InvalidStateException(
-                                        "La fase con ID " + id
-                                                        + " no está en estado EN_EJECUCION y no puede ser finalizada");
-                } else {
-                        otFase.setEstado(EstadoOtFase.TERMINADO);
-                }
+    public void validarOperarioEnFase(Long otFaseId, Long operarioId) {
+        OtFase otFase = otFaseRepository.findById(otFaseId)
+                .orElseThrow(() -> new EntityNotFoundException("La fase con ID " + otFaseId + " no existe"));
+        if (otFase.getOperario() == null || !otFase.getOperario().getId().equals(operarioId)) {
+            throw new AccessDeniedException(
+                    "El operario de ID " + operarioId + " no está asignado a la fase con ID " + otFase.getId());
+        }
+    }
 
-                // Establecer la duracion/fecha de fin real en minutos
-                otFase.setFechaFinReal(OffsetDateTime.now());
-                if (otFase.getFechaInicioReal() != null) {
-                        long duracion = java.time.Duration
-                                        .between(otFase.getFechaInicioReal(), otFase.getFechaFinReal())
-                                        .toMinutes();
-                        otFase.setDuracionRealMinutos((int) duracion);
-                } else {
-                        throw new InvalidStateException("La fase no tiene una fecha de inicio real establecida.");
-                }
+    @Transactional
+    public OtFaseReasignacionResponseDTO reasignarFase(Long id, OtFaseReasignacionRequestDTO dto, String jefeMail) {
+        Long operarioNuevoId = dto.getOperarioNuevoId();
 
-                // Guardar los cambios en la base de datos
-                OtFase guardada = otFaseRepository.save(otFase);
-
-                // Chequear si existe una fase siguiente para la misma orden de trabajo
-                OtFase faseSiguiente = otFaseRepository.findNextFase(
-                                otFase.getOrdenTrabajo().getId(),
-                                otFase.getCicloIteracion(),
-                                otFase.getNumeroSecuencia())
-                                .orElse(null);
-                // Si existe una fase siguiente, se debe pasar con estado "EN_COLA" y calcular
-                // su fecha de vencimiento, sumando el tiempo estimado al momento actual.
-                if (faseSiguiente != null) {
-                        faseSiguiente.setEstado(EstadoOtFase.EN_COLA);
-                        faseSiguiente
-                                        .setFechaVencimiento(OffsetDateTime.now()
-                                                        .plusMinutes(faseSiguiente.getTiempoEstimadoMinutos()));
-                        otFaseRepository.save(faseSiguiente);
-                } else {
-                        // Si no existe una fase siguiente, cambiar el estado de la OT a EN_CALIDAD, y
-                        // registrar la fecha en el campo fecha_pase_calidad.
-                        otFase.getOrdenTrabajo().setEstado(EstadoOT.EN_CALIDAD);
-                        otFase.getOrdenTrabajo().setFechaPaseCalidad(OffsetDateTime.now());
-                        ordenTrabajoRepository.save(otFase.getOrdenTrabajo());
-                }
-                return convertirADTO(guardada);
+        Usuario operarioNuevo = usuarioRepository.findById(operarioNuevoId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "El operario con id " + operarioNuevoId + " no existe"));
+        if (operarioNuevo.getRol() != NivelRol.OPERARIO) {
+            throw new InvalidStateException("El usuario con id " + operarioNuevoId + " no es un operario");
+        }
+        if (!operarioNuevo.getActivo()) {
+            throw new InvalidStateException(
+                    "El usuario con id " + operarioNuevoId + " no está habilitado para desarrollar la tarea");
         }
 
-        // POST /api/ot-fases (Jefe de Producción - Fases de Retrabajo)
-        @Transactional
-        public List<OtFaseResponseDTO> rehacerFases(RehacerFasesRequestDTO request) {
-                // 1. Validar que la Orden de Trabajo exista
-                var ordenTrabajo = ordenTrabajoRepository.findById(request.getOrdenTrabajoId())
-                                .orElseThrow(() -> new EntityNotFoundException(
-                                                "La Orden de Trabajo con ID " + request.getOrdenTrabajoId()
-                                                                + " no existe"));
-
-                // Validar que la orden de trabajo a rehacer no está conforme
-                if (ordenTrabajo.getEstado() != EstadoOT.NO_CONFORME) {
-                        throw new InvalidStateException("Solo se pueden rehacer fases de una OT no conforme");
-                }
-
-                // Obtener numero de iteración para colocar en las fases a rehacer
-                int nuevoCiclo = otFaseRepository.findByOrdenTrabajoId(ordenTrabajo.getId()).stream()
-                                .mapToInt(OtFase::getCicloIteracion)
-                                .max().orElse(1) + 1;
-
-                // 3. Emparejar cada fase anterior con lo que eligió el Jefe, ordenado por
-                // secuencia
-                record Pedido(OtFase anterior, RehacerFasesRequestDTO.FaseRehacerDTO datos) {
-                }
-                List<Pedido> pedidos = request.getFases().stream()
-                                .map(f -> new Pedido(
-                                                otFaseRepository.findById(f.getFaseId())
-                                                                .orElseThrow(() -> new EntityNotFoundException(
-                                                                                "La fase con ID " + f.getFaseId()
-                                                                                                + " no existe")),
-                                                f))
-                                .sorted(java.util.Comparator.comparing(p -> p.anterior().getNumeroSecuencia()))
-                                .toList();
-
-                // Validar que ninguna posición (numero_secuencia) venga repetida en el pedido
-                java.util.Set<Integer> secuenciasPedidas = new java.util.HashSet<>();
-                for (Pedido p : pedidos) {
-                        if (!secuenciasPedidas.add(p.anterior().getNumeroSecuencia())) {
-                                throw new IllegalArgumentException(
-                                        "La posición " + p.anterior().getNumeroSecuencia()
-                                                + " viene repetida en el pedido: cada fase se puede rehacer una sola vez");
-                        }
-                }
-
-                List<OtFase> nuevasFasesRehacer = new java.util.ArrayList<>();
-                boolean primera = true;
-
-                // 2. Procesar cada fase seleccionada para rehacer
-                for (Pedido p : pedidos) {
-                        OtFase faseAnterior = p.anterior();
-
-                        // Validar que pertenezca a la misma Orden de Trabajo
-                        if (!faseAnterior.getOrdenTrabajo().getId().equals(ordenTrabajo.getId())) {
-                                throw new IllegalArgumentException(
-                                                "La fase con ID " + faseAnterior.getId()
-                                                                + " no pertenece a la Orden de Trabajo especificada");
-                        }
-
-                        // Solo se puede rehacer lo que ya se terminó
-                        OtFase ultimaVersion = otFaseRepository
-                                .findFirstByOrdenTrabajoIdAndNumeroSecuenciaOrderByCicloIteracionDesc(
-                                        ordenTrabajo.getId(), faseAnterior.getNumeroSecuencia())
-                                .orElse(faseAnterior);
-                        if (!ultimaVersion.getId().equals(faseAnterior.getId())) {
-                                throw new InvalidStateException("La fase con ID " + faseAnterior.getId()
-                                        + " ya fue rehecha: hay que elegir su versión más reciente");
-                        }
-                        if (faseAnterior.getEstado() != EstadoOtFase.TERMINADO) {
-                                throw new InvalidStateException(
-                                                "La fase con ID " + faseAnterior.getId() + " no está TERMINADA");
-                        }
-
-                        // Operario elegido por el Jefe: tiene que estar habilitado para esa fase
-                        Usuario operario = usuarioRepository.findById(p.datos().getOperarioId())
-                                        .orElseThrow(() -> new EntityNotFoundException(
-                                                        "Operario no encontrado con ID: " + p.datos().getOperarioId()));
-                        if (!faseOperarioHabilitadoRepository.existsByFaseCatalogoIdAndOperarioIdAndHabilitadoTrue(
-                                        faseAnterior.getFaseCatalogo().getId(), operario.getId())) {
-                                throw new InvalidStateException("El operario " + operario.getNombre()
-                                                + " no está habilitado para la fase "
-                                                + faseAnterior.getFaseCatalogo().getNombre());
-                        }
-
-                        int tiempo = p.datos().getTiempoEstimadoMinutos();
-                        OffsetDateTime ahora = OffsetDateTime.now();
-                        // Crear el nuevo registro para el retrabajo
-                        OtFase nuevaFase = OtFase.builder()
-                                        .ordenTrabajo(ordenTrabajo)
-                                        .faseCatalogo(faseAnterior.getFaseCatalogo())
-                                        .numeroSecuencia(faseAnterior.getNumeroSecuencia())
-                                        .operario(operario) // mantiene el operario
-                                        .tiempoEstimadoMinutos(tiempo) // anterior por defecto
-                                        .estado(primera ? EstadoOtFase.EN_COLA : EstadoOtFase.PENDIENTE) // La primera
-                                                                                                         // se pone en
-                                                                                                         // cola para ya
-                                                                                                         // arrancar, el
-                                                                                                         // resto quedan
-                                                                                                         // pendientes
-                                        .fechaVencimiento(primera ? OffsetDateTime.now().plusMinutes(tiempo) : null)
-                                        .esRehacer(true) // Marcado explícitamente como retrabajo
-                                        .cicloIteracion(nuevoCiclo) // Incrementa el ciclo de iteración
-                                        .createdAt(ahora)
-                                        .updatedAt(ahora)
-                                        .build();
-
-                        nuevasFasesRehacer.add(otFaseRepository.save(nuevaFase));
-                        primera = false;
-                }
-
-                // Devolver OT a producción
-                ordenTrabajo.setEstado(EstadoOT.EN_PRODUCCION);
-                ordenTrabajoRepository.save(ordenTrabajo);
-
-                // Retornar la lista de nuevas fases de retrabajo mapeadas a DTO
-                return nuevasFasesRehacer.stream()
-                                .map(this::convertirADTO)
-                                .collect(Collectors.toList());
+        OtFase otFase = otFaseRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("La fase con id " + id + " no existe"));
+        if (otFase.getEstado() == EstadoOtFase.TERMINADO) {
+            throw new InvalidStateException("La fase con id " + id + " ya está en terminada y no puede ser reasignada");
+        }
+        if (otFase.getEstado() == EstadoOtFase.EN_EJECUCION) {
+            throw new InvalidStateException("La fase con id " + id + " ya está en ejecución y no puede ser reasignada");
         }
 
-        // Valida que el operario con el id pasado por parametro este asignado a la fase
-        // pasada como parametro
-        public void validarOperarioEnFase(OtFase otFase, Long operarioId) {
-                if (otFase.getOperario() == null || !otFase.getOperario().getId().equals(operarioId)) {
-                        throw new AccessDeniedException(
-                                        "El operario de ID " + operarioId + " no está asignado a la fase con ID "
-                                                        + otFase.getId());
-                }
+        Usuario operarioAnterior = otFase.getOperario();
+
+        if (!faseOperarioHabilitadoRepository.existsByFaseCatalogoIdAndOperarioIdAndHabilitadoTrue(
+                otFase.getFaseCatalogo().getId(), operarioNuevoId)) {
+            throw new InvalidStateException(
+                    "El operario con id " + operarioNuevoId + " no puede realizar la fase con id "
+                            + otFase.getFaseCatalogo().getId());
         }
 
-        // Valida que el operario con el id pasado por parametro este asignado a la fase
-        // con el id pasado como parametro
-        public void validarOperarioEnFase(Long otFaseId, Long operarioId) {
-                OtFase otFase = otFaseRepository.findById(otFaseId)
-                                .orElseThrow(() -> new EntityNotFoundException(
-                                                "La fase con ID " + otFaseId + " no existe"));
-                if (otFase.getOperario() == null || !otFase.getOperario().getId().equals(operarioId)) {
-                        throw new AccessDeniedException(
-                                        "El operario de ID " + operarioId + " no está asignado a la fase con ID "
-                                                        + otFase.getId());
-                }
+        Usuario jefe = usuarioRepository.findByEmail(jefeMail)
+                .orElseThrow(() -> new EntityNotFoundException("El usuario con email " + jefeMail + " no existe"));
+
+        OtFaseReasignacion reasignacion = new OtFaseReasignacion();
+        reasignacion.setOtFase(otFase);
+        reasignacion.setOperarioAnterior(operarioAnterior);
+        reasignacion.setOperarioNuevo(operarioNuevo);
+        reasignacion.setReasignadoPor(jefe);
+        reasignacion.setMotivo(dto.getMotivo());
+        reasignacion.setFechaReasignacion(OffsetDateTime.now());
+        otFaseReasignacionRepository.save(reasignacion);
+
+        otFase.setOperario(operarioNuevo);
+        otFaseRepository.save(otFase);
+
+        OtFaseReasignacionResponseDTO response = new OtFaseReasignacionResponseDTO();
+        response.setId(id);
+        response.setOperarioId(operarioNuevoId);
+        return response;
+    }
+
+    private boolean validarFaseAnteriorTerminada(OtFase otFase) {
+        if (otFase.getNumeroSecuencia() <= 1) {
+            return true;
         }
 
-        // Endpoint: POST /api/ot-fases/{id}/reasignar
-        // Rol: Jefe de producción
-        // Se reasigna una OtFase a un nuevo operario, y se crea una entrada en
-        // OtFaseReasignaciones para dejar registro. Se valida que el operario cumpla
-        // los requisitos necesarios en el proceso.
-        @Transactional
-        public OtFaseReasignacionResponseDTO reasignarFase(Long id, OtFaseReasignacionRequestDTO dto, String jefeMail) {
-                Long operarioNuevoId = dto.getOperarioNuevoId();
+        int secuenciaAnterior = otFase.getNumeroSecuencia() - 1;
+        OtFase ultimaEjecucionAnterior = otFaseRepository
+                .findFirstByOrdenTrabajoIdAndNumeroSecuenciaOrderByCicloIteracionDesc(
+                        otFase.getOrdenTrabajo().getId(),
+                        secuenciaAnterior)
+                .orElse(null);
 
-                // Buscar operario y verificar que cumpla los requisitos para tomar la tarea
-                Usuario operarioNuevo = usuarioRepository.findById(operarioNuevoId)
-                                .orElseThrow(() -> new EntityNotFoundException(
-                                                "El operario con id " + operarioNuevoId + " no existe"));
-                if (operarioNuevo.getRol() != NivelRol.OPERARIO) {
-                        throw new InvalidStateException("El usuario con id " + operarioNuevoId + " no es un operario");
-                }
-                if (!operarioNuevo.getActivo()) {
-                        throw new InvalidStateException(
-                                        "El usuario con id " + operarioNuevoId
-                                                        + " no está habilitado para desarrollar la tarea");
-                }
+        return ultimaEjecucionAnterior != null
+                && ultimaEjecucionAnterior.getEstado() == EstadoOtFase.TERMINADO;
+    }
 
-                // Chequear que la otFase es valida y sin terminar
-                OtFase otFase = otFaseRepository.findById(id)
-                                .orElseThrow(() -> new EntityNotFoundException("La fase con id " + id + " no existe"));
-                if (otFase.getEstado() == EstadoOtFase.TERMINADO) {
-                        throw new InvalidStateException(
-                                        "La fase con id " + id + " ya está en terminada y no puede ser reasignada");
-                }
-                if (otFase.getEstado() == EstadoOtFase.EN_EJECUCION) {
-                        throw new InvalidStateException(
-                                        "La fase con id " + id + " ya está en ejecución y no puede ser reasignada");
-                }
-                // Guardar operarioAnterior para dejar registro
-                Usuario operarioAnterior = otFase.getOperario();
-
-                // Chequear que el operario puede realizar la nueva fase
-                if (!faseOperarioHabilitadoRepository.existsByFaseCatalogoIdAndOperarioIdAndHabilitadoTrue(
-                                otFase.getFaseCatalogo().getId(), operarioNuevoId)) {
-                        throw new InvalidStateException(
-                                        "El operario con id " + operarioNuevoId + " no puede realizar la fase con id "
-                                                        + otFase.getFaseCatalogo().getId());
-                }
-
-                // Verificar que el usuario jefe y la OtFase estén en la BD
-                Usuario jefe = usuarioRepository.findByEmail(jefeMail)
-                                .orElseThrow(() -> new EntityNotFoundException(
-                                                "El usuario con email " + jefeMail + " no existe"));
-
-                // Crear entrada en otFaseReasignaciones
-                OtFaseReasignacion reasignacion = new OtFaseReasignacion();
-                reasignacion.setOtFase(otFase);
-                reasignacion.setOperarioAnterior(operarioAnterior);
-                reasignacion.setOperarioNuevo(operarioNuevo);
-                reasignacion.setReasignadoPor(jefe);
-                reasignacion.setMotivo(dto.getMotivo());
-                reasignacion.setFechaReasignacion(OffsetDateTime.now());
-                otFaseReasignacionRepository.save(reasignacion);
-
-                // Actualizar la OtFase con el nuevo operario
-                otFase.setOperario(operarioNuevo);
-                otFaseRepository.save(otFase);
-
-                // Generar respuesta
-                OtFaseReasignacionResponseDTO response = new OtFaseReasignacionResponseDTO();
-                response.setId(id);
-                response.setOperarioId(operarioNuevoId);
-                return response;
-        }
-
-        private boolean validarFaseAnteriorTerminada(OtFase otFase) {
-                // Si es la primera fase de la secuencia, pasa directo
-                if (otFase.getNumeroSecuencia() <= 1) {
-                        return true;
-                }
-
-                // Buscar la última ejecución (es decir, la de mayor ciclo_iteracion) de la fase
-                // anterior
-                int secuenciaAnterior = otFase.getNumeroSecuencia() - 1;
-                OtFase ultimaEjecucionAnterior = otFaseRepository
-                                .findFirstByOrdenTrabajoIdAndNumeroSecuenciaOrderByCicloIteracionDesc(
-                                                otFase.getOrdenTrabajo().getId(),
-                                                secuenciaAnterior)
-                                .orElse(null);
-
-                // Debe existir obligatoriamente y su estado más reciente debe ser TERMINADO
-                return ultimaEjecucionAnterior != null
-                                && ultimaEjecucionAnterior.getEstado() == EstadoOtFase.TERMINADO;
-        }
-
-        private OtFaseResponseDTO convertirADTO(OtFase otFase) {
-                return OtFaseResponseDTO.builder()
-                                .id(otFase.getId())
-                                .ordenTrabajoId(otFase.getOrdenTrabajo().getId())
-                                .numeroOt(otFase.getOrdenTrabajo().getNumeroOt())
-                                .descripcionPieza(otFase.getOrdenTrabajo().getCotizacion().getSolicitud()
-                                                .getDescripcionPieza())
-                                .cantidad(otFase.getOrdenTrabajo().getCantidad())
-                                .solicitudId(otFase.getOrdenTrabajo().getCotizacion().getSolicitud().getId())
-                                .faseCatalogoId(otFase.getFaseCatalogo().getId())
-                                .faseNombre(otFase.getFaseCatalogo().getNombre())
-                                .numeroSecuencia(otFase.getNumeroSecuencia())
-                                .operarioId(otFase.getOperario().getId())
-                                .tiempoEstimadoMinutos(otFase.getTiempoEstimadoMinutos())
-                                .fechaVencimiento(otFase.getFechaVencimiento())
-                                .estado(otFase.getEstado())
-                                .fechaInicioReal(otFase.getFechaInicioReal())
-                                .fechaFinReal(otFase.getFechaFinReal())
-                                .duracionRealMinutos(otFase.getDuracionRealMinutos())
-                                .esRehacer(otFase.getEsRehacer())
-                                .cicloIteracion(otFase.getCicloIteracion())
-                                .createdAt(otFase.getCreatedAt())
-                                .updatedAt(otFase.getUpdatedAt())
-                                .build();
-        }
+    // Único método convertirADTO completo y actualizado con todas las relaciones
+    private OtFaseResponseDTO convertirADTO(OtFase otFase) {
+        return OtFaseResponseDTO.builder()
+                .id(otFase.getId())
+                .ordenTrabajoId(otFase.getOrdenTrabajo().getId())
+                .numeroOt(otFase.getOrdenTrabajo().getNumeroOt())
+                .descripcionPieza(otFase.getOrdenTrabajo().getCotizacion().getSolicitud()
+                        .getDescripcionPieza())
+                .cantidad(otFase.getOrdenTrabajo().getCantidad())
+                .solicitudId(otFase.getOrdenTrabajo().getCotizacion().getSolicitud().getId())
+                .faseCatalogoId(otFase.getFaseCatalogo().getId())
+                .faseNombre(otFase.getFaseCatalogo().getNombre())
+                .numeroSecuencia(otFase.getNumeroSecuencia())
+                .operarioId(otFase.getOperario() != null ? otFase.getOperario().getId() : null)
+                .tiempoEstimadoMinutos(otFase.getTiempoEstimadoMinutos())
+                .fechaVencimiento(otFase.getFechaVencimiento())
+                .estado(otFase.getEstado())
+                .fechaInicioReal(otFase.getFechaInicioReal())
+                .fechaFinReal(otFase.getFechaFinReal())
+                .duracionRealMinutos(otFase.getDuracionRealMinutos())
+                .esRehacer(otFase.getEsRehacer())
+                .cicloIteracion(otFase.getCicloIteracion())
+                .createdAt(otFase.getCreatedAt())
+                .updatedAt(otFase.getUpdatedAt())
+                .build();
+    }
 }
