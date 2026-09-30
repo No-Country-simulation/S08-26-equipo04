@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
-import { apiGet, apiPost, extractApiMessage } from '../api';
-import { useAuth } from './AuthContext';
-import { OtFasesContext } from './OtFasesContext';
+import { useCallback, useEffect, useState } from "react";
+import { apiGet, apiPost, extractApiMessage } from "../api";
+import { useAuth } from "./AuthContext";
+import { OtFasesContext } from "./OtFasesContext";
 
 /**
  * Provider de fases de OT para el Operario (HU-3.1) contra API real.
@@ -32,13 +32,17 @@ import { OtFasesContext } from './OtFasesContext';
 
 // El backend responde `mensaje` (ErrorResponse), asi que se reusa el helper
 // que ya sabe leerlo y solo se agrega el mensaje de Render en frio.
-const extractMessage = (error, fallback) =>
-  extractApiMessage(
+// Los 500 se mapean al fallback amigable: no se expone el genérico
+// "Error interno del servidor" en la vista del operario.
+const extractMessage = (error, fallback) => {
+  if (error?.response?.status >= 500) return fallback;
+  return extractApiMessage(
     error,
-    error?.code === 'ECONNABORTED'
-      ? 'El servidor tarda en responder (Render en frio). Reintenta.'
+    error?.code === "ECONNABORTED"
+      ? "El servidor tarda en responder (Render en frio). Reintenta."
       : fallback,
   );
+};
 
 const mapItem = (item, operarioNombre = null) => ({
   ...item,
@@ -77,7 +81,7 @@ export const OtFasesProvider = ({ children }) => {
   // El GET /api/ot-fases permite OPERARIO y JEFE_PRODUCCION: no pedirlo con
   // otros roles para no disparar 403 (toast de permisos).
   const puedeConsultar =
-    user?.rol === 'OPERARIO' || user?.rol === 'JEFE_PRODUCCION';
+    user?.rol === "OPERARIO" || user?.rol === "JEFE_PRODUCCION";
   const [otFases, setOtFases] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
@@ -86,7 +90,7 @@ export const OtFasesProvider = ({ children }) => {
   // GET /api/ot-fases: el DTO ya trae numero, pieza, cantidad y solicitud
   // (BE #219), asi que es un solo request sin cadena OT -> cotizacion.
   const cargarLista = useCallback(async () => {
-    const { data } = await apiGet('/api/ot-fases');
+    const { data } = await apiGet("/api/ot-fases");
     return (data ?? []).map((item) => mapItem(item, user?.nombre ?? null));
   }, [user?.nombre]);
 
@@ -95,9 +99,7 @@ export const OtFasesProvider = ({ children }) => {
   useEffect(() => {
     let cancelado = false;
     const promesa =
-      isAuthenticated && puedeConsultar
-        ? cargarLista()
-        : Promise.resolve(null);
+      isAuthenticated && puedeConsultar ? cargarLista() : Promise.resolve(null);
     promesa.then(
       (lista) => {
         if (cancelado) return;
@@ -107,7 +109,7 @@ export const OtFasesProvider = ({ children }) => {
       },
       (err) => {
         if (cancelado) return;
-        setError(extractMessage(err, 'No se pudieron cargar las tareas.'));
+        setError(extractMessage(err, "No se pudieron cargar las tareas."));
         setCargando(false);
       },
     );
@@ -124,7 +126,15 @@ export const OtFasesProvider = ({ children }) => {
 
   const iniciarFase = async (id) => {
     try {
-      const { data } = await apiPost(`/api/ot-fases/${id}/iniciar`, {});
+      // silenciarToast: la vista muestra ErrorBanner persistente (una sola
+      // señal) en vez del toast global + toast local duplicados.
+      const { data } = await apiPost(
+        `/api/ot-fases/${id}/iniciar`,
+        {},
+        {
+          silenciarToast: true,
+        },
+      );
       const actualizada = mapItem(data, user?.nombre ?? null);
       const lista = await cargarLista();
       setOtFases(
@@ -138,26 +148,43 @@ export const OtFasesProvider = ({ children }) => {
       );
       return actualizada;
     } catch (err) {
-      throw new Error(extractMessage(err, 'No se pudo iniciar la tarea.'), {
-        cause: err,
-      });
+      throw new Error(
+        extractMessage(err, "No se pudo iniciar la tarea. Intenta nuevamente."),
+        {
+          cause: err,
+        },
+      );
     }
   };
 
   const finalizarFase = async (id) => {
     let data;
     try {
-      ({ data } = await apiPost(`/api/ot-fases/${id}/finalizar`, {}));
+      ({ data } = await apiPost(
+        `/api/ot-fases/${id}/finalizar`,
+        {},
+        {
+          silenciarToast: true,
+        },
+      ));
     } catch (err) {
-      throw new Error(extractMessage(err, 'No se pudo terminar la tarea.'), {
-        cause: err,
-      });
+      throw new Error(
+        extractMessage(
+          err,
+          "No se pudo terminar la tarea. Intenta nuevamente.",
+        ),
+        {
+          cause: err,
+        },
+      );
     }
     const terminada = mapItem(data, user?.nombre ?? null);
     const lista = await cargarLista();
     const listaFusionada = lista.some((fase) => fase.id === terminada.id)
       ? lista.map((fase) =>
-          fase.id === terminada.id ? fusionarEnriquecida(fase, terminada) : fase,
+          fase.id === terminada.id
+            ? fusionarEnriquecida(fase, terminada)
+            : fase,
         )
       : [...lista, terminada];
     setOtFases(listaFusionada);
@@ -180,8 +207,7 @@ export const OtFasesProvider = ({ children }) => {
           (fase) =>
             fase.id !== terminada.id &&
             fase.orden_trabajo_id === terminada.orden_trabajo_id &&
-            (fase.numero_secuencia ?? 0) >
-              (terminada.numero_secuencia ?? 0) &&
+            (fase.numero_secuencia ?? 0) > (terminada.numero_secuencia ?? 0) &&
             fase.estado !== "TERMINADO",
         )
         .sort(
@@ -199,5 +225,7 @@ export const OtFasesProvider = ({ children }) => {
     finalizarFase,
   };
 
-  return <OtFasesContext.Provider value={value}>{children}</OtFasesContext.Provider>;
+  return (
+    <OtFasesContext.Provider value={value}>{children}</OtFasesContext.Provider>
+  );
 };

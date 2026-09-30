@@ -41,22 +41,24 @@ api.interceptors.response.use(
     // En las respuestas blob (ver documento) el cuerpo no es un objeto y la
     // vista responsable muestra su propio mensaje: no se duplica el toast.
     const esBlob = error?.config?.responseType === 'blob';
-    // Hay 404 esperados (ej. OT sin auditorías en el expediente): la vista
-    // los maneja y pide silencio con `silenciarToast: true` en el config.
-    // Solo se salta ese 404 puntual: 401/403/500 siguen el flujo global.
-    if (status === 404 && error?.config?.silenciarToast === true) {
-      return Promise.reject(error);
-    }
+    // `silenciarToast: true` pide que la vista maneje el error con su propio
+    // mensaje (ej. ErrorBanner en Mis tareas): no se dispara toast global
+    // para no duplicar la señal. El 401 igual redirige al login.
+    const silenciar = error?.config?.silenciarToast === true;
     if (status === 401 && !error?.config?.url?.includes('/api/auth/login')) {
       clearSession();
-      toast.error('Tu sesión expiró. Inicia sesión nuevamente.');
+      if (!silenciar) {
+        toast.error('Tu sesión expiró. Inicia sesión nuevamente.');
+      }
       redirectToLogin();
-    } else if (status === 403) {
-      toast.error('No tienes permisos para esta acción.');
-    } else if (status >= 500) {
-      toast.error('Error del servidor. Intenta nuevamente.');
-    } else if ((status === 400 || status === 404 || status === 409) && !esBlob) {
-      toast.error(message);
+    } else if (!silenciar) {
+      if (status === 403) {
+        toast.error('No tienes permisos para esta acción.');
+      } else if (status >= 500) {
+        toast.error('Error del servidor. Intenta nuevamente.');
+      } else if ((status === 400 || status === 404 || status === 409) && !esBlob) {
+        toast.error(message);
+      }
     }
 
     return Promise.reject(error);
