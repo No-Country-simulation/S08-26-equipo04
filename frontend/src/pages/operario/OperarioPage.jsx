@@ -28,7 +28,8 @@ export const OperarioPage = () => {
       otFases
         .filter((fase) => ESTADOS_ACTIVOS.includes(fase.estado))
         .sort((a, b) => {
-          if (a.estado !== b.estado) return a.estado === "EN_EJECUCION" ? -1 : 1;
+          if (a.estado !== b.estado)
+            return a.estado === "EN_EJECUCION" ? -1 : 1;
           return a.numero_secuencia - b.numero_secuencia;
         }),
     [otFases],
@@ -43,8 +44,9 @@ export const OperarioPage = () => {
         `${tarea.ot_numero ?? "La tarea"} · ${tarea.fase_nombre ?? "fase"} en ejecucion`,
       );
     } catch (err) {
+      // Una sola señal: ErrorBanner persistente (el POST va con
+      // silenciarToast para no duplicar con el toast global).
       setErrorAccion(err.message);
-      toast.error(err.message);
     } finally {
       setAccionId(null);
     }
@@ -66,8 +68,8 @@ export const OperarioPage = () => {
         toast.success(`${referencia} terminada · derivada al siguiente puesto`);
       }
     } catch (err) {
+      // Una sola señal: ErrorBanner persistente (ver handleIniciar).
       setErrorAccion(err.message);
-      toast.error(err.message);
     } finally {
       setAccionId(null);
     }
@@ -79,7 +81,7 @@ export const OperarioPage = () => {
   };
 
   const tareaDetalle = detalleId
-    ? otFases.find((fase) => fase.id === detalleId) ?? null
+    ? (otFases.find((fase) => fase.id === detalleId) ?? null)
     : null;
 
   const errorVisible = errorAccion ?? error;
@@ -95,7 +97,11 @@ export const OperarioPage = () => {
       </header>
 
       {errorVisible && !cargando && (
-        <ErrorBanner message={errorVisible} onRetry={reintentar} />
+        <ErrorBanner
+          message={errorVisible}
+          retryLabel="Recargar lista"
+          onRetry={reintentar}
+        />
       )}
 
       {cargando ? (
