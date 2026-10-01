@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
 import {
+  Activity,
+  ClipboardCheck,
+  ClipboardList,
+  Layers,
+  ShieldCheck,
+  Timer,
+} from "lucide-react";
+import {
   Bar,
   BarChart,
   Cell,
@@ -29,6 +37,29 @@ import {
  * `PanelResumen`: consulta endpoints propios (/api/dashboard/planta y
  * /api/dashboard/calidad) y muestra graficos en lugar de tarjetas de conteo.
  */
+
+// Clases explicitas por tono (sin interpolacion dinamica) para que Tailwind
+// no las purgue. Mismo lenguaje visual que `MetricCard` de PanelResumen:
+// icono + etiqueta + valor dentro de `Card`.
+const TONE_STYLES = {
+  primary: "bg-primary-tint text-primary",
+  info: "bg-info-light text-info",
+  warning: "bg-warning-light text-warning",
+  success: "bg-success-light text-success",
+  error: "bg-error-light text-error",
+};
+
+const StatCard = ({ icon: Icon, label, value, tone = "primary" }) => (
+  <Card className="flex items-center gap-4">
+    <span className={`rounded-lg p-3 ${TONE_STYLES[tone] ?? TONE_STYLES.primary}`}>
+      <Icon className="h-5 w-5" aria-hidden="true" />
+    </span>
+    <span>
+      <span className="block text-metadata text-text-muted">{label}</span>
+      <span className="block text-2xl font-semibold text-ink">{value}</span>
+    </span>
+  </Card>
+);
 
 const normalizarPlanta = (data) => {
   const fases = data?.fasesExistentes ?? data?.fases_existentes ?? {};
@@ -172,24 +203,24 @@ export const ManagerDashboard = () => {
           </p>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <p className="text-metadata text-text-muted">OTs pendientes</p>
-            <p className="mt-2 text-2xl font-semibold text-ink">
-              {planta.pendientes}
-            </p>
-          </Card>
-          <Card>
-            <p className="text-metadata text-text-muted">OTs activas</p>
-            <p className="mt-2 text-2xl font-semibold text-ink">
-              {planta.activas}
-            </p>
-          </Card>
-          <Card>
-            <p className="text-metadata text-text-muted">Fases en catálogo</p>
-            <p className="mt-2 text-2xl font-semibold text-ink">
-              {planta.fases.length}
-            </p>
-          </Card>
+          <StatCard
+            icon={ClipboardList}
+            label="OTs pendientes"
+            value={planta.pendientes}
+            tone="warning"
+          />
+          <StatCard
+            icon={Activity}
+            label="OTs activas"
+            value={planta.activas}
+            tone="info"
+          />
+          <StatCard
+            icon={Layers}
+            label="Fases en catálogo"
+            value={planta.fases.length}
+            tone="primary"
+          />
         </div>
         <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(260px,1fr)]">
           <Card>
@@ -241,28 +272,24 @@ export const ManagerDashboard = () => {
           </p>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <p className="text-metadata text-text-muted">Conformidad</p>
-            <p className="mt-2 text-2xl font-semibold text-ink">
-              {Number(calidad.porcentaje).toFixed(1)}%
-            </p>
-          </Card>
-          <Card>
-            <p className="text-metadata text-text-muted">
-              Tiempo promedio en calidad
-            </p>
-            <p className="mt-2 text-2xl font-semibold text-ink">
-              {Math.round((calidad.promedioMinutos / 60) * 10) / 10} h
-            </p>
-          </Card>
-          <Card>
-            <p className="text-metadata text-text-muted">
-              Auditorías recientes
-            </p>
-            <p className="mt-2 text-2xl font-semibold text-ink">
-              {calidad.auditorias.length}
-            </p>
-          </Card>
+          <StatCard
+            icon={ShieldCheck}
+            label="Conformidad"
+            value={`${Number(calidad.porcentaje).toFixed(1)}%`}
+            tone="success"
+          />
+          <StatCard
+            icon={Timer}
+            label="Tiempo promedio en calidad"
+            value={`${Math.round((calidad.promedioMinutos / 60) * 10) / 10} h`}
+            tone="info"
+          />
+          <StatCard
+            icon={ClipboardCheck}
+            label="Auditorías recientes"
+            value={calidad.auditorias.length}
+            tone="primary"
+          />
         </div>
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
