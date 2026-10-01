@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useCotizaciones } from "../../hooks/useCotizaciones";
 import { useOrdenesTrabajo } from "../../hooks/useOrdenesTrabajo";
+import { useOtFases } from "../../hooks/useOtFases";
 import { useSolicitudes } from "../../hooks/useSolicitudes";
 import { buildActividad } from "./actividad";
 import { ManagerDashboard } from "./ManagerDashboard";
@@ -32,6 +33,9 @@ export const DashboardPage = () => {
   const solicitudesState = useSolicitudes();
   const cotizacionesState = useCotizaciones();
   const ordenesState = useOrdenesTrabajo();
+  // Fases para las cards de carga de operarios del Jefe (provider global, sin
+  // request extra: el Jefe ya tiene permiso a GET /api/ot-fases).
+  const fasesState = useOtFases();
 
   // Identidad estable entre renders (viene de un modulo), asi que sirve como
   // dependencia de los useMemo.
@@ -46,6 +50,7 @@ export const DashboardPage = () => {
     [cotizacionesState.cotizaciones, panel, user],
   );
   const ordenes = ordenesState.ordenesTrabajo;
+  const fases = fasesState.otFases;
 
   const actividad = useMemo(
     () => (panel ? buildActividad({ solicitudes, ordenes }) : []),
@@ -55,9 +60,13 @@ export const DashboardPage = () => {
   const cargando =
     solicitudesState.cargando ||
     cotizacionesState.cargando ||
-    ordenesState.cargando;
+    ordenesState.cargando ||
+    fasesState.cargando;
   const error =
-    solicitudesState.error || cotizacionesState.error || ordenesState.error;
+    solicitudesState.error ||
+    cotizacionesState.error ||
+    ordenesState.error ||
+    fasesState.error;
 
   if (user?.rol === "GERENTE") return <ManagerDashboard />;
 
@@ -65,7 +74,7 @@ export const DashboardPage = () => {
     return (
       <PanelResumen
         config={panel}
-        values={panel.count({ solicitudes, cotizaciones, ordenes })}
+        values={panel.count({ solicitudes, cotizaciones, ordenes, fases })}
         actividad={actividad}
         cargando={cargando}
         error={error}
