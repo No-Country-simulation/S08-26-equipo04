@@ -150,7 +150,9 @@ export const CotizacionesProvider = ({ children }) => {
       );
     }
     const cotizacion = fusionar(data);
-    // La OT la genera el backend al aprobar: se verifica que exista.
+    // La OT la genera el backend al aprobar: se verifica que exista y se
+    // avisa al listado de OTs (FE-286), que carga una sola vez al montar y
+    // solo se refresca con este evento o el botón Actualizar.
     let ordenTrabajo;
     try {
       ({ data: ordenTrabajo } = await apiGet(
@@ -158,6 +160,9 @@ export const CotizacionesProvider = ({ children }) => {
       ));
     } catch {
       ordenTrabajo = null;
+    }
+    if (ordenTrabajo) {
+      window.dispatchEvent(new Event("qualitytrack:ordenes-recargar"));
     }
     return { cotizacion, ordenTrabajo, numeroOT: numeroOTDe(ordenTrabajo) };
   };
