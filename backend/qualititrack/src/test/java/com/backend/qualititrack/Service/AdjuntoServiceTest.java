@@ -60,6 +60,8 @@ class AdjuntoServiceTest {
             "foto.png, image/png",
             "plano.dwg, application/octet-stream",
             "plano.dxf, ''",
+            "plano.dxf, text/plain",
+            "plano.dwg, application/x-dwg",
             "planilla.xlsx, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             "informe.docx, application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     })
@@ -74,7 +76,8 @@ class AdjuntoServiceTest {
             "script.sh, application/x-sh",
             "comprimido.zip, application/zip",
             "sin_extension, application/pdf",
-            "virus.pdf, application/x-msdownload"
+            "virus.pdf, application/x-msdownload",
+            "virus.dwg, application/x-msdownload"
     })
     void rechazaFormatosNoPermitidos(String nombre, String contentType) {
         assertThrows(IllegalArgumentException.class, () -> subir(nombre, contentType));

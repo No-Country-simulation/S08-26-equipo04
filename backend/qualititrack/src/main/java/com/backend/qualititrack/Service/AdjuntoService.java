@@ -40,8 +40,10 @@ public class AdjuntoService {
             Map.entry(".png", Set.of("image/png")),
             Map.entry(".jpg", Set.of("image/jpeg")),
             Map.entry(".jpeg", Set.of("image/jpeg")),
-            Map.entry(".dwg", Set.of("image/vnd.dwg", "image/x-dwg", "application/acad", "application/dwg")),
-            Map.entry(".dxf", Set.of("image/vnd.dxf", "image/x-dxf", "application/dxf")),
+            Map.entry(".dwg", Set.of("image/vnd.dwg", "image/x-dwg", "application/acad", "application/dwg",
+                    "application/x-dwg", "application/x-acad", "application/autocad_dwg", "drawing/x-dwg")),
+            Map.entry(".dxf", Set.of("image/vnd.dxf", "image/x-dxf", "application/dxf", "application/x-dxf",
+                    "text/plain")), // el DXF es texto: algunos sistemas lo mandan como text/plain
             Map.entry(".xls", Set.of("application/vnd.ms-excel")),
             Map.entry(".xlsx", Set.of("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")));
 
