@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, RefreshCw } from 'lucide-react';
 import { apiGet, apiPost, extractApiMessage } from '../../api';
 import { Button, Card, CardHeader, CardTitle, DataTable, ErrorBanner, SkeletonTable, Toggle, Title } from '../../components/ui';
 import { toast } from 'sonner';
@@ -200,6 +200,14 @@ export const OperariosFasePage = () => {
             Operarios — {fase.nombre}
           </h1>
         </div>
+        <Button
+          variant="secondary"
+          onClick={reintentar}
+          aria-label="Actualizar operarios"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Actualizar
+        </Button>
       </div>
 
       <Card>
