@@ -93,7 +93,7 @@ export const Sidebar = ({ collapsed, mobileOpen, onToggle, onClose, role }) => {
         />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border bg-surface transition-transform lg:static lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"} ${collapsed ? "lg:w-24" : ""}`}
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border bg-surface transition-transform lg:sticky lg:top-0 lg:h-screen lg:shrink-0 lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"} ${collapsed ? "lg:w-24" : ""}`}
       >
         <div className="flex h-16 items-center justify-between border-b border-border px-4">
           {!collapsed ? (
@@ -122,7 +122,9 @@ export const Sidebar = ({ collapsed, mobileOpen, onToggle, onClose, role }) => {
             )}
           </button>
         </div>
-        <nav className="flex-1 space-y-1 p-3" aria-label="Navegacion principal">
+        {/* El nav scrollea interno: el bloque de usuario queda fijo al pie
+            del viewport aunque la pagina sea mas alta que la ventana. */}
+        <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto p-3" aria-label="Navegacion principal">
           {visibleItems.map(({ label, to, icon: Icon }) => (
             <NavLink
               key={to}
