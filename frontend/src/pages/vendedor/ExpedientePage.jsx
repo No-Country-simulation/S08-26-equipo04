@@ -3,9 +3,12 @@ import { Eye, FileText } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { formatDateTime, formatFechaEntrega, verAdjunto } from '../../api';
 import { TIPOS_ARCHIVO, formatBytes, mensajeErrorAdjunto } from '../../utils/adjuntos';
-import { Badge, EmptyState, ErrorBanner, SkeletonCard } from '../../components/ui';
+import { Badge, Button, EmptyState, ErrorBanner, SkeletonCard } from '../../components/ui';
+import { ReasignarFaseModal } from '../../components/ReasignarFaseModal';
+import { useAuth } from '../../context/AuthContext';
 import { useGsapAnimation } from '../../hooks/useGsapAnimation';
 import { useExpediente } from '../../hooks/useExpediente';
+import { useOtFases } from '../../hooks/useOtFases';
 
 const tabs = ['Resumen', 'Documentos', 'Hoja de ruta', 'Calidad', 'Entrega', 'Historial'];
 
@@ -57,6 +60,23 @@ export const ExpedientePage = () => {
   const [activeTab, setActiveTab] = useState('Resumen');
   const [abriendoId, setAbriendoId] = useState(null);
   const [errorDocumento, setErrorDocumento] = useState(null);
+  // Reasignación (solo Jefe, FE-274): fase completa (ids) a editar.
+  const [faseAReasignar, setFaseAReasignar] = useState(null);
+  // Nombre del operario actual según el historial (el DTO de ot-fases no
+  // trae nombre de operario): solo display para el modal.
+  const [nombreOperarioAReasignar, setNombreOperarioAReasignar] = useState(null);
+  const { user } = useAuth();
+  const esJefe = user?.rol === 'JEFE_PRODUCCION';
+  const { otFases } = useOtFases();
+  // Join historial (trae nombres) con ot-fases (trae ids de fase, catálogo
+  // y operario) por id de OtFase: sin endpoint nuevo.
+  const fasesPorId = useMemo(() => {
+    const mapa = new Map();
+    (otFases ?? []).forEach((fase) => {
+      if (fase?.id != null) mapa.set(Number(fase.id), fase);
+    });
+    return mapa;
+  }, [otFases]);
   const contentRef = useRef(null);
   const timelineRef = useRef(null);
 
@@ -367,10 +387,34 @@ export const ExpedientePage = () => {
           const motivo = leer(fase, 'motivo_reasignacion', 'motivoReasignacion');
           const fechaFin = leer(fase, 'fecha_fin', 'fechaFin');
           const fechaInicio = leer(fase, 'fecha_inicio', 'fechaInicio');
+          // Reasignable = lo que el backend acepta (rechaza TERMINADO y
+          // EN_EJECUCION). Solo Jefe: el Vendedor no ve el botón.
+          const idFase = leer(fase, 'fase_id', 'faseId');
+          const faseCompleta =
+            idFase != null ? fasesPorId.get(Number(idFase)) ?? null : null;
+          const reasignable =
+            esJefe &&
+            faseCompleta != null &&
+            (estadoFase === 'EN_COLA' || estadoFase === 'PENDIENTE');
           return (
             <div key={fase.fase_id ?? fase.faseId ?? `${numero}-${intento}`} className="grid min-h-[68px] grid-cols-[40px_minmax(0,1fr)] items-center gap-3 rounded-lg border border-border px-4 py-3 sm:grid-cols-[40px_minmax(0,1fr)_140px_120px] sm:gap-4">
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-tint text-metadata font-semibold text-primary">{String(numero).padStart(2, '0')}</span>
-              <div className="min-w-0"><p className="text-label font-semibold text-ink">{nombre}</p><p className="text-metadata text-text-muted">{operario}{motivo ? ` · ${motivo}` : ''}</p></div>
+              <div className="min-w-0"><p className="text-label font-semibold text-ink">{nombre}</p><p className="text-metadata text-text-muted">{operario}{motivo ? ` · ${motivo}` : ''}</p>
+                {reasignable && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="mt-1.5"
+                    onClick={() => {
+                      setFaseAReasignar(faseCompleta);
+                      setNombreOperarioAReasignar(operario);
+                    }}
+                    aria-label={`Reasignar fase ${nombre}`}
+                  >
+                    Reasignar
+                  </Button>
+                )}
+              </div>
               <span className="text-metadata text-text-secondary"><Badge variant={estadoFaseVariant[estadoFase] || 'queue'} type="inline">{estadoFaseLabels[estadoFase] || estadoFase || '—'}</Badge></span>
               <span className="text-left text-metadata text-text-muted sm:text-right">{fechaFin ? formatDateTime(fechaFin) : fechaInicio ? `Inició ${formatDateTime(fechaInicio)}` : '—'}</span>
             </div>
@@ -532,10 +576,35 @@ export const ExpedientePage = () => {
         ['Cantidad', cantidad != null ? `${cantidad} piezas` : '—'],
         ['Fecha de entrega solicitada', formatFechaEntrega(fechaSolicitada)],
       ].map(([label, value]) => <div key={label} className="border-b border-border px-4 py-3 last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0"><p className="text-metadata text-text-muted">{label}</p><p className="mt-1 text-label font-semibold text-ink">{value}</p></div>)}</div>
-      <div className="mt-4 flex flex-wrap gap-1 rounded-xl border border-border bg-canvas p-1">{tabs.map((tab) => <button key={tab} type="button" onClick={() => setActiveTab(tab)} className={`rounded-lg px-3 py-2 text-metadata ${activeTab === tab ? 'bg-surface text-ink shadow-sm' : 'text-text-secondary hover:bg-surface/70'}`}>{tab}</button>)}</div>
+      <div role="tablist" aria-label="Secciones del expediente" className="mt-4 flex flex-wrap gap-1 rounded-xl border border-border bg-canvas p-1 sm:gap-2 sm:p-1.5">{tabs.map((tab) => {
+        const activa = activeTab === tab;
+        return (
+          <button
+            key={tab}
+            type="button"
+            role="tab"
+            aria-selected={activa}
+            onClick={() => setActiveTab(tab)}
+            className={`min-w-[104px] flex-1 rounded-lg border-t-[3px] px-3 py-2 text-metadata transition-colors ${activa ? 'border-t-primary bg-surface font-semibold text-ink shadow-sm' : 'border-t-transparent text-text-secondary hover:bg-surface/70 hover:text-ink'}`}
+          >
+            {tab}
+          </button>
+        );
+      })}</div>
       <div ref={contentRef} className="mt-4">
         {renderContent()}
       </div>
+      <ReasignarFaseModal
+        key={faseAReasignar?.id ?? 'cerrado'}
+        fase={faseAReasignar}
+        open={esJefe && faseAReasignar != null}
+        nombreOperarioActual={nombreOperarioAReasignar}
+        onClose={() => {
+          setFaseAReasignar(null);
+          setNombreOperarioAReasignar(null);
+        }}
+        onReasignada={() => recargar()}
+      />
     </div>
   );
 };
