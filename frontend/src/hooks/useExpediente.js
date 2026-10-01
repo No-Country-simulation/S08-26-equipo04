@@ -52,20 +52,21 @@ export const useExpediente = (otParam) => {
   const [version, setVersion] = useState(0);
   // FE-288: con id numérico no se espera la lista (los links ya navegan por
   // id): el expediente arranca en paralelo. Por numero_ot sí hay que
-  // esperar la lista para resolver el id.
+  // esperar la lista para resolver el id. Se derivan `lista`/`esperarLista`
+  // para que el efecto no se re-ejecute cuando la lista termina de llegar
+  // (repetiría o cancelaría las consultas ya en curso).
   const esIdDirecto = /^\d+$/.test(String(otParam ?? ""));
+  const lista = esIdDirecto ? null : ordenesTrabajo;
+  const esperarLista = !esIdDirecto && cargandoLista;
 
   // Todos los setState ocurren en callbacks de la promesa (nunca en el
   // cuerpo del efecto) para cumplir react-hooks/set-state-in-effect.
   useEffect(() => {
-    if (!esIdDirecto && cargandoLista) return undefined;
+    if (esperarLista) return undefined;
     let cancelado = false;
 
     const cargar = async () => {
-      const { otId, cotizacionId: cidLista } = resolverOt(
-        otParam,
-        ordenesTrabajo,
-      );
+      const { otId, cotizacionId: cidLista } = resolverOt(otParam, lista);
       if (otId == null) return { noEncontrada: true };
 
       const { data: expediente } = await apiGet(
@@ -144,7 +145,7 @@ export const useExpediente = (otParam) => {
     return () => {
       cancelado = true;
     };
-  }, [otParam, ordenesTrabajo, cargandoLista, version, esIdDirecto]);
+  }, [otParam, lista, esperarLista, version]);
 
   const recargar = useCallback(() => {
     setDatos((prev) => ({ ...prev, cargando: true, error: null }));
