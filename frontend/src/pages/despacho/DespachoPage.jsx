@@ -147,7 +147,7 @@ export const DespachoPage = () => {
     // Si otro rol llega aquí (ej. manipulación), se redirige a inicio (/).
     if (!canEntregar) {
       toast.error("No tienes permisos para esta acción.");
-      navigate("/", { replace: true });
+      navigate("/dashboard", { replace: true });
       return;
     }
 
@@ -174,7 +174,7 @@ export const DespachoPage = () => {
       if (status === 403) {
         toast.error("No tienes permisos para esta acción.");
         handleCloseModal();
-        navigate("/", { replace: true });
+        navigate("/dashboard", { replace: true });
         return;
       }
       const message =

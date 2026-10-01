@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { QualityCoreAnimation } from "../components/QualityCoreAnimation";
 import { Button, Field, Title } from "../components/ui";
 import { loginSchema, loginDefaults } from "../utils/loginSchema";
-import logoIcon from "../assets/qualitytrack-icon.png";
 
 const PasswordField = ({ id, label, placeholder, error, ...props }) => {
   const [visible, setVisible] = useState(false);
@@ -68,13 +70,7 @@ export const LoginPage = () => {
     <main className="flex min-h-screen items-center justify-center bg-canvas p-4">
       <Title>Iniciar sesión</Title>
       <div className="flex w-full max-w-5xl flex-col items-stretch overflow-hidden rounded-2xl bg-surface shadow-card lg:flex-row">
-        {/* Lado izquierdo - Logo */}
-        <div className="flex items-center justify-center bg-surface px-8 py-12 lg:w-1/2 lg:py-0">
-          <div className="flex items-center gap-4">
-            <img src={logoIcon} alt="QT" className="h-14 w-14 rounded-xl" />
-            <span className="text-h2 text-ink">QualityTrack</span>
-          </div>
-        </div>
+        <QualityCoreAnimation />
 
         {/* Divider vertical */}
         <div className="hidden lg:block lg:w-px bg-border" />
@@ -85,6 +81,13 @@ export const LoginPage = () => {
         {/* Lado derecho - Formulario */}
         <div className="flex items-center justify-center px-8 py-10 lg:w-1/2 lg:py-12">
           <div className="w-full max-w-sm">
+            <Link
+              to="/"
+              className="mb-6 inline-flex min-h-10 items-center gap-2 rounded-md text-label font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              Volver a la landing
+            </Link>
             <h1 className="mb-8 text-h1 text-ink">Iniciar sesión</h1>
             <form
               onSubmit={handleSubmit(onSubmit)}
