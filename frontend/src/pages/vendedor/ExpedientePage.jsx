@@ -342,12 +342,13 @@ export const ExpedientePage = () => {
                 <div className="min-w-0 flex-1"><p className="truncate text-label font-semibold text-ink">{documento.nombre_original || '—'}</p><p className="truncate text-metadata text-text-muted">{tipoArchivoLabel(documento.tipo_archivo)}{documento.mime_type ? ` · ${documento.mime_type}` : ''}{documento.tamanio_bytes != null ? ` · ${formatBytes(documento.tamanio_bytes)}` : ''}</p></div>
                 <button
                   type="button"
-                  className="p-1 text-text-secondary disabled:opacity-50"
+                  className="inline-flex shrink-0 items-center gap-1.5 p-1 text-label font-medium text-text-secondary hover:text-primary disabled:opacity-50"
                   aria-label={`Ver ${documento.nombre_original}`}
                   disabled={abriendoId === documento.id}
                   onClick={() => verDocumento(documento)}
                 >
-                  <Eye className="h-4 w-4" />
+                  <Eye className="h-4 w-4" aria-hidden="true" />
+                  <span aria-hidden="true">Ver</span>
                 </button>
               </div>
             ))}
