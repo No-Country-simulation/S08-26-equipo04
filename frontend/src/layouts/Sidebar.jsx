@@ -20,7 +20,7 @@ import logoFull from "../assets/qualitytrack-logo.png";
 import logoIcon from "../assets/qualitytrack-icon.png";
 
 const items = [
-  { label: "Dashboard", to: "/", icon: LayoutDashboard, roles: [] },
+  { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard, roles: [] },
   {
     label: "Solicitudes",
     to: "/solicitudes",
