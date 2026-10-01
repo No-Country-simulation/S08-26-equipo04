@@ -176,7 +176,6 @@ public class OtFaseService {
                 // Chequear si existe una fase siguiente para la misma orden de trabajo
                 OtFase faseSiguiente = otFaseRepository.findNextFase(
                                 otFase.getOrdenTrabajo().getId(),
-                                otFase.getCicloIteracion(),
                                 otFase.getNumeroSecuencia())
                                 .orElse(null);
                 // Si existe una fase siguiente, se debe pasar con estado "EN_COLA" y calcular

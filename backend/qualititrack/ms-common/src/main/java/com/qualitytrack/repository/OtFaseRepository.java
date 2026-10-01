@@ -55,6 +55,5 @@ public interface OtFaseRepository extends JpaRepository<OtFase, Long> {
 
         @Query("SELECT o FROM OtFase o WHERE o.ordenTrabajo.id = :ordenTrabajoId AND o.numeroSecuencia > :numeroSecuencia AND o.estado != 'TERMINADO' ORDER BY o.numeroSecuencia ASC, o.cicloIteracion DESC LIMIT 1")
         Optional<OtFase> findNextFase(@Param("ordenTrabajoId") Long ordenTrabajoId,
-                        @Param("cicloIteracion") Integer cicloIteracion,
                         @Param("numeroSecuencia") Integer numeroSecuencia);
 }
