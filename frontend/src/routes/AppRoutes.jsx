@@ -79,7 +79,14 @@ export const AppRoutes = () => {
               element={<OrdenesEntregadasPage />}
             />
           </Route>
-          <Route element={<ProtectedRoute roles={["VENDEDOR"]} />}>
+          {/* Órdenes de trabajo: Vendedor la usa completa; el Jefe la usa en
+              modo lectura + reasignación de fases (FE-274). La entrega sigue
+              solo Vendedor en /despacho (issue #157). */}
+          <Route
+            element={
+              <ProtectedRoute roles={["VENDEDOR", "JEFE_PRODUCCION"]} />
+            }
+          >
             <Route path="ordenes-trabajo" element={<OrdenesTrabajoPage />} />
             <Route path="ordenes-trabajo/:id" element={<ExpedientePage />} />
           </Route>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Users, Inbox } from 'lucide-react';
+import { Plus, Pencil, Users, Inbox, RefreshCw } from 'lucide-react';
 import { apiGet, apiPost, apiPut } from '../../api';
 import { Button, Card, CardHeader, CardTitle, DataTable, EmptyState, ErrorBanner, SkeletonTable, Toggle, Title } from '../../components/ui';
 import { FaseFormModal } from '../../components/FaseFormModal';
@@ -14,18 +14,32 @@ export const CatalogoFasesPage = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingFase, setEditingFase] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [version, setVersion] = useState(0);
 
   useEffect(() => {
+    let cancelado = false;
     apiGet('/api/fases')
       .then(({ data }) => {
+        if (cancelado) return;
         setFases(data ?? []);
+        setError(null);
         setCargando(false);
       })
       .catch((err) => {
+        if (cancelado) return;
         setError(err?.response?.data?.message || 'No se pudieron cargar las fases.');
         setCargando(false);
       });
-  }, []);
+    return () => {
+      cancelado = true;
+    };
+  }, [version]);
+
+  const recargar = () => {
+    setError(null);
+    setCargando(true);
+    setVersion((v) => v + 1);
+  };
 
   const handleCreate = () => {
     setEditingFase(null);
@@ -156,17 +170,27 @@ export const CatalogoFasesPage = () => {
         <div>
           <h1 className="text-h1 text-ink">Catalogo de fases</h1>
         </div>
-        <Button onClick={handleCreate}>
-          <Plus className="h-4 w-4" />
-          Nueva fase
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="secondary"
+            onClick={recargar}
+            aria-label="Actualizar fases"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Actualizar
+          </Button>
+          <Button onClick={handleCreate}>
+            <Plus className="h-4 w-4" />
+            Nueva fase
+          </Button>
+        </div>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Fases registradas</CardTitle>
         </CardHeader>
-        {error ? <ErrorBanner message={error} /> : cargando ? (
+        {error ? <ErrorBanner message={error} onRetry={recargar} /> : cargando ? (
           <SkeletonTable columns={5} rows={5} />
         ) : fases.length === 0 ? (
           <EmptyState

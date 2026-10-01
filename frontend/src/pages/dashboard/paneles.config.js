@@ -113,7 +113,7 @@ export const PANELES = {
         key: "produccion",
         label: "OTs en producción",
         icon: Clock3,
-        path: "/planta",
+        path: "/ordenes-trabajo?estado=EN_PRODUCCION",
         tone: "warning",
       },
       {
@@ -134,7 +134,7 @@ export const PANELES = {
         key: "noConformes",
         label: "No conformes",
         icon: TriangleAlert,
-        path: "/ordenes-trabajo?estado=NO_CONFORME",
+        path: "/no-conformidades",
         tone: "error",
       },
       {
@@ -148,7 +148,7 @@ export const PANELES = {
         key: "fasesPendientes",
         label: "Fases pendientes",
         icon: ListChecks,
-        path: "/planta",
+        path: "/planta?estado=EN_COLA",
         tone: "warning",
       },
       {

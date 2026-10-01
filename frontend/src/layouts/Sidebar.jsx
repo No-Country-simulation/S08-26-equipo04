@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 import {
   Clipboard,
   ClipboardList,
+  Factory,
   FileText,
   LayoutDashboard,
   LogOut,
@@ -36,7 +37,7 @@ const items = [
     label: "Órdenes de trabajo",
     to: "/ordenes-trabajo",
     icon: ClipboardList,
-    roles: ["VENDEDOR"],
+    roles: ["VENDEDOR", "JEFE_PRODUCCION"],
   },
   {
     label: "Despacho",
@@ -53,7 +54,7 @@ const items = [
   {
     label: "Planta",
     to: "/planta",
-    icon: ClipboardList,
+    icon: Factory,
     roles: ["JEFE_PRODUCCION"],
   },
   {
