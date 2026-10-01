@@ -332,21 +332,26 @@ export const ManagerDashboard = () => {
                   key={auditoria.id ?? index}
                   className="flex items-center justify-between gap-3 py-3"
                 >
-                  <div>
-                    <p className="text-label font-semibold text-ink">
+                  <div className="min-w-0">
+                    <p className="truncate text-label text-ink">
                       {/* El backend manda snake_case: leer numero_ot/id_ot
                           primero (con fallback a las grafías viejas). */}
-                      {auditoria.numero_ot ??
-                        auditoria.numeroOt ??
-                        auditoria.ot_numero ??
-                        `OT #${auditoria.id_ot ?? auditoria.idOt ?? "—"}`}
-                    </p>
-                    <p className="text-metadata text-text-muted">
-                      {formatDateTime(
-                        auditoria.fecha_auditoria ??
-                          auditoria.fechaAuditoria ??
-                          auditoria.fecha_veredicto,
-                      )}
+                      <span className="font-semibold">
+                        {auditoria.numero_ot ??
+                          auditoria.numeroOt ??
+                          auditoria.ot_numero ??
+                          `OT #${auditoria.id_ot ?? auditoria.idOt ?? "—"}`}
+                      </span>
+                      <span className="text-text-muted">
+                        <span aria-hidden="true" className="mx-2">
+                          ·
+                        </span>
+                        {formatDateTime(
+                          auditoria.fecha_auditoria ??
+                            auditoria.fechaAuditoria ??
+                            auditoria.fecha_veredicto,
+                        )}
+                      </span>
                     </p>
                   </div>
                   <Badge
