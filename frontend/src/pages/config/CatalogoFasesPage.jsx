@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Pencil, Users, Inbox, RefreshCw } from 'lucide-react';
 import { apiGet, apiPost, apiPut } from '../../api';
@@ -46,10 +46,10 @@ export const CatalogoFasesPage = () => {
     setModalOpen(true);
   };
 
-  const handleEdit = (fase) => {
+  const handleEdit = useCallback((fase) => {
     setEditingFase(fase);
     setModalOpen(true);
-  };
+  }, []);
 
   const handleSubmit = async (data) => {
     setSaving(true);
@@ -89,18 +89,20 @@ export const CatalogoFasesPage = () => {
     }
   };
 
-  const handleToggleActivo = async (fase) => {
+  const handleToggleActivo = useCallback(async (fase) => {
     try {
       const { data } = await apiPut(`/api/fases/${fase.id}`, {
         ...fase,
         activo: !fase.activo,
       });
+      // Update optimista local (sin refetch): no altera el orden ni la
+      // pagina actual del DataTable (ver FE-275: autoResetPageIndex off).
       setFases((prev) => prev.map((item) => item.id === fase.id ? data : item));
       toast.success(fase.activo ? 'Fase desactivada' : 'Fase activada');
     } catch (err) {
       toast.error(err?.response?.data?.message || err?.response?.data?.error || 'No se pudo cambiar el estado de la fase.');
     }
-  };
+  }, []);
 
   const columns = useMemo(() => [
     {
@@ -161,7 +163,7 @@ export const CatalogoFasesPage = () => {
         </div>
       ),
     },
-  ], [navigate]);
+  ], [navigate, handleToggleActivo, handleEdit]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
