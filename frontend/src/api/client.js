@@ -18,6 +18,23 @@ const redirectToLogin = () => {
   }
 };
 
+// Varios providers piden en paralelo al abrir una vista: si todos fallan con
+// el mismo motivo (ej. sesión inválida tras un reset de BD), no se apila un
+// toast por request. Misma señal dentro de la ventana => solo el primero.
+let ultimoToast = { mensaje: null, momento: 0 };
+const VENTANA_DEDUPE_MS = 3000;
+const toastUnico = (mensaje) => {
+  const ahora = Date.now();
+  if (
+    mensaje &&
+    (mensaje !== ultimoToast.mensaje ||
+      ahora - ultimoToast.momento > VENTANA_DEDUPE_MS)
+  ) {
+    ultimoToast = { mensaje, momento: ahora };
+    toast.error(mensaje);
+  }
+};
+
 api.interceptors.request.use((config) => {
   const session = readSession();
   const token = session?.token;
@@ -48,16 +65,16 @@ api.interceptors.response.use(
     if (status === 401 && !error?.config?.url?.includes('/api/auth/login')) {
       clearSession();
       if (!silenciar) {
-        toast.error('Tu sesión expiró. Inicia sesión nuevamente.');
+        toastUnico('Tu sesión expiró. Inicia sesión nuevamente.');
       }
       redirectToLogin();
     } else if (!silenciar) {
       if (status === 403) {
-        toast.error('No tienes permisos para esta acción.');
+        toastUnico('No tienes permisos para esta acción.');
       } else if (status >= 500) {
-        toast.error('Error del servidor. Intenta nuevamente.');
+        toastUnico('Error del servidor. Intenta nuevamente.');
       } else if ((status === 400 || status === 404 || status === 409) && !esBlob) {
-        toast.error(message);
+        toastUnico(message);
       }
     }
 

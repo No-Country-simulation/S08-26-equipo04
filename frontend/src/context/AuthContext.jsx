@@ -1,12 +1,22 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 import { apiPost } from '../api';
 import { mocks } from '../mocks';
-import { clearSession, readSession, saveSession } from '../api/session';
+import { clearSession, readSession, saveSession, tokenExpirado } from '../api/session';
 
 const AuthContext = createContext(null);
 
+// Sesión vencida no se restaura: evita abrir la app con un token muerto.
+const leerSesionValida = () => {
+  const session = readSession();
+  if (session?.token && tokenExpirado(session.token)) {
+    clearSession();
+    return null;
+  }
+  return session;
+};
+
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(readSession);
+  const [user, setUser] = useState(leerSesionValida);
 
   const login = async ({ email, password }) => {
     try {
