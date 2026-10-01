@@ -26,10 +26,23 @@ export const DataTable = ({
 
   const tableColumns = useMemo(() => columns, [columns]);
 
+  // FE-275: deriva una paginacion "segura" sin setState en efectos.
+  // Si `data` se achica y la pagina actual queda fuera de rango, se usa la
+  // ultima pagina valida; en cualquier otro caso se conserva pageIndex.
+  // (La busqueda si resetea a 0 de forma explicita en su onChange.)
+  const rowCount = data?.length ?? 0;
+  const safePagination = useMemo(() => {
+    const pageCountFromData = Math.max(1, Math.ceil(rowCount / pagination.pageSize));
+    if (pagination.pageIndex >= pageCountFromData) {
+      return { ...pagination, pageIndex: pageCountFromData - 1 };
+    }
+    return pagination;
+  }, [pagination, rowCount]);
+
   const table = useLegacyTable({
     data,
     columns: tableColumns,
-    state: { globalFilter, sorting, pagination },
+    state: { globalFilter, sorting, pagination: safePagination },
     onGlobalFilterChange: setGlobalFilter,
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
@@ -38,15 +51,20 @@ export const DataTable = ({
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     globalFilterFn: 'includesString',
+    // FE-275: por defecto TanStack resetea pageIndex a 0 cada vez que `data`
+    // cambia (p. ej. al activar/desactivar un registro con update optimista),
+    // lo que devolvia al usuario a la pagina 1 aunque estuviera en la 2 o 3.
+    // Se desactiva y solo se recalcula si la pagina actual quedo vacia.
+    autoResetPageIndex: false,
   });
 
   const headerGroups = table.getHeaderGroups();
   const rows = table.getRowModel().rows;
   const pageCount = table.getPageCount();
-  const currentPage = pagination.pageIndex;
+  const currentPage = safePagination.pageIndex;
   const totalRows = data.length;
-  const showingFrom = currentPage * pagination.pageSize + 1;
-  const showingTo = Math.min((currentPage + 1) * pagination.pageSize, totalRows);
+  const showingFrom = currentPage * safePagination.pageSize + 1;
+  const showingTo = Math.min((currentPage + 1) * safePagination.pageSize, totalRows);
 
   const footerText = footer || (totalRows > 0
     ? `Mostrando ${showingFrom} a ${showingTo} de ${totalRows} registros`
