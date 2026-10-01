@@ -96,8 +96,11 @@ export const ManagerDashboard = () => {
       },
       (err) => {
         if (cancelado) return;
+        // El backend manda el motivo en `mensaje` (ErrorResponse): leerlo
+        // primero para no mostrar siempre el genérico.
         setError(
-          err?.response?.data?.message ||
+          err?.response?.data?.mensaje ||
+            err?.response?.data?.message ||
             err?.response?.data?.error ||
             "No se pudieron cargar los dashboards.",
         );
@@ -331,13 +334,18 @@ export const ManagerDashboard = () => {
                 >
                   <div>
                     <p className="text-label font-semibold text-ink">
-                      {auditoria.numeroOt ??
+                      {/* El backend manda snake_case: leer numero_ot/id_ot
+                          primero (con fallback a las grafías viejas). */}
+                      {auditoria.numero_ot ??
+                        auditoria.numeroOt ??
                         auditoria.ot_numero ??
-                        `OT #${auditoria.idOt ?? "—"}`}
+                        `OT #${auditoria.id_ot ?? auditoria.idOt ?? "—"}`}
                     </p>
                     <p className="text-metadata text-text-muted">
                       {formatDateTime(
-                        auditoria.fechaAuditoria ?? auditoria.fecha_veredicto,
+                        auditoria.fecha_auditoria ??
+                          auditoria.fechaAuditoria ??
+                          auditoria.fecha_veredicto,
                       )}
                     </p>
                   </div>

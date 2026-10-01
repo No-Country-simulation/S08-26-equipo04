@@ -79,7 +79,7 @@ const fusionarEnriquecida = (previa, actualizada) => ({
 export const OtFasesProvider = ({ children }) => {
   const { isAuthenticated, user } = useAuth();
   // El GET /api/ot-fases permite OPERARIO y JEFE_PRODUCCION: no pedirlo con
-  // otros roles para no disparar 403 (toast de permisos).
+  // otros roles para no disparar 403 (banner de permisos).
   const puedeConsultar =
     user?.rol === "OPERARIO" || user?.rol === "JEFE_PRODUCCION";
   const [otFases, setOtFases] = useState([]);
@@ -89,8 +89,12 @@ export const OtFasesProvider = ({ children }) => {
 
   // GET /api/ot-fases: el DTO ya trae numero, pieza, cantidad y solicitud
   // (BE #219), asi que es un solo request sin cadena OT -> cotizacion.
+  // silenciarToast: los fallos de carga se muestran solo en el ErrorBanner
+  // persistente de la vista (una sola señal, igual que iniciar/finalizar).
   const cargarLista = useCallback(async () => {
-    const { data } = await apiGet("/api/ot-fases");
+    const { data } = await apiGet("/api/ot-fases", {
+      silenciarToast: true,
+    });
     return (data ?? []).map((item) => mapItem(item, user?.nombre ?? null));
   }, [user?.nombre]);
 
@@ -127,7 +131,7 @@ export const OtFasesProvider = ({ children }) => {
   const iniciarFase = async (id) => {
     try {
       // silenciarToast: la vista muestra ErrorBanner persistente (una sola
-      // señal) en vez del toast global + toast local duplicados.
+      // señal) en vez del toast global.
       const { data } = await apiPost(
         `/api/ot-fases/${id}/iniciar`,
         {},
