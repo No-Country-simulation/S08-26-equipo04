@@ -4,9 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { QualityCoreAnimation } from "../components/QualityCoreAnimation";
 import { Button, Field, Title } from "../components/ui";
 import { loginSchema, loginDefaults } from "../utils/loginSchema";
-import logoIcon from "../assets/qualitytrack-icon.png";
 
 const PasswordField = ({ id, label, placeholder, error, ...props }) => {
   const [visible, setVisible] = useState(false);
@@ -70,13 +70,7 @@ export const LoginPage = () => {
     <main className="flex min-h-screen items-center justify-center bg-canvas p-4">
       <Title>Iniciar sesión</Title>
       <div className="flex w-full max-w-5xl flex-col items-stretch overflow-hidden rounded-2xl bg-surface shadow-card lg:flex-row">
-        {/* Lado izquierdo - Logo */}
-        <div className="flex items-center justify-center bg-surface px-8 py-12 lg:w-1/2 lg:py-0">
-          <div className="flex items-center gap-4">
-            <img src={logoIcon} alt="QT" className="h-14 w-14 rounded-xl" />
-            <span className="text-h2 text-ink">QualityTrack</span>
-          </div>
-        </div>
+        <QualityCoreAnimation />
 
         {/* Divider vertical */}
         <div className="hidden lg:block lg:w-px bg-border" />
