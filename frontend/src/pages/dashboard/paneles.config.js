@@ -1,4 +1,14 @@
-import { ClipboardList, Clock3, FileText, PackageCheck } from "lucide-react";
+import {
+  ClipboardList,
+  Clock3,
+  FileText,
+  ListChecks,
+  PackageCheck,
+  ShieldCheck,
+  TriangleAlert,
+  Truck,
+  Users,
+} from "lucide-react";
 
 /**
  * Configuracion declarativa de los paneles operativos: VENDEDOR y
@@ -19,6 +29,20 @@ import { ClipboardList, Clock3, FileText, PackageCheck } from "lucide-react";
 
 const contarEstado = (items, estado) =>
   items.filter((item) => item.estado === estado).length;
+
+// Operario activo = con carga pendiente: al menos una fase EN_COLA o
+// EN_EJECUCION (definición BE/PM). No es "habilitado" (usuarios.activo) y
+// deja afuera a quienes tienen todo TERMINADO o solo PENDIENTE.
+const contarOperariosActivos = (fases) =>
+  new Set(
+    (fases ?? [])
+      .filter(
+        (fase) =>
+          fase.estado === "EN_COLA" || fase.estado === "EN_EJECUCION",
+      )
+      .map((fase) => fase.operario_id ?? fase.operarioId)
+      .filter(Boolean),
+  ).size;
 
 export const PANELES = {
   VENDEDOR: {
@@ -71,9 +95,9 @@ export const PANELES = {
   JEFE_PRODUCCION: {
     titulo: "Panel del jefe",
     eyebrow: "Panel de producción",
-    encabezado: "Cotizaciones y planta",
+    encabezado: "Gestión de planta",
     detalle:
-      "Accesos rápidos a las solicitudes por cotizar, las cotizaciones para enviar y el estado de la planta.",
+      "Acceso rápido a tus funcionalidades y vista de actividad reciente.",
     // El jefe ve la lista completa: el backend no filtra solicitudes ni
     // cotizaciones por rol, las devuelve todas.
     filtraPorVendedor: false,
@@ -84,13 +108,6 @@ export const PANELES = {
         icon: ClipboardList,
         path: "/solicitudes?estado=PENDIENTE_COTIZACION",
         tone: "primary",
-      },
-      {
-        key: "cotizaciones",
-        label: "Cotizaciones para enviar",
-        icon: FileText,
-        path: "/cotizaciones?estado=LISTA_PARA_ENVIAR",
-        tone: "info",
       },
       {
         key: "produccion",
@@ -106,12 +123,54 @@ export const PANELES = {
         path: "/ordenes-entregadas",
         tone: "success",
       },
+      {
+        key: "calidad",
+        label: "OTs en calidad",
+        icon: ShieldCheck,
+        path: "/ordenes-trabajo?estado=EN_CALIDAD",
+        tone: "info",
+      },
+      {
+        key: "noConformes",
+        label: "No conformes",
+        icon: TriangleAlert,
+        path: "/ordenes-trabajo?estado=NO_CONFORME",
+        tone: "error",
+      },
+      {
+        key: "despacho",
+        label: "OTs en despacho",
+        icon: Truck,
+        path: "/ordenes-trabajo?estado=DESPACHO",
+        tone: "success",
+      },
+      {
+        key: "fasesPendientes",
+        label: "Fases pendientes",
+        icon: ListChecks,
+        path: "/planta",
+        tone: "warning",
+      },
+      {
+        key: "operariosActivos",
+        label: "Operarios activos",
+        icon: Users,
+        path: "/planta",
+        tone: "primary",
+      },
     ],
-    count: ({ solicitudes, cotizaciones, ordenes }) => ({
+    // Las claves deben coincidir con las de `cards` de este mismo rol.
+    // `fases` (ot-fases del contexto global) alimenta las cards de carga de
+    // operarios; los demas roles la ignoran.
+    count: ({ solicitudes, ordenes, fases }) => ({
       solicitudes: contarEstado(solicitudes, "PENDIENTE_COTIZACION"),
-      cotizaciones: contarEstado(cotizaciones, "LISTA_PARA_ENVIAR"),
       produccion: contarEstado(ordenes, "EN_PRODUCCION"),
       entregadas: contarEstado(ordenes, "ENTREGADA"),
+      calidad: contarEstado(ordenes, "EN_CALIDAD"),
+      noConformes: contarEstado(ordenes, "NO_CONFORME"),
+      despacho: contarEstado(ordenes, "DESPACHO"),
+      fasesPendientes: contarEstado(fases ?? [], "EN_COLA"),
+      operariosActivos: contarOperariosActivos(fases),
     }),
   },
 };

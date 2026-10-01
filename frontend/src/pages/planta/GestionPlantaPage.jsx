@@ -97,15 +97,6 @@ export const GestionPlantaPage = () => {
     return () => { cancelado = true; };
   }, [otFases]);
 
-  const operarios = useMemo(() => {
-    const ids = [...new Set(otFases.map((fase) => fase.operarioId ?? fase.operario_id).filter(Boolean))];
-    return ids.map((id) => ({
-      id,
-      nombre: detalleOperarios.get(id)?.nombre ?? `Operario #${id}`,
-      tipo_tarea: detalleOperarios.get(id)?.tipo_tarea ?? null,
-    }));
-  }, [detalleOperarios, otFases]);
-
   const fasesNormalizadas = useMemo(() => otFases.map((fase) => ({
     ...fase,
     operario_id: fase.operarioId ?? fase.operario_id,
@@ -114,6 +105,26 @@ export const GestionPlantaPage = () => {
     // para no mostrar el id interno como "OT #46".
     ot_numero: fase.ot_numero ?? fase.numero_ot ?? fase.numeroOt ?? `OT #${fase.ordenTrabajoId ?? fase.orden_trabajo_id}`,
   })), [fasesCatalogo, otFases]);
+
+  // Cards alineadas con "Fases pendientes": solo fases con carga real
+  // (EN_COLA o EN_EJECUCION). Las PENDIENTE/TERMINADO siguen visibles en el
+  // detalle por operario para poder reasignarlas.
+  const fasesConCarga = useMemo(
+    () =>
+      fasesNormalizadas.filter(
+        (fase) => fase.estado === "EN_COLA" || fase.estado === "EN_EJECUCION",
+      ),
+    [fasesNormalizadas],
+  );
+
+  const operarios = useMemo(() => {
+    const ids = [...new Set(fasesConCarga.map((fase) => fase.operarioId ?? fase.operario_id).filter(Boolean))];
+    return ids.map((id) => ({
+      id,
+      nombre: detalleOperarios.get(id)?.nombre ?? `Operario #${id}`,
+      tipo_tarea: detalleOperarios.get(id)?.tipo_tarea ?? null,
+    }));
+  }, [detalleOperarios, fasesConCarga]);
 
   const cargaPorOperario = useMemo(() => {
     const grupos = new Map(
@@ -337,7 +348,7 @@ export const GestionPlantaPage = () => {
           </span>
           <div>
             <p className="text-metadata text-text-muted">OTs en curso</p>
-            <p className="text-2xl font-semibold text-ink">{new Set(fasesNormalizadas.map((fase) => fase.ot_numero)).size}</p>
+            <p className="text-2xl font-semibold text-ink">{new Set(fasesConCarga.map((fase) => fase.ot_numero)).size}</p>
           </div>
         </Card>
       </div>
