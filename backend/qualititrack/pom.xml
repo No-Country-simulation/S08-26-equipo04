@@ -25,6 +25,8 @@
     <properties>
         <java.version>21</java.version>
         <spring-cloud.version>2023.0.3</spring-cloud.version>
+        <!-- Lombok con soporte para JDK 21-25 -->
+        <lombok.version>1.18.42</lombok.version>
     </properties>
 
     <dependencyManagement>
@@ -80,6 +82,20 @@
 
     <build>
         <plugins>
+            <!-- Habilita explicitamente el procesador de Lombok (desde JDK 23 no se ejecuta solo) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

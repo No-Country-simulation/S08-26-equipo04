@@ -103,6 +103,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
         ErrorResponse errorResponse = new ErrorResponse(
                 "El archivo supera el tamaño máximo permitido (10 MB).", new ArrayList<>());
-        return ResponseEntity.status(HttpStatus.CONTENT_TOO_LARGE).body(errorResponse);
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(errorResponse);
     }
 }
