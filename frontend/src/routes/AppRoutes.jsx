@@ -5,6 +5,7 @@ import { AppLayout, OperarioLayout } from "../layouts";
 import { LoadingSpinner } from "../components/ui/LoadingSpinner";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { LoginPage } from "../pages/LoginPage";
+import { LandingPage } from "../pages/LandingPage";
 
 // FE-288: las páginas van con import dinámico para que el build genere un
 // chunk por ruta en vez de un único bundle (~1,3 MB). `lazy` exige default
@@ -105,10 +106,11 @@ export const AppRoutes = () => {
       ? "/operario"
       : user?.rol === "CALIDAD"
         ? "/calidad"
-        : "/";
+        : "/dashboard";
   return (
     <Suspense fallback={<LoadingSpinner label="Cargando vista..." />}>
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route
         path="/login"
         element={user ? <Navigate to={home} replace /> : <LoginPage />}
@@ -116,7 +118,7 @@ export const AppRoutes = () => {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route
-            index
+            path="dashboard"
             element={
               user?.rol === "OPERARIO" ? (
                 <Navigate to="/operario" replace />

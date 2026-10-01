@@ -1,0 +1,2091 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QualityTrack | Gestión de producción y calidad</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Syne', 'sans-serif'],
+                    },
+                    colors: {
+                        base: '#F7F5F0', // Fondo crema cálido
+                        text: '#1C1C1C', // Texto casi negro
+                        primary: '#0a6375', // Verde azulado del logo (teal)
+                        surface: '#EAE6DB' // Tono para superficies/hover
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #F7F5F0;
+            color: #1C1C1C;
+            overflow-x: hidden;
+            cursor: none;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Lenis smooth scrolling styles */
+        html.lenis { height: auto; }
+        .lenis.lenis-smooth { scroll-behavior: auto; }
+        .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+        .lenis.lenis-stopped { overflow: hidden; }
+
+        /* Custom Cursor */
+        .cursor-dot {
+            width: 12px;
+            height: 12px;
+            background-color: #0a6375;
+            border-radius: 50%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 9999;
+            transition: width 0.3s ease, height 0.3s ease, background-color 0.3s ease;
+        }
+        
+        .cursor-dot.active {
+            width: 60px;
+            height: 60px;
+            background-color: rgba(10, 99, 117, 0.1);
+            border: 1px solid rgba(10, 99, 117, 0.5);
+            backdrop-filter: blur(2px);
+        }
+
+        .cursor-dot.profile-active {
+            width: 112px;
+            height: 46px;
+            border: 1px solid rgba(10, 99, 117, 0.65);
+            border-radius: 999px;
+            background-color: rgba(10, 99, 117, 0.08);
+            backdrop-filter: blur(2px);
+        }
+
+        /* Hover Reveal Image Container */
+        .hover-reveal-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 300px;
+            height: 380px;
+            pointer-events: none;
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.8) rotate(-5deg);
+            z-index: 9998;
+            overflow: hidden;
+            border-radius: 8px;
+            will-change: transform, opacity;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .hover-reveal-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scale(1.2);
+            transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* Team Row Styles */
+        .team-row {
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(28, 28, 28, 0.1);
+        }
+        .team-row .row-bg {
+            position: absolute;
+            inset: 0;
+            background-color: #EAE6DB;
+            transform: scaleY(0);
+            transform-origin: bottom;
+            transition: transform 0.5s cubic-bezier(0.76, 0, 0.24, 1);
+            z-index: 0;
+        }
+        .team-row:hover .row-bg {
+            transform: scaleY(1);
+            transform-origin: top;
+        }
+        .team-row * {
+            transition: color 0.3s ease, transform 0.5s cubic-bezier(0.76, 0, 0.24, 1);
+            z-index: 10;
+        }
+        .team-row:hover .role {
+            font-style: italic;
+            color: #0a6375;
+        }
+        .team-row:hover .name {
+            transform: translateX(20px);
+            color: #0a6375;
+        }
+
+        .team-profile-link {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding-block: 0.65rem;
+            color: #0a6375;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            transition: transform 0.25s ease, color 0.25s ease;
+            white-space: nowrap;
+        }
+
+        .team-profile-link::after {
+            position: absolute;
+            right: 0;
+            bottom: 0.35rem;
+            left: 0;
+            height: 1px;
+            background: currentColor;
+            content: "";
+            transform: scaleX(0);
+            transform-origin: left center;
+            transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+        }
+
+        .team-profile-link:hover,
+        .team-profile-link:focus-visible {
+            color: #084d5b;
+            transform: translateX(3px);
+        }
+
+        .team-profile-link:hover::after,
+        .team-profile-link:focus-visible::after {
+            transform: scaleX(1);
+        }
+
+        .team-profile-link:focus-visible {
+            outline: 2px solid #0a6375;
+            outline-offset: 5px;
+        }
+
+        .team-profile-link svg {
+            width: 14px;
+            height: 14px;
+            transition: transform 0.25s ease;
+        }
+
+        .team-profile-link:hover svg,
+        .team-profile-link:focus-visible svg {
+            transform: translate(2px, -2px);
+        }
+
+        .team-profile-pending {
+            color: rgba(28, 28, 28, 0.42);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.625rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .service-scroll-frame {
+            position: relative;
+            height: min(62svh, 520px);
+            min-height: 460px;
+            overflow: hidden;
+        }
+
+        .service-track {
+            display: flex;
+            align-items: stretch;
+            gap: 0;
+            width: max-content;
+            height: 100%;
+        }
+
+        .service-stage {
+            display: flex;
+            flex: 0 0 min(calc(100vw - 6rem), 80rem);
+            flex-direction: column;
+            justify-content: center;
+            min-height: 100%;
+            padding: 1.5rem clamp(1.5rem, 8vw, 8rem) 3.5rem;
+        }
+
+        .stage-content {
+            width: min(100%, 920px);
+            margin-inline: auto;
+        }
+
+        .service-progress {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: #0a6375;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .service-progress-rail {
+            height: 1px;
+            flex: 1;
+            overflow: hidden;
+            background: rgba(28, 28, 28, 0.18);
+        }
+
+        .service-progress-fill {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: #0a6375;
+            transform: scaleX(0);
+            transform-origin: left center;
+        }
+
+        @media (max-width: 767px) {
+            .service-scroll-frame {
+                height: auto;
+                min-height: 0;
+                margin-right: -1.5rem;
+                overflow-x: auto;
+                overscroll-behavior-x: contain;
+                scroll-snap-type: x mandatory;
+                scrollbar-width: thin;
+                scrollbar-color: rgba(10, 99, 117, 0.6) transparent;
+            }
+
+            .service-track {
+                height: auto;
+                padding-right: 1.5rem;
+            }
+
+            .service-stage {
+                flex-basis: 78vw;
+                min-height: 300px;
+                padding: 1.5rem 0 3rem;
+                scroll-snap-align: start;
+            }
+
+            .service-progress {
+                display: none;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .service-scroll-frame {
+                min-height: 0;
+                margin-right: 0;
+                overflow: visible;
+            }
+
+            .service-track {
+                width: 100%;
+                flex-direction: column;
+                gap: 1rem;
+                padding-right: 0;
+                transform: none !important;
+            }
+
+            .service-stage {
+                flex-basis: auto;
+                min-height: 0;
+                padding-bottom: 2rem;
+            }
+
+            .service-progress {
+                display: none;
+            }
+        }
+
+        body.is-loading {
+            overflow: hidden;
+        }
+
+        .site-loader {
+            position: fixed;
+            inset: 0;
+            z-index: 20000;
+            background: #061214;
+            color: #F7F5F0;
+        }
+
+        .loader-backdrop {
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(10, 99, 117, 0.45) 0%, transparent 70%),
+                linear-gradient(rgba(101, 196, 194, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(101, 196, 194, 0.05) 1px, transparent 1px);
+            background-size: 100% 100%, 48px 48px, 48px 48px;
+        }
+
+        .loader-dial-spin {
+            animation: rotateClockwise 26s linear infinite;
+        }
+
+        .loader-dial-spin-reverse {
+            animation: rotateCounterClockwise 18s linear infinite;
+        }
+
+        .site-loader.is-leaving {
+            pointer-events: none;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .site-loader {
+                display: none !important;
+            }
+        }
+
+        /* Hero Awwwards 3D & Cybernetic Telemetry Styles */
+        .hero-cyber-card {
+            background-color: #081619;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(10, 99, 117, 0.35) 0%, transparent 70%),
+                linear-gradient(rgba(101, 196, 194, 0.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(101, 196, 194, 0.06) 1px, transparent 1px);
+            background-size: 100% 100%, 40px 40px, 40px 40px;
+            box-shadow: 0 25px 60px -15px rgba(10, 99, 117, 0.35), 0 0 0 1px rgba(101, 196, 194, 0.25);
+        }
+
+        .hero-laser-scanner {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, rgba(101, 196, 194, 0.8), #65c4c2, rgba(101, 196, 194, 0.8), transparent);
+            box-shadow: 0 0 18px 3px rgba(101, 196, 194, 0.9), 0 0 35px 6px rgba(10, 99, 117, 0.6);
+            animation: laserScan 4.5s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: 15;
+        }
+
+        @keyframes laserScan {
+            0% { top: 3%; opacity: 0.2; }
+            30% { opacity: 0.95; }
+            70% { opacity: 0.95; }
+            100% { top: 97%; opacity: 0.2; }
+        }
+
+        .rotate-slow {
+            animation: rotateClockwise 36s linear infinite;
+        }
+
+        .rotate-slow-reverse {
+            animation: rotateCounterClockwise 28s linear infinite;
+        }
+
+        @keyframes rotateClockwise {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        @keyframes rotateCounterClockwise {
+            from { transform: translate(-50%, -50%) rotate(360deg); }
+            to { transform: translate(-50%, -50%) rotate(0deg); }
+        }
+
+        .pulse-aura {
+            animation: pulseAuraAnim 3.2s ease-in-out infinite;
+        }
+
+        @keyframes pulseAuraAnim {
+            0%, 100% {
+                box-shadow: 0 0 25px rgba(10, 99, 117, 0.4), inset 0 0 20px rgba(101, 196, 194, 0.2);
+                border-color: rgba(101, 196, 194, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 55px rgba(101, 196, 194, 0.8), inset 0 0 30px rgba(10, 99, 117, 0.5);
+                border-color: rgba(101, 196, 194, 0.9);
+            }
+        }
+
+        .soundbar {
+            animation: soundbarAnim 1.4s ease-in-out infinite;
+        }
+
+        @keyframes soundbarAnim {
+            0%, 100% { height: 4px; }
+            50% { height: 16px; }
+        }
+
+        .marquee-container {
+            display: flex;
+            overflow: hidden;
+            user-select: none;
+            mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+        }
+
+        .marquee-track {
+            display: flex;
+            flex-shrink: 0;
+            white-space: nowrap;
+            animation: marqueeSlide 35s linear infinite;
+        }
+
+        .marquee-container:hover .marquee-track {
+            animation-play-state: paused;
+        }
+
+        @keyframes marqueeSlide {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .hero-tilt-card {
+            transform: none !important;
+        }
+
+        .perspective-1000 {
+            perspective: 1200px;
+        }
+
+        @keyframes subtleFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        .animate-subtle-float {
+            animation: subtleFloat 2.6s ease-in-out infinite;
+        }
+
+        ::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="font-sans selection:bg-primary selection:text-base">
+
+    <div class="site-loader fixed inset-0 z-[20000] flex items-center justify-center overflow-hidden" id="site-loader" role="status" aria-live="polite">
+        <!-- Split Shutter Curtains for Cinematic Architectural Exit -->
+        <div id="loader-curtain-top" class="absolute top-0 left-0 right-0 h-1/2 bg-[#061214] origin-top z-0 border-b border-[#65c4c2]/15"></div>
+        <div id="loader-curtain-bottom" class="absolute bottom-0 left-0 right-0 h-1/2 bg-[#061214] origin-bottom z-0 border-t border-[#65c4c2]/15"></div>
+
+        <!-- Ambient Coordinate Grid -->
+        <div class="loader-backdrop absolute inset-0 z-0 pointer-events-none"></div>
+        <div id="loader-3d-container" class="absolute inset-0 z-[1] opacity-40 pointer-events-none" aria-hidden="true"></div>
+
+        <!-- Technical Corner Telemetry Badges -->
+        <div class="absolute top-6 left-6 z-10 flex items-center gap-2 font-mono text-[10px] tracking-widest text-[#65c4c2]/80 uppercase">
+            <span class="inline-block w-2 h-2 bg-[#65c4c2] rounded-full animate-ping"></span>
+            <span>QT-CORE // V2.6</span>
+        </div>
+        <div class="absolute top-6 right-6 z-10 font-mono text-[10px] tracking-widest text-[#F7F5F0]/50 uppercase hidden sm:block">
+            GESTIÓN DE ÓRDENES // MECANIZADO
+        </div>
+        <div class="absolute bottom-6 left-6 z-10 font-mono text-[10px] tracking-widest text-[#F7F5F0]/50 uppercase hidden sm:block">
+            ÓRDENES DE TRABAJO // ACTIVAS
+        </div>
+        <div class="absolute bottom-6 right-6 z-10 font-mono text-[10px] tracking-widest text-[#65c4c2]/80 uppercase">
+            ESTADO: CALIBRACIÓN ACTIVA
+        </div>
+
+        <!-- Center Content Shell -->
+        <div id="loader-shell" class="relative z-10 flex flex-col items-center max-w-md w-full px-6 text-center">
+            <!-- Hologram Disc with Project Icon -->
+            <div class="relative flex items-center justify-center mb-6">
+                <!-- Outer SVG Dial -->
+                <svg class="loader-dial-spin absolute w-36 h-36 sm:w-44 sm:h-44 text-[#65c4c2]/30 pointer-events-none" viewBox="0 0 160 160" fill="none">
+                    <circle cx="80" cy="80" r="76" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 8" opacity="0.7"/>
+                    <circle cx="80" cy="80" r="66" stroke="currentColor" stroke-width="1" stroke-dasharray="24 12 6 12"/>
+                    <path d="M80 0 V10 M80 150 V160 M0 80 H10 M150 80 H160" stroke="currentColor" stroke-width="1.5"/>
+                </svg>
+                <!-- Counter Rotating Inner Ring -->
+                <svg class="loader-dial-spin-reverse absolute w-28 h-28 sm:w-34 sm:h-34 text-[#0a6375]/70 pointer-events-none" viewBox="0 0 160 160" fill="none">
+                    <circle cx="80" cy="80" r="54" stroke="currentColor" stroke-width="1.5" stroke-dasharray="8 8"/>
+                </svg>
+                <!-- Glowing Logo Medallion -->
+                <div class="pulse-aura relative flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full border border-[#65c4c2]/60 bg-[#081619]/90 backdrop-blur-md shadow-[0_0_35px_rgba(10,99,117,0.7)]">
+                    <img src="imagenes/qualitytrack-icon.png" alt="QualityTrack" class="h-10 w-10 sm:h-12 sm:w-12 object-contain filter drop-shadow-[0_0_12px_rgba(101,196,194,0.85)]">
+                </div>
+            </div>
+
+            <!-- Brand Wordmark -->
+            <h2 class="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#F7F5F0]">
+                Quality<span class="text-[#65c4c2]">Track</span>
+            </h2>
+            <p class="font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-[#65c4c2]/85 mt-1">
+                Producción y calidad en un solo flujo
+            </p>
+
+            <!-- Big Numerical Counter -->
+            <div class="my-6 flex items-baseline justify-center">
+                <span id="loader-count" class="font-display text-6xl sm:text-7xl md:text-8xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-[#F7F5F0] via-[#65c4c2] to-[#0a6375] tabular-nums">00</span>
+                <span class="font-display text-2xl sm:text-3xl font-bold text-[#65c4c2] ml-1.5">%</span>
+            </div>
+
+            <!-- Dynamic Protocol Checklist -->
+            <div class="w-full mb-4 flex flex-col gap-2 text-left bg-[#081619]/80 border border-[#65c4c2]/25 rounded-xl p-3.5 backdrop-blur-md shadow-lg">
+                <div id="loader-step-1" class="flex items-center justify-between text-[11px] font-mono text-[#F7F5F0]/80 transition-colors duration-200">
+                    <span>01. Solicitud y cotización</span>
+                    <span class="loader-badge text-[#65c4c2] font-semibold">CARGANDO...</span>
+                </div>
+                <div id="loader-step-2" class="flex items-center justify-between text-[11px] font-mono text-[#F7F5F0]/40 transition-colors duration-200">
+                    <span>02. Seguimiento de producción</span>
+                    <span class="loader-badge text-[#F7F5F0]/40">PENDIENTE</span>
+                </div>
+                <div id="loader-step-3" class="flex items-center justify-between text-[11px] font-mono text-[#F7F5F0]/40 transition-colors duration-200">
+                    <span>03. Control de calidad</span>
+                    <span class="loader-badge text-[#F7F5F0]/40">PENDIENTE</span>
+                </div>
+            </div>
+
+            <!-- Progress Rail with Glowing Head -->
+            <div class="w-full h-1.5 rounded-full bg-[#F7F5F0]/15 overflow-hidden p-0.5 border border-[#65c4c2]/20">
+                <div id="loader-progress-fill" class="h-full rounded-full bg-gradient-to-r from-primary to-[#65c4c2] origin-left transition-transform duration-100 ease-out shadow-[0_0_12px_#65c4c2]" style="transform: scaleX(0);"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const siteLoader = document.getElementById('site-loader');
+            const loaderFill = document.getElementById('loader-progress-fill');
+            const loaderCount = document.getElementById('loader-count');
+            const loaderStep1 = document.getElementById('loader-step-1');
+            const loaderStep2 = document.getElementById('loader-step-2');
+            const loaderStep3 = document.getElementById('loader-step-3');
+
+            let progress = 0;
+            let finished = false;
+
+            function updateStep(el, text, colorClass) {
+                if (!el) return;
+                const badge = el.querySelector('.loader-badge');
+                if (badge) {
+                    badge.textContent = text;
+                    badge.className = 'loader-badge ' + colorClass + ' font-semibold';
+                }
+                el.classList.remove('text-[#F7F5F0]/40');
+                el.classList.add('text-[#F7F5F0]');
+            }
+
+            const timer = setInterval(() => {
+                progress = Math.min(progress + Math.floor(Math.random() * 5) + 6, 98);
+                if (loaderCount) loaderCount.textContent = String(progress).padStart(2, '0');
+                if (loaderFill) loaderFill.style.transform = 'scaleX(' + (progress / 100) + ')';
+
+                if (progress >= 30 && progress < 65) {
+                    updateStep(loaderStep1, '✓ VERIFICADO', 'text-emerald-400');
+                    const b2 = loaderStep2 ? loaderStep2.querySelector('.loader-badge') : null;
+                    if (b2) { b2.textContent = 'CARGANDO...'; b2.className = 'loader-badge text-[#65c4c2] font-semibold'; }
+                } else if (progress >= 65) {
+                    updateStep(loaderStep1, '✓ VERIFICADO', 'text-emerald-400');
+                    updateStep(loaderStep2, '✓ SINCRONIZADO', 'text-emerald-400');
+                    const b3 = loaderStep3 ? loaderStep3.querySelector('.loader-badge') : null;
+                    if (b3) { b3.textContent = 'CARGANDO...'; b3.className = 'loader-badge text-[#65c4c2] font-semibold'; }
+                }
+            }, 20);
+
+            function dismiss() {
+                if (finished) return;
+                finished = true;
+                clearInterval(timer);
+
+                if (loaderCount) loaderCount.textContent = '100';
+                if (loaderFill) loaderFill.style.transform = 'scaleX(1)';
+                updateStep(loaderStep1, '✓ VERIFICADO', 'text-emerald-400');
+                updateStep(loaderStep2, '✓ SINCRONIZADO', 'text-emerald-400');
+                updateStep(loaderStep3, '✓ LISTO', 'text-emerald-400');
+
+                setTimeout(() => {
+                    if (siteLoader) {
+                        siteLoader.style.pointerEvents = 'none';
+                        siteLoader.classList.add('is-leaving');
+                        siteLoader.style.transition = 'transform 0.65s cubic-bezier(0.77, 0, 0.175, 1), opacity 0.4s ease 0.25s';
+                        siteLoader.style.transform = 'translateY(-100%)';
+                        siteLoader.style.opacity = '0';
+                    }
+
+                    if (window.moveHeroCoreToCard) {
+                        window.moveHeroCoreToCard();
+                    }
+
+                    if (window.playHeroIntro) {
+                        window.playHeroIntro();
+                    } else {
+                        window._heroReadyToPlay = true;
+                    }
+
+                    setTimeout(() => {
+                        if (siteLoader && siteLoader.parentNode) {
+                            siteLoader.style.display = 'none';
+                            siteLoader.remove();
+                        }
+                        if (window.ScrollTrigger) window.ScrollTrigger.refresh();
+                    }, 700);
+                }, 160);
+            }
+
+            window.addEventListener('load', () => setTimeout(dismiss, 200));
+            setTimeout(dismiss, 750);
+        })();
+    </script>
+
+    <div class="cursor-dot"></div>
+
+    <div class="hover-reveal-container">
+        <img src="" alt="Team Member" class="hover-reveal-img">
+    </div>
+
+    <!-- Header con el logo específico -->
+    <header class="fixed top-0 w-full z-50 px-6 py-6 md:px-12 flex justify-between items-center mix-blend-multiply">
+        <a href="#" class="hover-target">
+            <img src="imagenes/qualitytrack-icon.png" alt="Logo de QualityTrack" class="h-10 md:h-12 object-contain">
+        </a>
+        <nav class="pointer-events-auto">
+            <ul class="flex gap-2.5 sm:gap-6 md:gap-8">
+                <li><a href="#servicios" class="hover-target text-[10px] sm:text-xs md:text-sm font-sans font-medium uppercase tracking-widest text-text hover:text-primary transition-colors">Servicios</a></li>
+                <li><a href="#modulos" class="hover-target text-[10px] sm:text-xs md:text-sm font-sans font-medium uppercase tracking-widest text-text hover:text-primary transition-colors">Módulos</a></li>
+                <li><a href="#impacto" class="hover-target text-[10px] sm:text-xs md:text-sm font-sans font-medium uppercase tracking-widest text-text hover:text-primary transition-colors">Impacto</a></li>
+                <li><a href="#equipo" class="hover-target text-[10px] sm:text-xs md:text-sm font-sans font-medium uppercase tracking-widest text-text hover:text-primary transition-colors">Equipo</a></li>
+                <li><a href="#faq" class="hover-target text-[10px] sm:text-xs md:text-sm font-sans font-medium uppercase tracking-widest text-text hover:text-primary transition-colors">FAQ</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="relative min-h-[96svh] px-6 pb-12 pt-32 md:px-12 md:pb-16 md:pt-36 overflow-hidden" id="hero-trigger">
+            <!-- Subtle background ambient grid and glow -->
+            <div class="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
+                <div class="absolute -top-40 right-0 h-[600px] w-[600px] rounded-full bg-primary/10 blur-[130px]"></div>
+                <div class="absolute bottom-0 left-[-10%] h-[400px] w-[500px] rounded-full bg-[#65c4c2]/10 blur-[120px]"></div>
+            </div>
+
+            <div class="mx-auto grid min-h-[70vh] max-w-7xl items-center gap-12 lg:grid-cols-[1fr_1fr] lg:gap-16">
+                <!-- Left Column: Typography & Dynamic Actions -->
+                <div class="hero-copy relative z-10 max-w-2xl">
+                    <div class="hero-eyebrow mb-6 inline-flex items-center gap-3 rounded-full border border-primary/25 bg-surface/80 px-4 py-1.5 backdrop-blur-sm shadow-sm">
+                        <span class="relative flex h-2 w-2">
+                            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
+                            <span class="relative inline-flex h-2 w-2 rounded-full bg-primary"></span>
+                        </span>
+                        <span class="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">Gestión para pymes industriales</span>
+                        <span class="text-text/30">•</span>
+                        <span class="font-sans text-[11px] font-medium tracking-wider text-text/75">Órdenes de mecanizado</span>
+                    </div>
+
+                    <h1 class="hero-title font-display text-4xl sm:text-6xl lg:text-[4.4rem] xl:text-[5rem] font-bold leading-[1.03] text-text tracking-tight">
+                        <span class="hero-title-mask block overflow-hidden"><span class="hero-title-line block">Del pedido al despacho.</span></span>
+                        <span class="hero-title-mask block overflow-hidden pb-2"><span class="hero-title-line block text-primary italic font-semibold">Toda la orden, visible.</span></span>
+                    </h1>
+
+                    <p class="hero-description mt-7 max-w-xl font-sans text-base leading-relaxed text-text/75 sm:text-lg">
+                        Centraliza solicitudes, planos, cotizaciones y fases de producción. Sigue cada trabajo hasta el control de calidad y el despacho, con su historial en un solo lugar.
+                    </p>
+
+                    <div class="hero-actions mt-9 flex flex-wrap items-center gap-4 sm:gap-6">
+                        <a href="#servicios" class="group relative inline-flex items-center gap-3.5 rounded-full bg-[#0a6375] px-7 py-3.5 font-sans text-xs sm:text-sm font-bold uppercase tracking-wider text-[#F7F5F0] shadow-lg shadow-[#0a6375]/30 transition-all duration-300 hover:bg-[#084d5b] hover:shadow-xl hover:shadow-[#0a6375]/45 hover:-translate-y-0.5 active:translate-y-0 hover-target cursor-pointer">
+                            <span class="text-[#F7F5F0] font-bold">Descubre qué hacemos</span>
+                            <span class="flex h-7 w-7 items-center justify-center rounded-full bg-white/25 text-[#F7F5F0] font-bold transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">→</span>
+                        </a>
+                        <a href="/login" target="_top" class="group inline-flex items-center gap-2.5 rounded-full border-2 border-text/30 bg-surface/50 px-6 py-3.5 font-sans text-xs sm:text-sm font-bold uppercase tracking-wider text-text transition-all duration-300 hover:border-primary hover:text-primary hover:bg-surface hover:-translate-y-0.5 active:translate-y-0 hover-target cursor-pointer">
+                            <span>Explorar el proyecto</span>
+                            <svg class="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                        </a>
+                    </div>
+
+                    <!-- Live Telemetry KPI Indicators -->
+                    <div class="hero-stats-row mt-12 grid grid-cols-3 gap-4 border-t border-text/10 pt-6">
+                        <div>
+                            <p class="font-display text-2xl sm:text-3xl font-bold text-text">5</p>
+                            <p class="mt-0.5 font-sans text-[10px] sm:text-[11px] font-medium uppercase tracking-wider text-text/60">Roles conectados</p>
+                        </div>
+                        <div>
+                            <p class="font-display text-2xl sm:text-3xl font-bold text-text">A medida</p>
+                            <p class="mt-0.5 font-sans text-[10px] sm:text-[11px] font-medium uppercase tracking-wider text-text/60">Fases por planta</p>
+                        </div>
+                        <div>
+                            <p class="font-display text-2xl sm:text-3xl font-bold text-text">1</p>
+                            <p class="mt-0.5 font-sans text-[10px] sm:text-[11px] font-medium uppercase tracking-wider text-text/60">Historial por orden</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Interactive 3D Cybernetic Arena & Telemetry Core -->
+                <div class="perspective-1000 relative">
+                    <div id="hero-tilt-card" class="hero-cyber-card hero-tilt-card relative isolate aspect-[4/3] sm:aspect-[1.12/1] min-h-[420px] lg:min-h-[490px] w-full overflow-hidden rounded-2xl border border-[#65c4c2]/30 shadow-2xl">
+                        
+                        <!-- Sweeping Cybernetic Laser Scanner Beam -->
+                        <div class="hero-laser-scanner" aria-hidden="true"></div>
+
+                        <!-- WebGL 3D Canvas Container -->
+                        <div id="hero-3d-container" class="absolute inset-0 h-full w-full"></div>
+
+                        <!-- Central Logo Glass Medallion & Rotating Telemetry Dials -->
+                        <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10 flex flex-col items-center justify-center">
+                            <!-- Outer Rotating Reticle Dial -->
+                            <svg class="rotate-slow absolute w-52 h-52 sm:w-64 sm:h-64 text-[#65c4c2]/30" viewBox="0 0 200 200" fill="none">
+                                <circle cx="100" cy="100" r="92" stroke="currentColor" stroke-width="1" stroke-dasharray="3 6" opacity="0.6"/>
+                                <circle cx="100" cy="100" r="82" stroke="currentColor" stroke-width="1.5" stroke-dasharray="24 12 6 12"/>
+                                <path d="M100 0 V12 M100 188 V200 M0 100 H12 M188 100 H200" stroke="currentColor" stroke-width="1.5"/>
+                            </svg>
+
+                            <!-- Counter-Rotating Inner Precision Ring -->
+                            <svg class="rotate-slow-reverse absolute w-40 h-40 sm:w-48 sm:h-48 text-[#0a6375]/50" viewBox="0 0 200 200" fill="none">
+                                <circle cx="100" cy="100" r="72" stroke="currentColor" stroke-width="1" stroke-dasharray="8 8"/>
+                                <circle cx="100" cy="100" r="62" stroke="currentColor" stroke-width="1" stroke-dasharray="4 16"/>
+                            </svg>
+
+                            <!-- Glowing Central Glass Disc Preserving the Project Icon -->
+                            <div class="pulse-aura relative flex h-24 w-24 sm:h-28 sm:w-28 items-center justify-center rounded-full border border-[#65c4c2]/60 bg-[#081619]/80 backdrop-blur-md">
+                                <img src="imagenes/qualitytrack-icon.png" alt="Logo de QualityTrack" class="h-12 w-12 sm:h-14 sm:w-14 object-contain filter drop-shadow-[0_0_14px_rgba(101,196,194,0.75)]">
+                            </div>
+
+                            <span class="mt-2.5 rounded-full border border-[#65c4c2]/40 bg-[#081619]/90 px-2.5 py-0.5 font-sans text-[9px] font-semibold tracking-widest text-[#65c4c2] uppercase shadow-sm">
+                                NÚCLEO QUALITYTRACK
+                            </span>
+                        </div>
+
+                        <!-- Top-Left Floating Badge: Real-time Audit Sensor Status -->
+                        <div class="absolute left-4 top-4 z-20 flex items-center gap-2.5 rounded-lg border border-[#F7F5F0]/15 bg-[#081619]/85 px-3 py-2 backdrop-blur-md shadow-lg sm:left-6 sm:top-6 sm:px-3.5 sm:py-2.5">
+                            <span class="relative flex h-2 w-2">
+                                <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                                <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                            </span>
+                            <div>
+                                <p class="font-sans text-[10px] font-semibold uppercase tracking-wider text-[#F7F5F0]">Orden en producción</p>
+                                <p class="font-sans text-[9px] font-medium tracking-wide text-[#65c4c2]/90">OT #QT-2048 // Fase: mecanizado</p>
+                            </div>
+                        </div>
+
+                        <!-- Top-Right Floating Badge: Dynamic Sensor Frequency Bars -->
+                        <div class="absolute right-4 top-4 z-20 flex items-center gap-2.5 rounded-lg border border-[#F7F5F0]/15 bg-[#081619]/85 px-3 py-2 backdrop-blur-md shadow-lg sm:right-6 sm:top-6 sm:px-3 sm:py-2.5">
+                            <div class="flex items-end gap-1 h-3.5 text-[#65c4c2]" aria-hidden="true">
+                                <span class="soundbar w-0.5 bg-[#65c4c2] rounded-full" style="animation-delay: 0s;"></span>
+                                <span class="soundbar w-0.5 bg-[#65c4c2] rounded-full" style="animation-delay: 0.25s;"></span>
+                                <span class="soundbar w-0.5 bg-[#65c4c2] rounded-full" style="animation-delay: 0.45s;"></span>
+                                <span class="soundbar w-0.5 bg-[#65c4c2] rounded-full" style="animation-delay: 0.15s;"></span>
+                                <span class="soundbar w-0.5 bg-[#65c4c2] rounded-full" style="animation-delay: 0.35s;"></span>
+                            </div>
+                            <span class="font-sans text-[10px] font-semibold tracking-wider text-[#F7F5F0]/90">FASES CONFIGURABLES</span>
+                        </div>
+
+                        <!-- Bottom Interactive Quality Cycle Controller -->
+                        <div class="hero-flow-panel absolute bottom-4 left-4 right-4 z-20 rounded-xl border border-[#F7F5F0]/20 bg-[#081619]/90 p-3.5 backdrop-blur-md sm:bottom-6 sm:left-6 sm:right-6 sm:p-4">
+                            <div class="mb-2 flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-[#65c4c2]"></span>
+                                    <p class="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-[#F7F5F0]/85 sm:text-xs">Ciclo de calidad interactivo</p>
+                                </div>
+                                <span id="hero-cycle-step-display" class="font-sans text-[10px] font-bold tabular-nums text-[#65c4c2] sm:text-xs">01 / 03</span>
+                            </div>
+
+                            <p id="hero-cycle-caption" class="mb-3 font-sans text-[11px] sm:text-xs text-[#F7F5F0]/80 transition-all duration-300">
+                                <strong class="text-[#65c4c2]">01 Solicitar:</strong> Registra el pedido del cliente y reúne descripción, cantidad, planos y documentos.
+                            </p>
+
+                            <div class="hero-flow-line mb-3 h-1 overflow-hidden rounded-full bg-[#F7F5F0]/15">
+                                <span id="hero-cycle-progress-bar" class="block h-full w-full origin-left bg-gradient-to-r from-primary to-[#65c4c2] transition-transform duration-500 ease-out" style="transform: scaleX(0.33);"></span>
+                            </div>
+
+                            <div class="grid grid-cols-3 gap-2">
+                                <button type="button" data-step="0" class="hero-step-btn active group flex items-center justify-center gap-1.5 rounded-lg border border-[#65c4c2]/50 bg-primary px-2.5 py-1.5 font-sans text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[#F7F5F0] transition-all duration-200 hover-target">
+                                    <span class="text-[#65c4c2]">01</span> Solicitar
+                                </button>
+                                <button type="button" data-step="1" class="hero-step-btn group flex items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 font-sans text-[10px] sm:text-xs font-medium uppercase tracking-wider text-[#F7F5F0]/70 transition-all duration-200 hover:bg-white/15 hover:text-white hover-target">
+                                    <span class="text-[#65c4c2]/60">02</span> Producir
+                                </button>
+                                <button type="button" data-step="2" class="hero-step-btn group flex items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 font-sans text-[10px] sm:text-xs font-medium uppercase tracking-wider text-[#F7F5F0]/70 transition-all duration-200 hover:bg-white/15 hover:text-white hover-target">
+                                    <span class="text-[#65c4c2]/60">03</span> Inspeccionar
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Subtle cyber grid corner mark -->
+                        <div class="absolute -bottom-1 right-0 h-1 w-1/3 bg-gradient-to-r from-primary to-[#65c4c2]"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Full-width Awwwards Marquee Ticker -->
+            <div class="hero-marquee-bar mt-14 sm:mt-16 w-full overflow-hidden border-y border-text/10 bg-surface/70 py-3 backdrop-blur-sm">
+                <div class="marquee-container">
+                    <div class="marquee-track flex gap-8 font-sans text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-text/80">
+                        <span>✦ SOLICITUDES Y PLANOS EN UNA ORDEN</span>
+                        <span>✦ COTIZACIÓN POR FASES</span>
+                        <span>✦ COLA DE TAREAS POR OPERARIO</span>
+                        <span>✦ CONTROL DE CALIDAD POR ORDEN</span>
+                        <span>✦ RETRABAJO SOLO EN LAS FASES NECESARIAS</span>
+                        <span>✦ CARGA DE TRABAJO VISIBLE</span>
+                        <span>✦ HISTORIAL HASTA EL DESPACHO</span>
+                        <span>✦ MENOS PAPELES, MÁS TRAZABILIDAD</span>
+                        <span>✦ SOLICITUDES Y PLANOS EN UNA ORDEN</span>
+                        <span>✦ COTIZACIÓN POR FASES</span>
+                        <span>✦ COLA DE TAREAS POR OPERARIO</span>
+                        <span>✦ CONTROL DE CALIDAD POR ORDEN</span>
+                        <span>✦ RETRABAJO SOLO EN LAS FASES NECESARIAS</span>
+                        <span>✦ CARGA DE TRABAJO VISIBLE</span>
+                        <span>✦ HISTORIAL HASTA EL DESPACHO</span>
+                        <span>✦ MENOS PAPELES, MÁS TRAZABILIDAD</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Statement & Workflow Highlights -->
+        <section class="py-24 sm:py-32 px-6 md:px-12 max-w-6xl mx-auto text-center relative">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary/20 bg-surface/80 font-sans text-xs font-semibold uppercase tracking-widest text-primary mb-6 shadow-sm">
+                <span>[ Un flujo conectado para cada orden ]</span>
+            </div>
+            <p class="font-display text-3xl sm:text-5xl lg:text-6xl font-normal leading-snug sm:leading-tight text-text/90 desc-text max-w-4xl mx-auto">
+                De la solicitud del cliente al despacho: <span class="text-primary italic font-semibold">cada etapa y cada responsable</span> quedan conectados al historial de la orden.
+            </p>
+            <!-- Standards Chips -->
+            <div class="mt-12 flex flex-wrap items-center justify-center gap-3 sm:gap-4 font-sans text-xs sm:text-sm">
+                <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-text/10 bg-surface/70 text-text/80 shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    Solicitud con planos y documentos
+                </span>
+                <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-text/10 bg-surface/70 text-text/80 shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    Catálogo de fases configurable
+                </span>
+                <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-text/10 bg-surface/70 text-text/80 shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    Tareas asignadas por operario
+                </span>
+                <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-text/10 bg-surface/70 text-text/80 shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    Checklist de control final
+                </span>
+                <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-text/10 bg-surface/70 text-text/80 shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    Historial hasta el despacho
+                </span>
+            </div>
+        </section>
+
+        <!-- Módulos Operativos Bento Grid -->
+        <section class="py-24 sm:py-32 px-6 md:px-12 bg-base border-t border-text/10" id="modulos">
+            <div class="max-w-7xl mx-auto">
+                <div class="mb-16 grid gap-6 md:grid-cols-[1.2fr_0.8fr] md:items-end">
+                    <div>
+                        <p class="font-sans text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-primary mb-3">[ El flujo de trabajo ]</p>
+                        <h2 class="font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-text">
+                            Una orden conectada en cada etapa.
+                        </h2>
+                    </div>
+                    <p class="font-sans text-base sm:text-lg text-text/70 leading-relaxed md:justify-self-end max-w-lg">
+                        Solicitudes, fases, tareas, controles y despacho comparten la misma información durante todo el recorrido del trabajo.
+                    </p>
+                </div>
+
+                <!-- Bento Grid Layout -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Bento Card 1: Configuración del flujo -->
+                    <div class="reveal-card lg:col-span-2 rounded-2xl border border-text/15 bg-white p-8 sm:p-10 flex flex-col justify-between transition-all duration-300 hover:border-primary/50 hover:shadow-xl relative overflow-hidden group shadow-sm">
+                        <div class="relative z-10">
+                            <div class="flex items-center justify-between mb-6">
+                                <span class="font-display text-xs font-bold tracking-widest text-primary uppercase">[ 01 // Configuración ]</span>
+                                <span class="px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase bg-primary/10 text-primary border border-primary/25">Fases a medida</span>
+                            </div>
+                            <h3 class="font-display text-2xl sm:text-3xl font-bold text-text mb-3">Configura el flujo de tu planta</h3>
+                            <p class="font-sans text-base sm:text-lg text-text leading-relaxed max-w-2xl font-normal">
+                                Define un catálogo global de fases y elige cuáles necesita cada pedido. Ordena las tareas y asigna qué operarios están habilitados para ejecutarlas, sin cambiar código.
+                            </p>
+                        </div>
+
+                        <div class="mt-8 grid grid-cols-2 gap-3 rounded-xl border border-text/15 bg-surface/50 p-5 font-sans text-sm sm:grid-cols-4">
+                            <div class="border-l-2 border-primary pl-3"><span class="block text-[10px] font-semibold uppercase text-text/50">01</span>Solicitud</div>
+                            <div class="border-l-2 border-primary pl-3"><span class="block text-[10px] font-semibold uppercase text-text/50">02</span>Cotización</div>
+                            <div class="border-l-2 border-primary pl-3"><span class="block text-[10px] font-semibold uppercase text-text/50">03</span>Producción</div>
+                            <div class="border-l-2 border-primary pl-3"><span class="block text-[10px] font-semibold uppercase text-text/50">04</span>Calidad y despacho</div>
+                        </div>
+                    </div>
+
+                    <!-- Bento Card 2: Ejecución de órdenes -->
+                    <div class="reveal-card rounded-2xl border border-text/15 bg-white p-8 sm:p-10 flex flex-col justify-between transition-all duration-300 hover:border-primary/50 hover:shadow-xl shadow-sm">
+                        <div>
+                            <div class="flex items-center justify-between mb-6">
+                                <span class="font-display text-xs font-bold tracking-widest text-primary uppercase">[ 02 // Producción ]</span>
+                                <span class="px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase bg-primary/10 text-primary border border-primary/25">Móvil y tablet</span>
+                            </div>
+                            <h3 class="font-display text-2xl font-bold text-text mb-3">Cada operario sabe qué sigue</h3>
+                            <p class="font-sans text-base text-text leading-relaxed font-normal">
+                                Una vista simple reúne las tareas asignadas, sus fechas y los planos del trabajo. El operario registra cuándo empieza y termina cada fase.
+                            </p>
+                        </div>
+                        <div class="mt-6 p-4 rounded-xl border border-text/15 bg-surface/50 space-y-3 font-sans text-sm">
+                            <div class="flex items-center justify-between text-text font-medium">
+                                <span>Cola de tareas asignadas</span>
+                                <span class="bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-0.5 rounded-full text-xs font-bold">EN CURSO</span>
+                            </div>
+                            <div class="flex items-center justify-between text-text font-medium">
+                                <span>Planos y documentos del pedido</span>
+                                <span class="bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-0.5 rounded-full text-xs font-bold">DISPONIBLES</span>
+                            </div>
+                            <div class="flex items-center justify-between text-text font-medium">
+                                <span>Inicio y fin de cada fase</span>
+                                <span class="bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-0.5 rounded-full text-xs font-bold">REGISTRADOS</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bento Card 3: Control de calidad -->
+                    <div class="reveal-card rounded-2xl border border-text/15 bg-white p-8 sm:p-10 flex flex-col justify-between transition-all duration-300 hover:border-primary/50 hover:shadow-xl shadow-sm">
+                        <div>
+                            <div class="flex items-center justify-between mb-6">
+                                <span class="font-display text-xs font-bold tracking-widest text-primary uppercase">[ 03 // Control de calidad ]</span>
+                                <span class="px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase bg-primary/10 text-primary border border-primary/25">Checklist por orden</span>
+                            </div>
+                            <h3 class="font-display text-2xl font-bold text-text mb-3">Un defecto no reinicia todo el trabajo</h3>
+                            <p class="font-sans text-base text-text leading-relaxed font-normal">
+                                Calidad revisa criterios técnicos y emite un veredicto. Si detecta un defecto, producción selecciona solo las fases que deben rehacerse; las aprobadas conservan su estado.
+                            </p>
+                        </div>
+                        <div class="mt-6 flex items-center justify-between gap-1.5 text-xs font-mono font-bold text-text pt-4 border-t border-text/15">
+                            <span class="px-2.5 py-1.5 rounded-lg bg-surface border border-text/15">Inspección</span>
+                            <span class="text-text/60">→</span>
+                            <span class="px-2.5 py-1.5 rounded-lg bg-surface border border-text/15">No conforme</span>
+                            <span class="text-text/60">→</span>
+                            <span class="px-2.5 py-1.5 rounded-lg bg-primary text-white font-bold shadow-xs">Fase a rehacer</span>
+                        </div>
+                    </div>
+
+                    <!-- Bento Card 4: Seguimiento de órdenes -->
+                    <div class="reveal-card lg:col-span-2 rounded-2xl border border-text/15 bg-white p-8 sm:p-10 flex flex-col justify-between transition-all duration-300 hover:border-primary/50 hover:shadow-xl shadow-sm">
+                        <div>
+                            <div class="flex items-center justify-between mb-6">
+                                <span class="font-display text-xs font-bold tracking-widest text-primary uppercase">[ 04 // Seguimiento ]</span>
+                                <span class="px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase bg-primary/10 text-primary border border-primary/25">Vista de planta</span>
+                            </div>
+                            <h3 class="font-display text-2xl sm:text-3xl font-bold text-text mb-3">Avance e historial de cada orden</h3>
+                            <p class="font-sans text-base sm:text-lg text-text leading-relaxed max-w-2xl font-normal">
+                                Producción visualiza la carga del equipo y puede reasignar fases pendientes. Los tableros muestran cuellos de botella, conformidades y retrabajos por fase, sin medir el desempeño individual.
+                            </p>
+                        </div>
+                        <div class="mt-8 grid grid-cols-2 gap-3 p-5 rounded-xl border border-text/15 bg-surface/50 sm:grid-cols-4 sm:gap-4">
+                            <div class="min-w-0">
+                                <p class="font-display text-xl sm:text-2xl font-black leading-tight text-primary break-words">01</p>
+                                <p class="mt-1 text-[10px] font-sans font-bold uppercase leading-tight text-text sm:text-xs">Historial por orden</p>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="font-display text-xl sm:text-2xl font-black leading-tight text-text break-words">Fases</p>
+                                <p class="mt-1 text-[10px] font-sans font-bold uppercase leading-tight text-text sm:text-xs">Carga de trabajo</p>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="font-display text-xl sm:text-2xl font-black leading-tight text-text break-words">OK</p>
+                                <p class="mt-1 text-[10px] font-sans font-bold uppercase leading-tight text-text sm:text-xs">Conformidad</p>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="font-display text-xl sm:text-2xl font-black leading-tight text-primary break-words">Fase</p>
+                                <p class="mt-1 text-[10px] font-sans font-bold uppercase leading-tight text-text sm:text-xs">Retrabajo visible</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Flujo compartido por roles -->
+        <section class="py-24 sm:py-32 px-6 md:px-12 bg-[#081619] text-[#F7F5F0] relative overflow-hidden" id="impacto">
+            <!-- Subtle Grid Pattern Background -->
+            <div class="absolute inset-0 pointer-events-none opacity-20" style="background-image: linear-gradient(rgba(101,196,194,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(101,196,194,0.1) 1px, transparent 1px); background-size: 50px 50px;"></div>
+            
+            <div class="max-w-7xl mx-auto relative z-10">
+                <div class="text-center max-w-3xl mx-auto mb-16 sm:mb-20">
+                    <p class="font-sans text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-[#65c4c2] mb-3">[ Un hilo, cinco roles ]</p>
+                    <h2 class="font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[#F7F5F0]">
+                        Cada persona ve lo que necesita para avanzar.
+                    </h2>
+                    <p class="font-sans text-base sm:text-lg text-[#F7F5F0]/70 mt-4 leading-relaxed">
+                        Comercial, producción, operarios, calidad y despacho trabajan sobre la misma orden, desde la solicitud inicial hasta la entrega.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 gap-6 divide-y divide-white/10 sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-5 lg:divide-x">
+                    <div class="pt-5 text-center sm:px-4 lg:pt-0">
+                        <p class="font-display text-2xl font-bold text-[#65c4c2]">Comercial</p>
+                        <p class="mt-2 font-sans text-sm font-semibold uppercase tracking-wider text-[#F7F5F0]">Pedido y cotización</p>
+                        <p class="mt-1 font-sans text-xs text-[#F7F5F0]/60">Carga requisitos y adjunta planos</p>
+                    </div>
+                    <div class="pt-5 text-center sm:px-4 lg:pt-0">
+                        <p class="font-display text-2xl font-bold text-[#65c4c2]">Producción</p>
+                        <p class="mt-2 font-sans text-sm font-semibold uppercase tracking-wider text-[#F7F5F0]">Planifica las fases</p>
+                        <p class="mt-1 font-sans text-xs text-[#F7F5F0]/60">Organiza el flujo y la carga</p>
+                    </div>
+                    <div class="pt-5 text-center sm:px-4 lg:pt-0">
+                        <p class="font-display text-2xl font-bold text-[#65c4c2]">Operación</p>
+                        <p class="mt-2 font-sans text-sm font-semibold uppercase tracking-wider text-[#F7F5F0]">Ejecuta las tareas</p>
+                        <p class="mt-1 font-sans text-xs text-[#F7F5F0]/60">Consulta planos y registra avances</p>
+                    </div>
+                    <div class="pt-5 text-center sm:px-4 lg:pt-0">
+                        <p class="font-display text-2xl font-bold text-[#65c4c2]">Calidad</p>
+                        <p class="mt-2 font-sans text-sm font-semibold uppercase tracking-wider text-[#F7F5F0]">Inspecciona la pieza</p>
+                        <p class="mt-1 font-sans text-xs text-[#F7F5F0]/60">Registra criterios y veredicto</p>
+                    </div>
+                    <div class="pt-5 text-center sm:px-4 lg:pt-0">
+                        <p class="font-display text-2xl font-bold text-[#65c4c2]">Despacho</p>
+                        <p class="mt-2 font-sans text-sm font-semibold uppercase tracking-wider text-[#F7F5F0]">Confirma la entrega</p>
+                        <p class="mt-1 font-sans text-xs text-[#F7F5F0]/60">Cierra el historial de la orden</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-surface px-6 py-24 md:px-12 md:py-32" id="servicios">
+            <div class="mx-auto max-w-7xl">
+                <div class="service-intro mb-16 grid gap-6 md:grid-cols-[1.2fr_0.8fr] md:items-end md:gap-12">
+                    <div>
+                        <p class="service-eyebrow mb-4 font-sans text-sm font-medium uppercase tracking-widest text-primary">[ Qué hacemos ]</p>
+                        <h2 class="service-heading max-w-3xl font-display text-4xl font-bold leading-tight text-text md:text-6xl">Del pedido al despacho, sin perder el hilo.</h2>
+                    </div>
+                    <p class="service-summary max-w-xl font-sans text-base leading-relaxed text-text/70 md:justify-self-end md:text-lg">
+                        Cada etapa actualiza la misma orden: documentos, fases, responsables, controles y estado de entrega.
+                    </p>
+                </div>
+
+                <div class="service-scroll-frame" tabindex="0" role="region" aria-label="Etapas del proceso QualityTrack">
+                    <div class="service-track">
+                        <article class="service-stage relative">
+                            <span class="stage-rule absolute inset-x-0 top-0 h-px origin-left bg-text/20" aria-hidden="true"></span>
+                            <div class="stage-content">
+                                <div class="mb-8 flex items-center justify-between">
+                                    <span class="stage-index font-display text-3xl font-bold text-primary">01</span>
+                                    <svg aria-hidden="true" class="stage-icon h-8 w-8 text-primary" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5">
+                                        <path d="M7 5.5h12l6 6V27H7zM19 5.5v6h6M11 17h10M11 21h7" />
+                                    </svg>
+                                </div>
+                                <h3 class="stage-title mb-3 font-display text-3xl font-semibold text-text md:text-4xl">Solicitud y cotización</h3>
+                                <p class="stage-copy max-w-2xl font-sans text-base leading-relaxed text-text/80 md:text-lg">Reúne los datos del pedido y sus archivos. Producción define las fases necesarias, estima tiempos y prepara la cotización.</p>
+                                <ul class="stage-details mt-8 grid gap-3 border-t border-text/15 pt-5 font-sans text-sm leading-relaxed text-text/75 sm:grid-cols-3 sm:gap-5 md:mt-10">
+                                    <li>Descripción y cantidad solicitada</li>
+                                    <li>Planos y documentos adjuntos</li>
+                                    <li>Orden de trabajo tras la aprobación</li>
+                                </ul>
+                            </div>
+                        </article>
+
+                        <article class="service-stage relative">
+                            <span class="stage-rule absolute inset-x-0 top-0 h-px origin-left bg-text/20" aria-hidden="true"></span>
+                            <div class="stage-content">
+                                <div class="mb-8 flex items-center justify-between">
+                                    <span class="stage-index font-display text-3xl font-bold text-primary">02</span>
+                                    <svg aria-hidden="true" class="stage-icon h-8 w-8 text-primary" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5">
+                                        <path d="M16 4 26 8v7c0 6.4-4.3 10.7-10 13-5.7-2.3-10-6.6-10-13V8zM11 16l3.2 3.2L21 12" />
+                                    </svg>
+                                </div>
+                                <h3 class="stage-title mb-3 font-display text-3xl font-semibold text-text md:text-4xl">Producción por fases</h3>
+                                <p class="stage-copy max-w-2xl font-sans text-base leading-relaxed text-text/80 md:text-lg">Asigna cada tarea a operarios habilitados. El equipo consulta su cola de trabajo, los planos y las fechas previstas desde el móvil o una tablet.</p>
+                                <ul class="stage-details mt-8 grid gap-3 border-t border-text/15 pt-5 font-sans text-sm leading-relaxed text-text/75 sm:grid-cols-3 sm:gap-5 md:mt-10">
+                                    <li>Fases ordenadas para cada pedido</li>
+                                    <li>Inicio y fin de tarea registrados</li>
+                                    <li>Reasignación para equilibrar la carga</li>
+                                </ul>
+                            </div>
+                        </article>
+
+                        <article class="service-stage relative">
+                            <span class="stage-rule absolute inset-x-0 top-0 h-px origin-left bg-text/20" aria-hidden="true"></span>
+                            <div class="stage-content">
+                                <div class="mb-8 flex items-center justify-between">
+                                    <span class="stage-index font-display text-3xl font-bold text-primary">03</span>
+                                    <svg aria-hidden="true" class="stage-icon h-8 w-8 text-primary" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5">
+                                        <path d="M5 25V7M5 25h23M9 21l6-7 5 3 8-10M22 7h6v6" />
+                                    </svg>
+                                </div>
+                                <h3 class="stage-title mb-3 font-display text-3xl font-semibold text-text md:text-4xl">Inspección y despacho</h3>
+                                <p class="stage-copy max-w-2xl font-sans text-base leading-relaxed text-text/80 md:text-lg">Calidad completa un checklist y emite un veredicto. Si algo falla, producción devuelve solo las fases necesarias; si está conforme, la orden pasa a despacho.</p>
+                                <ul class="stage-details mt-8 grid gap-3 border-t border-text/15 pt-5 font-sans text-sm leading-relaxed text-text/75 sm:grid-cols-3 sm:gap-5 md:mt-10">
+                                    <li>Criterios técnicos por pieza</li>
+                                    <li>Retrabajo sin reiniciar todo el pedido</li>
+                                    <li>Registro de entrega y receptor</li>
+                                </ul>
+                            </div>
+                        </article>
+                    </div>
+                    <div class="service-progress" aria-hidden="true">
+                        <span class="service-progress-current">01</span>
+                        <div class="service-progress-rail">
+                            <span class="service-progress-fill"></span>
+                        </div>
+                        <span>03</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Casos de Uso por Industria -->
+        <section class="py-24 sm:py-32 px-6 md:px-12 bg-base border-t border-text/10" id="industrias">
+            <div class="max-w-7xl mx-auto">
+                <div class="mb-16 max-w-3xl">
+                    <p class="font-sans text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-primary mb-3">[ Ejemplos de fases ]</p>
+                    <h2 class="font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-text">
+                        Un flujo que se adapta a tu planta.
+                    </h2>
+                    <p class="font-sans text-base sm:text-lg text-text/70 mt-4 leading-relaxed">
+                        Configura un catálogo común de operaciones y arma cada orden con las fases que requiere el trabajo.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="reveal-card rounded-2xl border border-text/10 bg-surface/50 p-6 sm:p-8 flex flex-col justify-between hover:border-primary/40 hover:shadow-lg transition-all duration-300 group">
+                        <div>
+                            <span class="text-3xl mb-4 block">🏭</span>
+                            <h3 class="font-display text-xl font-bold text-text mb-2 group-hover:text-primary transition-colors">Corte y plegado</h3>
+                            <p class="font-sans text-sm text-text/70 leading-relaxed">
+                                Asigna las tareas a operarios habilitados y comparte los planos vinculados al pedido.
+                            </p>
+                        </div>
+                        <span class="mt-6 text-[11px] font-semibold tracking-wider uppercase text-primary border-t border-text/10 pt-4">Fase configurable</span>
+                    </div>
+
+                    <div class="reveal-card rounded-2xl border border-text/10 bg-surface/50 p-6 sm:p-8 flex flex-col justify-between hover:border-primary/40 hover:shadow-lg transition-all duration-300 group">
+                        <div>
+                            <span class="text-3xl mb-4 block">⚙️</span>
+                            <h3 class="font-display text-xl font-bold text-text mb-2 group-hover:text-primary transition-colors">Soldadura y ensamble</h3>
+                            <p class="font-sans text-sm text-text/70 leading-relaxed">
+                                Ordena las etapas por trabajo y registra inicio, término y vencimiento de cada tarea.
+                            </p>
+                        </div>
+                        <span class="mt-6 text-[11px] font-semibold tracking-wider uppercase text-primary border-t border-text/10 pt-4">Avance por etapa</span>
+                    </div>
+
+                    <div class="reveal-card rounded-2xl border border-text/10 bg-surface/50 p-6 sm:p-8 flex flex-col justify-between hover:border-primary/40 hover:shadow-lg transition-all duration-300 group">
+                        <div>
+                            <span class="text-3xl mb-4 block">🔩</span>
+                            <h3 class="font-display text-xl font-bold text-text mb-2 group-hover:text-primary transition-colors">Matricería</h3>
+                            <p class="font-sans text-sm text-text/70 leading-relaxed">
+                                Define qué fases se rehacen ante un defecto y conserva el estado de las etapas aprobadas.
+                            </p>
+                        </div>
+                        <span class="mt-6 text-[11px] font-semibold tracking-wider uppercase text-primary border-t border-text/10 pt-4">Retrabajo selectivo</span>
+                    </div>
+
+                    <div class="reveal-card rounded-2xl border border-text/10 bg-surface/50 p-6 sm:p-8 flex flex-col justify-between hover:border-primary/40 hover:shadow-lg transition-all duration-300 group">
+                        <div>
+                            <span class="text-3xl mb-4 block">🏭</span>
+                            <h3 class="font-display text-xl font-bold text-text mb-2 group-hover:text-primary transition-colors">Fabricación de válvulas</h3>
+                            <p class="font-sans text-sm text-text/70 leading-relaxed">
+                                Consulta el recorrido de cada orden, desde los requisitos iniciales hasta la persona que recibe el producto.
+                            </p>
+                        </div>
+                        <span class="mt-6 text-[11px] font-semibold tracking-wider uppercase text-primary border-t border-text/10 pt-4">Historial de la orden</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-32 px-6 md:px-12 relative z-10" id="equipo">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex flex-col mb-16">
+                    <p class="font-sans text-sm tracking-widest uppercase text-primary mb-4">[ Los Integrantes ]</p>
+                    <h2 class="font-display text-4xl md:text-6xl font-bold uppercase tracking-tight text-text">Nuestro Equipo</h2>
+                </div>
+
+                <div class="w-full border-t border-text/10" id="team-container">
+                    <!-- Dynamic Team Content Generated by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Preguntas Frecuentes FAQ -->
+        <section class="py-24 sm:py-32 px-6 md:px-12 bg-surface" id="faq">
+            <div class="max-w-4xl mx-auto">
+                <div class="text-center mb-16">
+                    <p class="font-sans text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-primary mb-3">[ Respuestas Directas ]</p>
+                    <h2 class="font-display text-4xl sm:text-5xl font-bold tracking-tight text-text">
+                        Preguntas Frecuentes
+                    </h2>
+                    <p class="font-sans text-base sm:text-lg text-text/70 mt-3">
+                        Cómo se mueve una orden de trabajo en QualityTrack.
+                    </p>
+                </div>
+
+                <!-- FAQ Accordion List -->
+                <div class="space-y-5">
+                    <div class="faq-item rounded-2xl border border-text/15 bg-white p-6 sm:p-8 transition-all duration-200 shadow-sm hover:border-primary/40">
+                        <button type="button" class="faq-toggle w-full flex items-center justify-between text-left font-display text-lg sm:text-xl font-bold text-text hover-target group">
+                            <span class="flex items-center gap-3">
+                                <span class="font-mono text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full shrink-0">01</span>
+                                <span>¿Podemos adaptar las fases a nuestra forma de producir?</span>
+                            </span>
+                            <span class="faq-icon text-primary text-2xl font-bold transition-transform duration-300 ml-4 shrink-0">−</span>
+                        </button>
+                        <div class="faq-content mt-4 pt-4 border-t border-text/10 font-sans text-base text-text leading-relaxed font-normal">
+                            Sí. Producción configura un catálogo global de fases y selecciona, ordena y asigna las etapas necesarias para cada pedido, de acuerdo con el flujo de la planta.
+                        </div>
+                    </div>
+
+                    <div class="faq-item rounded-2xl border border-text/15 bg-white p-6 sm:p-8 transition-all duration-200 shadow-sm hover:border-primary/40">
+                        <button type="button" class="faq-toggle w-full flex items-center justify-between text-left font-display text-lg sm:text-xl font-bold text-text hover-target group">
+                            <span class="flex items-center gap-3">
+                                <span class="font-mono text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full shrink-0">02</span>
+                                <span>¿Cómo pasa una solicitud a ser una orden de trabajo?</span>
+                            </span>
+                            <span class="faq-icon text-primary text-2xl font-bold transition-transform duration-300 ml-4 shrink-0">−</span>
+                        </button>
+                        <div class="faq-content mt-4 pt-4 border-t border-text/10 font-sans text-base text-text leading-relaxed font-normal">
+                            Comercial registra la descripción y cantidad solicitada, y adjunta planos y documentos. Producción define las fases, estima tiempos y precio; cuando el cliente aprueba la cotización, se genera la orden de trabajo.
+                        </div>
+                    </div>
+
+                    <div class="faq-item rounded-2xl border border-text/15 bg-white p-6 sm:p-8 transition-all duration-200 shadow-sm hover:border-primary/40">
+                        <button type="button" class="faq-toggle w-full flex items-center justify-between text-left font-display text-lg sm:text-xl font-bold text-text hover-target group">
+                            <span class="flex items-center gap-3">
+                                <span class="font-mono text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full shrink-0">03</span>
+                                <span>¿Qué ocurre si calidad encuentra un defecto?</span>
+                            </span>
+                            <span class="faq-icon text-primary text-2xl font-bold transition-transform duration-300 ml-4 shrink-0">−</span>
+                        </button>
+                        <div class="faq-content mt-4 pt-4 border-t border-text/10 font-sans text-base text-text leading-relaxed font-normal">
+                            Calidad registra el defecto en el checklist y la orden vuelve a producción. El responsable elige las fases puntuales que deben repetirse; las que ya estaban conformes mantienen su estado.
+                        </div>
+                    </div>
+
+                    <div class="faq-item rounded-2xl border border-text/15 bg-white p-6 sm:p-8 transition-all duration-200 shadow-sm hover:border-primary/40">
+                        <button type="button" class="faq-toggle w-full flex items-center justify-between text-left font-display text-lg sm:text-xl font-bold text-text hover-target group">
+                            <span class="flex items-center gap-3">
+                                <span class="font-mono text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full shrink-0">04</span>
+                                <span>¿Qué información muestran los tableros?</span>
+                            </span>
+                            <span class="faq-icon text-primary text-2xl font-bold transition-transform duration-300 ml-4 shrink-0">−</span>
+                        </button>
+                        <div class="faq-content mt-4 pt-4 border-t border-text/10 font-sans text-base text-text leading-relaxed font-normal">
+                            Permiten ver cuellos de botella de la planta, porcentaje de conformidad y retrabajos por fase. Son indicadores generales del proceso, no mediciones del desempeño individual de cada operario.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pre-Footer CTA Banner -->
+        <section class="py-20 px-6 md:px-12 bg-base border-t border-text/10">
+            <div class="max-w-5xl mx-auto rounded-3xl bg-gradient-to-br from-[#081619] to-[#0b1d20] text-[#F7F5F0] p-10 sm:p-16 text-center relative overflow-hidden shadow-2xl">
+                <div class="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-[#65c4c2]/10 blur-3xl pointer-events-none"></div>
+                <div class="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-primary/20 blur-3xl pointer-events-none"></div>
+                
+                <span class="inline-block px-3.5 py-1 rounded-full border border-[#65c4c2]/30 bg-white/5 font-sans text-xs font-semibold uppercase tracking-widest text-[#65c4c2] mb-6">
+                    Del pedido a la entrega, en un solo flujo
+                </span>
+                <h2 class="font-display text-3xl sm:text-5xl font-bold tracking-tight mb-4">
+                    Dale seguimiento a cada orden de trabajo.
+                </h2>
+                <p class="font-sans text-base sm:text-lg text-[#F7F5F0]/70 max-w-2xl mx-auto mb-8 leading-relaxed">
+                    Reúne solicitudes, planos, fases, inspecciones y despacho en el historial de cada trabajo.
+                </p>
+                <div class="flex flex-wrap items-center justify-center gap-4">
+                    <a href="#servicios" class="px-8 py-4 rounded-full bg-primary text-[#F7F5F0] font-sans text-xs sm:text-sm font-semibold uppercase tracking-wider hover:bg-[#084d5b] transition-all duration-300 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover-target">
+                        Ver el flujo de trabajo
+                    </a>
+                    <a href="/login" target="_top" class="px-8 py-4 rounded-full border border-white/20 text-[#F7F5F0] font-sans text-xs sm:text-sm font-semibold uppercase tracking-wider hover:bg-white/10 transition-all duration-300 hover-target">
+                        Conocer QualityTrack →
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <footer id="proyecto" class="py-40 px-6 md:px-12 flex flex-col items-center justify-center relative bg-surface overflow-hidden">
+            <a href="#" class="group hover-target flex flex-col items-center justify-center relative z-10">
+                <span class="font-sans text-sm tracking-widest uppercase text-primary mb-6 block font-medium text-center">Gestión de órdenes de trabajo</span>
+                <div class="flex items-center gap-6">
+                    <h2 class="font-display text-4xl md:text-7xl lg:text-[7vw] font-black uppercase tracking-tighter text-text group-hover:text-primary transition-colors duration-500 text-center">
+                        QualityTrack
+                    </h2>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 md:w-20 md:h-20 text-primary transform group-hover:translate-x-4 group-hover:-translate-y-4 transition-transform duration-500 ease-out" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                </div>
+            </a>
+        </footer>
+    </main>
+
+    <div class="fixed bottom-8 right-8 z-[100] flex flex-col items-end pointer-events-none">
+        <!-- Botón Volver Arriba con animación sutil -->
+        <button id="back-to-top-btn" 
+                class="w-12 h-12 mb-3 rounded-full bg-white border border-primary/30 text-primary shadow-lg shadow-primary/15 flex items-center justify-center transition-all duration-300 hover:bg-primary hover:text-white hover:border-primary hover:shadow-xl hover:shadow-primary/30 hover:scale-110 active:scale-95 opacity-0 translate-y-3 pointer-events-none hover-target group cursor-pointer"
+                aria-label="Volver al inicio de la página"
+                title="Volver al inicio">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 transition-transform duration-300 group-hover:-translate-y-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
+            </svg>
+        </button>
+
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js"></script>
+
+    <script>
+        const teamData = [
+            { name: "Luis Feliz", role: "Full Stack Developer", img: "imagenes/luis.jpg", linkedin: "https://www.linkedin.com/in/luis-antonio-feliz/" },
+            { name: "Felipe Arroyo", role: "Backend Developer", img: "imagenes/felipe.png", linkedin: "https://www.linkedin.com/in/feli-arroyo/" },
+            { name: "Mel Zarate", role: "Project Manager", img: "imagenes/mel.png", linkedin: "https://www.linkedin.com/in/melzarate/" },
+            { name: "Alfredo Agüero Ortiz", role: "Frontend Developer", img: "imagenes/alfredo.jpg", linkedin: "https://www.linkedin.com/in/alfredoagortiz/" },
+            { name: "Abel Fucili", role: "Backend Developer", img: "imagenes/abel.png", linkedin: "https://www.linkedin.com/in/abel-fucili-dev/" },
+            { name: "Alicia Zuñega", role: "Frontend Developer", img: "imagenes/ali-3.png", linkedin: "https://www.linkedin.com/in/alicialzunegamza/" },
+            { name: "Maria Chiribao", role: "QA Tester", img: "imagenes/maria.png", linkedin: "https://www.linkedin.com/in/maria-chiribao/" },
+            { name: "Lisandro Sánchez Morales", role: "Backend Developer", img: "imagenes/8E276BBB-7037-49FA-B1D8-D06B75F71E9B.jpg" },
+            { name: "Hazael Degante", role: "UX/UI Designer", img: "imagenes/hazael.png", linkedin: "https://www.linkedin.com/in/hazaelld/" }
+        ];
+
+        const teamContainer = document.getElementById('team-container');
+        teamData.forEach((member, index) => {
+            const idx = (index + 1).toString().padStart(2, '0');
+            const row = document.createElement('div');
+            row.className = 'team-row flex flex-col md:flex-row md:justify-between md:items-center py-6 md:py-8 w-full';
+            row.setAttribute('data-image', member.img);
+            row.setAttribute('data-name', member.name);
+            const profileAction = member.linkedin
+                ? `<a href="${member.linkedin}" target="_blank" rel="noopener noreferrer" class="team-profile-link hover-target" aria-label="Ver perfil de LinkedIn de ${member.name}">Ver perfil<svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12 12 4M5 4h7v7"/></svg></a>`
+                : '';
+            row.innerHTML = `
+                <div class="row-bg"></div>
+                <div class="flex items-baseline gap-4 md:gap-8 z-10 relative px-4 w-full md:w-auto">
+                    <span class="font-sans text-sm text-text/40 font-light hidden md:inline-block">${idx}</span>
+                    <p class="name font-display text-2xl md:text-4xl lg:text-5xl font-bold text-text m-0 tracking-tight">${member.name}</p>
+                </div>
+                <div class="flex items-center justify-between gap-4 z-10 relative px-4 mt-2 md:mt-0 w-full md:w-auto md:text-right">
+                    <span class="role font-sans text-sm md:text-base tracking-wider text-text/60 uppercase font-medium">${member.role}</span>
+                    ${profileAction}
+                </div>
+            `;
+            teamContainer.appendChild(row);
+        });
+
+        const cursor = document.querySelector('.cursor-dot');
+        const revealContainer = document.querySelector('.hover-reveal-container');
+        const revealImg = document.querySelector('.hover-reveal-img');
+        let pointerX = 0;
+        let pointerY = 0;
+
+        function hideTeamReveal(immediate = false) {
+            gsap.killTweensOf(revealContainer, "opacity,scale,rotation");
+
+            if (immediate) {
+                gsap.set(revealContainer, { opacity: 0, scale: 0.8, rotation: -5 });
+                return;
+            }
+
+            gsap.to(revealContainer, {
+                opacity: 0,
+                scale: 0.8,
+                rotation: -5,
+                duration: 0.15,
+                ease: "power2.in"
+            });
+        }
+        
+        const xToCursor = gsap.quickTo(cursor, "left", {duration: 0.15, ease: "power3"}),
+              yToCursor = gsap.quickTo(cursor, "top", {duration: 0.15, ease: "power3"});
+              
+        const xToReveal = gsap.quickTo(revealContainer, "left", {duration: 0.4, ease: "power3"}),
+              yToReveal = gsap.quickTo(revealContainer, "top", {duration: 0.4, ease: "power3"});
+
+        window.addEventListener('mousemove', (e) => {
+            pointerX = e.clientX;
+            pointerY = e.clientY;
+            if (!cursor.classList.contains('profile-active')) {
+                xToCursor(pointerX);
+                yToCursor(pointerY);
+            }
+            xToReveal(e.clientX);
+            yToReveal(e.clientY);
+        });
+
+        document.querySelectorAll('.hover-target').forEach(el => {
+            el.addEventListener('mouseenter', () => cursor.classList.add('active'));
+            el.addEventListener('mouseleave', () => cursor.classList.remove('active'));
+        });
+
+        document.querySelectorAll('.team-row').forEach(row => {
+            row.addEventListener('mouseenter', () => {
+                const imgUrl = row.getAttribute('data-image');
+                revealImg.src = imgUrl;
+                revealImg.alt = `Foto de ${row.getAttribute('data-name')}`;
+                gsap.killTweensOf(revealContainer, "opacity,scale,rotation");
+                
+                revealImg.onerror = function() {
+                    this.onerror = null;
+                    this.src = `https://placehold.co/300x380/EAE6DB/0a6375?text=Foto`;
+                };
+                
+                gsap.to(revealContainer, {
+                    opacity: 1,
+                    scale: 1,
+                    rotation: 0,
+                    duration: 0.5,
+                    ease: "back.out(1.2)"
+                });
+                
+                gsap.fromTo(revealImg, 
+                    { scale: 1.3 }, 
+                    { scale: 1, duration: 0.7, ease: "power2.out" }
+                );
+            });
+            
+            row.addEventListener('mouseleave', () => {
+                hideTeamReveal();
+            });
+
+            const profileLink = row.querySelector('.team-profile-link');
+            if (profileLink) {
+                profileLink.addEventListener('mouseenter', () => {
+                    cursor.classList.add('profile-active');
+                    hideTeamReveal(true);
+                    const linkBounds = profileLink.getBoundingClientRect();
+                    gsap.to(cursor, {
+                        left: linkBounds.left + linkBounds.width / 2,
+                        top: linkBounds.top + linkBounds.height / 2,
+                        duration: 0.24,
+                        ease: 'power3.out'
+                    });
+                });
+                profileLink.addEventListener('mouseleave', () => {
+                    cursor.classList.remove('profile-active');
+                    xToCursor(pointerX);
+                    yToCursor(pointerY);
+                });
+                profileLink.addEventListener('focus', () => hideTeamReveal(true));
+            }
+        });
+
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            direction: 'vertical',
+            gestureDirection: 'vertical',
+            smooth: true,
+        });
+
+        lenis.on('scroll', ScrollTrigger.update);
+        gsap.ticker.add((time) => { lenis.raf(time * 1000); });
+        gsap.ticker.lagSmoothing(0);
+        gsap.registerPlugin(ScrollTrigger);
+
+        window.playHeroIntro = function() {
+            if (window._heroIntroRan) return;
+            window._heroIntroRan = true;
+
+            const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (reduced) {
+                gsap.set(['.hero-eyebrow', '.hero-title-line', '.hero-description', '.hero-actions', '.hero-actions a', '.hero-stats-row > *', '#hero-tilt-card', '.hero-laser-scanner', '.hero-flow-panel', '.hero-marquee-bar'], {
+                    clearProps: 'all'
+                });
+                return;
+            }
+
+            gsap.set(['.hero-eyebrow', '.hero-title-line', '.hero-description', '.hero-actions', '.hero-actions a', '.hero-stats-row > *', '#hero-tilt-card', '.hero-laser-scanner', '.hero-flow-panel', '.hero-marquee-bar'], {
+                clearProps: 'all'
+            });
+
+            const tl = gsap.timeline({
+                defaults: { ease: 'power3.out' },
+                onComplete: () => {
+                    gsap.set(['.hero-eyebrow', '.hero-title-line', '.hero-description', '.hero-actions', '.hero-actions a', '.hero-stats-row > *', '#hero-tilt-card'], {
+                        clearProps: 'all'
+                    });
+                }
+            });
+
+            tl.from('.hero-eyebrow', { y: 16, opacity: 0, duration: 0.5 })
+              .from('.hero-title-line', { yPercent: 110, duration: 0.85, stagger: 0.1, ease: 'power4.out' }, '-=0.2')
+              .from('.hero-description', { y: 14, opacity: 0, duration: 0.55 }, '-=0.4')
+              .from('.hero-actions a', { y: 12, opacity: 0.6, duration: 0.45, stagger: 0.08, clearProps: 'all' }, '-=0.3')
+              .from('.hero-stats-row > *', { y: 12, opacity: 0, duration: 0.45, stagger: 0.06, clearProps: 'all' }, '-=0.25')
+              .from('#hero-tilt-card', { scale: 0.95, opacity: 0, duration: 0.85, ease: 'power3.out', clearProps: 'transform,opacity' }, 0.1)
+              .from('.hero-laser-scanner', { opacity: 0, duration: 0.6, clearProps: 'all' }, '-=0.35')
+              .from('.hero-flow-panel', { y: 14, opacity: 0, duration: 0.55, clearProps: 'all' }, '-=0.25')
+              .from('.hero-marquee-bar', { y: 10, opacity: 0, duration: 0.55, clearProps: 'all' }, '-=0.2');
+
+            // Garantía absoluta: los botones del Hero nunca deben quedar bloqueados con opacidad baja
+            setTimeout(() => {
+                document.querySelectorAll('.hero-actions a').forEach(btn => {
+                    btn.style.opacity = '1';
+                    btn.style.visibility = 'visible';
+                });
+            }, 600);
+        };
+
+        if (window._heroReadyToPlay) {
+            window.playHeroIntro();
+        }
+
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        if (!prefersReducedMotion) {
+            if (window.matchMedia('(min-width: 768px)').matches) {
+                const serviceIntro = gsap.timeline({
+                    scrollTrigger: {
+                        trigger: '.service-intro',
+                        start: 'top 78%',
+                        once: true
+                    }
+                });
+
+                serviceIntro
+                    .from('.service-eyebrow', { y: 14, opacity: 0, duration: 0.45, ease: 'power2.out' })
+                    .from('.service-heading', { y: 32, opacity: 0, duration: 0.75, ease: 'power3.out' }, '-=0.18')
+                    .from('.service-summary', { y: 20, opacity: 0, duration: 0.65, ease: 'power3.out' }, '-=0.38');
+            }
+
+            // === THREE.JS HOLOGRAPHIC QUALITY CORE ===
+            function initHero3D() {
+                const heroContainer = document.getElementById('hero-3d-container');
+                let container = document.getElementById('loader-3d-container') || heroContainer;
+                if (!container) return;
+
+                if (typeof THREE === 'undefined') {
+                    initFallbackCanvas(container, heroContainer);
+                    return;
+                }
+
+                try {
+                    const width = container.clientWidth || 400;
+                    const height = container.clientHeight || 400;
+
+                    const scene = new THREE.Scene();
+                    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+                    camera.position.z = 7;
+
+                    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance' });
+                    renderer.setSize(width, height);
+                    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+                    renderer.domElement.className = 'absolute inset-0 w-full h-full pointer-events-none';
+                    container.appendChild(renderer.domElement);
+
+                    const coreGroup = new THREE.Group();
+                    scene.add(coreGroup);
+
+                    // 1. Outer Polyhedral Cage (Wireframe Icosahedron)
+                    const icoGeo = new THREE.IcosahedronGeometry(2.1, 1);
+                    const icoMat = new THREE.MeshBasicMaterial({
+                        color: 0x0a6375,
+                        wireframe: true,
+                        transparent: true,
+                        opacity: 0.5
+                    });
+                    const icosahedron = new THREE.Mesh(icoGeo, icoMat);
+                    coreGroup.add(icosahedron);
+
+                    // 2. Inner Glowing Gem (Octahedron)
+                    const octGeo = new THREE.OctahedronGeometry(1.25, 0);
+                    const octMat = new THREE.MeshBasicMaterial({
+                        color: 0x65c4c2,
+                        wireframe: true,
+                        transparent: true,
+                        opacity: 0.8
+                    });
+                    const octahedron = new THREE.Mesh(octGeo, octMat);
+                    coreGroup.add(octahedron);
+
+                    // 3. Concentric Orbital Rings
+                    const ring1Geo = new THREE.RingGeometry(2.5, 2.53, 64);
+                    const ring1Mat = new THREE.MeshBasicMaterial({
+                        color: 0x65c4c2,
+                        side: THREE.DoubleSide,
+                        transparent: true,
+                        opacity: 0.4
+                    });
+                    const ring1 = new THREE.Mesh(ring1Geo, ring1Mat);
+                    ring1.rotation.x = Math.PI / 3;
+                    coreGroup.add(ring1);
+
+                    const ring2Geo = new THREE.RingGeometry(2.8, 2.82, 64);
+                    const ring2Mat = new THREE.MeshBasicMaterial({
+                        color: 0x0a6375,
+                        side: THREE.DoubleSide,
+                        transparent: true,
+                        opacity: 0.5
+                    });
+                    const ring2 = new THREE.Mesh(ring2Geo, ring2Mat);
+                    ring2.rotation.y = Math.PI / 4;
+                    ring2.rotation.x = -Math.PI / 6;
+                    coreGroup.add(ring2);
+
+                    // 4. Orbital Particles Cloud (450 points)
+                    const particleCount = 450;
+                    const particlePositions = new Float32Array(particleCount * 3);
+                    const particleColors = new Float32Array(particleCount * 3);
+
+                    const colorTeal = new THREE.Color(0x0a6375);
+                    const colorCyan = new THREE.Color(0x65c4c2);
+
+                    for (let i = 0; i < particleCount; i++) {
+                        const u = Math.random();
+                        const v = Math.random();
+                        const theta = u * 2.0 * Math.PI;
+                        const phi = Math.acos(2.0 * v - 1.0);
+                        const r = 2.0 + Math.random() * 1.6;
+
+                        const sinPhi = Math.sin(phi);
+                        particlePositions[i * 3] = r * sinPhi * Math.cos(theta);
+                        particlePositions[i * 3 + 1] = r * sinPhi * Math.sin(theta);
+                        particlePositions[i * 3 + 2] = r * Math.cos(phi);
+
+                        const col = Math.random() > 0.4 ? colorCyan : colorTeal;
+                        particleColors[i * 3] = col.r;
+                        particleColors[i * 3 + 1] = col.g;
+                        particleColors[i * 3 + 2] = col.b;
+                    }
+
+                    const particleGeo = new THREE.BufferGeometry();
+                    particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+                    particleGeo.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
+
+                    const particleMat = new THREE.PointsMaterial({
+                        size: 0.045,
+                        vertexColors: true,
+                        transparent: true,
+                        opacity: 0.9
+                    });
+
+                    const particleSystem = new THREE.Points(particleGeo, particleMat);
+                    coreGroup.add(particleSystem);
+
+                    // Steady autonomous animation (fixed position, no cursor tracking)
+                    let speedMult = 1;
+
+                    // Resize
+                    function resizeRenderer() {
+                        if (!container || !container.isConnected) return;
+                        const newW = container.clientWidth;
+                        const newH = container.clientHeight;
+                        if (newW && newH) {
+                            camera.aspect = newW / newH;
+                            camera.updateProjectionMatrix();
+                            renderer.setSize(newW, newH);
+                        }
+                    }
+
+                    window.addEventListener('resize', resizeRenderer);
+
+                    window.moveHeroCoreToCard = function() {
+                        if (!heroContainer || container === heroContainer) return;
+                        heroContainer.appendChild(renderer.domElement);
+                        container = heroContainer;
+                        resizeRenderer();
+                    };
+
+                    // Trigger burst on button clicks
+                    window.triggerCoreBurst = function(colorHex = 0x65c4c2) {
+                        speedMult = 3.2;
+                        gsap.to(octMat.color, {
+                            r: ((colorHex >> 16) & 255) / 255,
+                            g: ((colorHex >> 8) & 255) / 255,
+                            b: (colorHex & 255) / 255,
+                            duration: 0.3,
+                            onComplete: () => {
+                                gsap.to(octMat.color, { r: 0.39, g: 0.77, b: 0.76, duration: 1.2 });
+                            }
+                        });
+                    };
+
+                    let clock = new THREE.Clock();
+                    function renderLoop() {
+                        if (!container.isConnected) {
+                            window.removeEventListener('resize', resizeRenderer);
+                            renderer.dispose();
+                            return;
+                        }
+                        requestAnimationFrame(renderLoop);
+                        const time = clock.getElapsedTime();
+
+                        coreGroup.rotation.y = time * 0.22 * speedMult;
+                        coreGroup.rotation.x = Math.sin(time * 0.3) * 0.12;
+
+                        ring1.rotation.z = time * 0.35 * speedMult;
+                        ring2.rotation.z = -time * 0.3 * speedMult;
+
+                        const pulseScale = 1 + Math.sin(time * 1.8) * 0.05;
+                        octahedron.scale.set(pulseScale, pulseScale, pulseScale);
+                        octahedron.rotation.y = -time * 0.45 * speedMult;
+
+                        if (speedMult > 1) {
+                            speedMult += (1 - speedMult) * 0.025;
+                        }
+
+                        renderer.render(scene, camera);
+                    }
+                    renderLoop();
+
+                } catch (err) {
+                    console.warn('WebGL init error, falling back to 2D canvas', err);
+                    initFallbackCanvas(container, heroContainer);
+                }
+            }
+
+            // Fallback 2D Canvas if WebGL is unsupported
+            function initFallbackCanvas(container, heroContainer) {
+                const canvas = document.createElement('canvas');
+                canvas.className = 'absolute inset-0 w-full h-full pointer-events-none';
+                container.appendChild(canvas);
+                const ctx = canvas.getContext('2d');
+                let w = canvas.width = container.clientWidth || 400;
+                let h = canvas.height = container.clientHeight || 400;
+
+                function resizeCanvas() {
+                    if (!container || !container.isConnected) return;
+                    w = canvas.width = container.clientWidth || 400;
+                    h = canvas.height = container.clientHeight || 400;
+                }
+
+                window.addEventListener('resize', resizeCanvas);
+
+                window.moveHeroCoreToCard = function() {
+                    if (!heroContainer || container === heroContainer) return;
+                    heroContainer.appendChild(canvas);
+                    container = heroContainer;
+                    resizeCanvas();
+                };
+
+                const dots = Array.from({ length: 60 }, () => ({
+                    angle: Math.random() * Math.PI * 2,
+                    radius: 60 + Math.random() * 110,
+                    speed: (Math.random() - 0.5) * 0.02,
+                    size: 1.5 + Math.random() * 2
+                }));
+
+                function draw() {
+                    if (!canvas.isConnected) {
+                        window.removeEventListener('resize', resizeCanvas);
+                        return;
+                    }
+                    ctx.clearRect(0, 0, w, h);
+                    const cx = w / 2, cy = h / 2;
+                    ctx.strokeStyle = 'rgba(101, 196, 194, 0.2)';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, 90, 0, Math.PI * 2);
+                    ctx.stroke();
+
+                    dots.forEach(d => {
+                        d.angle += d.speed;
+                        const x = cx + Math.cos(d.angle) * d.radius;
+                        const y = cy + Math.sin(d.angle) * d.radius;
+                        ctx.fillStyle = '#65c4c2';
+                        ctx.beginPath();
+                        ctx.arc(x, y, d.size, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                    requestAnimationFrame(draw);
+                }
+                draw();
+            }
+
+            // === HERO INTERACTIONS (FIXED CARD, NO TILT) ===
+            function initHeroInteractions() {
+                // Interactive Cycle Controller
+                const stepButtons = document.querySelectorAll('.hero-step-btn');
+                const stepDisplay = document.getElementById('hero-cycle-step-display');
+                const captionEl = document.getElementById('hero-cycle-caption');
+                const progressBar = document.getElementById('hero-cycle-progress-bar');
+
+                const stepData = [
+                    {
+                        num: "01 / 03",
+                        progress: "scaleX(0.33)",
+                        html: '<strong class="text-[#65c4c2]">01 Solicitar:</strong> Reúne los datos del pedido, la cantidad y los planos en un expediente digital.',
+                        color: 0x65c4c2
+                    },
+                    {
+                        num: "02 / 03",
+                        progress: "scaleX(0.66)",
+                        html: '<strong class="text-[#65c4c2]">02 Producir:</strong> Configura las fases del trabajo, asigna responsables y sigue el avance de cada tarea.',
+                        color: 0x0a6375
+                    },
+                    {
+                        num: "03 / 03",
+                        progress: "scaleX(1.0)",
+                        html: '<strong class="text-[#65c4c2]">03 Inspeccionar:</strong> Registra el veredicto de calidad y devuelve solo las fases que necesitan retrabajo.',
+                        color: 0x38bdf8
+                    }
+                ];
+
+                stepButtons.forEach((btn) => {
+                    btn.addEventListener('click', () => {
+                        const stepIndex = parseInt(btn.getAttribute('data-step') || '0', 10);
+                        const data = stepData[stepIndex];
+                        if (!data) return;
+
+                        stepButtons.forEach((b, idx) => {
+                            if (idx === stepIndex) {
+                                b.className = 'hero-step-btn active group flex items-center justify-center gap-1.5 rounded-lg border border-[#65c4c2]/50 bg-primary px-2.5 py-1.5 font-sans text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[#F7F5F0] transition-all duration-200 hover-target';
+                                b.querySelector('span').className = 'text-[#65c4c2]';
+                            } else {
+                                b.className = 'hero-step-btn group flex items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 font-sans text-[10px] sm:text-xs font-medium uppercase tracking-wider text-[#F7F5F0]/70 transition-all duration-200 hover:bg-white/15 hover:text-white hover-target';
+                                b.querySelector('span').className = 'text-[#65c4c2]/60';
+                            }
+                        });
+
+                        if (stepDisplay) stepDisplay.textContent = data.num;
+                        if (progressBar) progressBar.style.transform = data.progress;
+                        if (captionEl) {
+                            captionEl.style.opacity = '0';
+                            setTimeout(() => {
+                                captionEl.innerHTML = data.html;
+                                captionEl.style.opacity = '1';
+                            }, 150);
+                        }
+
+                        if (window.triggerCoreBurst) {
+                            window.triggerCoreBurst(data.color);
+                        }
+                    });
+                });
+            }
+
+            initHero3D();
+            initHeroInteractions();
+
+            if (window._heroReadyToPlay || !document.getElementById('site-loader')) {
+                window.playHeroIntro();
+            }
+
+            if (window.matchMedia('(min-width: 768px)').matches) {
+                gsap.to('#hero-tilt-card', {
+                    yPercent: 8,
+                    ease: 'none',
+                    scrollTrigger: {
+                        trigger: '#hero-trigger',
+                        start: 'top top',
+                        end: 'bottom top',
+                        scrub: 0.8
+                    }
+                });
+            }
+
+            const serviceScroll = gsap.matchMedia();
+
+            serviceScroll.add('(min-width: 768px)', () => {
+                const frame = document.querySelector('.service-scroll-frame');
+                const track = document.querySelector('.service-track');
+                const stages = gsap.utils.toArray('.service-stage');
+                const progressFill = document.querySelector('.service-progress-fill');
+                const progressCurrent = document.querySelector('.service-progress-current');
+                const getDistance = () => Math.max(0, track.scrollWidth - frame.clientWidth);
+
+                const processTimeline = gsap.timeline({
+                    scrollTrigger: {
+                        trigger: frame,
+                        start: 'top top+=104',
+                        end: () => `+=${getDistance()}`,
+                        pin: true,
+                        scrub: 1,
+                        anticipatePin: 1,
+                        invalidateOnRefresh: true,
+                        onUpdate: (self) => {
+                            gsap.set(progressFill, { scaleX: self.progress });
+                            progressCurrent.textContent = String(Math.min(stages.length, Math.floor(self.progress * stages.length) + 1)).padStart(2, '0');
+                        }
+                    }
+                });
+
+                processTimeline.to(track, {
+                    x: () => -getDistance(),
+                    duration: stages.length,
+                    ease: 'none'
+                }, 0);
+
+                stages.forEach((stage, index) => {
+                    const start = index + 0.12;
+                    processTimeline
+                        .from(stage.querySelector('.stage-rule'), { scaleX: 0, duration: 0.45, ease: 'power3.inOut', immediateRender: false }, start)
+                        .from(stage.querySelector('.stage-index'), { y: 16, opacity: 0, duration: 0.36, ease: 'power3.out', immediateRender: false }, start + 0.04)
+                        .from(stage.querySelector('.stage-icon'), { scale: 0.65, rotation: -14, opacity: 0, duration: 0.4, ease: 'back.out(1.7)', immediateRender: false }, start + 0.08)
+                        .from(stage.querySelector('.stage-title'), { y: 18, opacity: 0, duration: 0.38, ease: 'power3.out', immediateRender: false }, start + 0.12)
+                        .from(stage.querySelector('.stage-copy'), { y: 14, opacity: 0, duration: 0.4, ease: 'power3.out', immediateRender: false }, start + 0.16);
+                });
+            });
+
+            // === SCROLL REVEALS FOR EXTENDED SECTIONS (SAFE FROMTO) ===
+            // Módulos Bento Grid
+            gsap.utils.toArray('#modulos .reveal-card').forEach((card) => {
+                gsap.fromTo(card,
+                    { y: 24, opacity: 0.2 },
+                    {
+                        y: 0,
+                        opacity: 1,
+                        duration: 0.65,
+                        ease: 'power2.out',
+                        immediateRender: false,
+                        clearProps: 'transform,opacity',
+                        scrollTrigger: {
+                            trigger: card,
+                            start: 'top 92%',
+                            once: true
+                        }
+                    }
+                );
+            });
+
+            // Impacto Metrics Band
+            gsap.utils.toArray('#impacto .grid > div').forEach((metric, idx) => {
+                gsap.fromTo(metric,
+                    { y: 24, opacity: 0.2 },
+                    {
+                        y: 0,
+                        opacity: 1,
+                        duration: 0.55,
+                        delay: idx * 0.07,
+                        ease: 'power2.out',
+                        immediateRender: false,
+                        clearProps: 'transform,opacity',
+                        scrollTrigger: {
+                            trigger: '#impacto',
+                            start: 'top 88%',
+                            once: true
+                        }
+                    }
+                );
+            });
+
+            // Industrias Cards
+            gsap.utils.toArray('#industrias .reveal-card').forEach((card) => {
+                gsap.fromTo(card,
+                    { y: 24, opacity: 0.2 },
+                    {
+                        y: 0,
+                        opacity: 1,
+                        duration: 0.65,
+                        ease: 'power2.out',
+                        immediateRender: false,
+                        clearProps: 'transform,opacity',
+                        scrollTrigger: {
+                            trigger: card,
+                            start: 'top 92%',
+                            once: true
+                        }
+                    }
+                );
+            });
+
+            // FAQ Items Reveal
+            gsap.utils.toArray('#faq .faq-item').forEach((item) => {
+                gsap.fromTo(item,
+                    { y: 20, opacity: 0.2 },
+                    {
+                        y: 0,
+                        opacity: 1,
+                        duration: 0.5,
+                        ease: 'power2.out',
+                        immediateRender: false,
+                        clearProps: 'transform,opacity',
+                        scrollTrigger: {
+                            trigger: item,
+                            start: 'top 94%',
+                            once: true
+                        }
+                    }
+                );
+            });
+
+        }
+
+        const teamSectionObserver = new IntersectionObserver((entries) => {
+            if (!entries[0].isIntersecting) hideTeamReveal(true);
+        });
+        teamSectionObserver.observe(document.getElementById('equipo'));
+
+        if (!prefersReducedMotion && window.matchMedia('(min-width: 768px)').matches) {
+            gsap.fromTo(".desc-text", 
+                { y: 40, opacity: 0.25 },
+                {
+                    y: 0,
+                    opacity: 1,
+                    ease: "none",
+                    scrollTrigger: {
+                        trigger: ".desc-text",
+                        start: "top 95%",
+                        end: "top 55%",
+                        scrub: 1
+                    }
+                }
+            );
+        }
+
+        window.addEventListener('load', () => {
+            ScrollTrigger.refresh();
+        });
+        setTimeout(() => {
+            ScrollTrigger.refresh();
+        }, 1200);
+
+        // === FAQ ACCORDION INTERACTIVITY ===
+        const faqToggles = document.querySelectorAll('.faq-toggle');
+        faqToggles.forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                const item = toggle.closest('.faq-item');
+                const content = item.querySelector('.faq-content');
+                const icon = toggle.querySelector('.faq-icon');
+                const isCurrentlyOpen = !content.classList.contains('hidden');
+
+                if (isCurrentlyOpen) {
+                    content.classList.add('hidden');
+                    if (icon) icon.textContent = '+';
+                    item.classList.remove('border-primary/50', 'shadow-md');
+                } else {
+                    content.classList.remove('hidden');
+                    if (icon) icon.textContent = '−';
+                    item.classList.add('border-primary/50', 'shadow-md');
+                    if (!prefersReducedMotion) {
+                        gsap.fromTo(content, { opacity: 0, y: -6 }, { opacity: 1, y: 0, duration: 0.25, ease: 'power2.out' });
+                    }
+                }
+            });
+        });
+
+        // === BOTÓN VOLVER ARRIBA CON ANIMACIÓN SUTIL (SMOOTH SCROLL) ===
+        const backToTopBtn = document.getElementById('back-to-top-btn');
+        if (backToTopBtn) {
+            let isVisible = false;
+
+            const updateBackToTopVisibility = () => {
+                const scrollPos = window.scrollY || document.documentElement.scrollTop;
+                if (scrollPos > 320) {
+                    if (!isVisible) {
+                        isVisible = true;
+                        backToTopBtn.classList.remove('opacity-0', 'translate-y-3', 'pointer-events-none');
+                        backToTopBtn.classList.add('opacity-100', 'translate-y-0', 'pointer-events-auto', 'animate-subtle-float');
+                    }
+                } else {
+                    if (isVisible) {
+                        isVisible = false;
+                        backToTopBtn.classList.remove('opacity-100', 'translate-y-0', 'pointer-events-auto', 'animate-subtle-float');
+                        backToTopBtn.classList.add('opacity-0', 'translate-y-3', 'pointer-events-none');
+                    }
+                }
+            };
+
+            window.addEventListener('scroll', updateBackToTopVisibility, { passive: true });
+
+            backToTopBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Retorno suave y sutil al inicio de la página ("no de golpe")
+                if (window.lenis) {
+                    window.lenis.scrollTo(0, {
+                        duration: 1.5,
+                        easing: (t) => 1 - Math.pow(1 - t, 3)
+                    });
+                } else {
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        }
+
+    </script>
+</body>
+</html>

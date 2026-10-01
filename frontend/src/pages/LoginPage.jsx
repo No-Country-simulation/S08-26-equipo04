@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Button, Field, Title } from "../components/ui";
 import { loginSchema, loginDefaults } from "../utils/loginSchema";
@@ -85,6 +87,13 @@ export const LoginPage = () => {
         {/* Lado derecho - Formulario */}
         <div className="flex items-center justify-center px-8 py-10 lg:w-1/2 lg:py-12">
           <div className="w-full max-w-sm">
+            <Link
+              to="/"
+              className="mb-6 inline-flex min-h-10 items-center gap-2 rounded-md text-label font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              Volver a la landing
+            </Link>
             <h1 className="mb-8 text-h1 text-ink">Iniciar sesión</h1>
             <form
               onSubmit={handleSubmit(onSubmit)}
