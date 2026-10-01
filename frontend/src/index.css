@@ -14,6 +14,13 @@ button:disabled {
 }
 
 @layer base {
+  /* Sin rebote elástico al llegar al tope/fondo de la página: los
+     contenedores internos con scroll (nav, modales, tablas) siguen
+     funcionando igual, solo se corta el encadenamiento a la página. */
+  html {
+    overscroll-behavior-y: none;
+  }
+
   body {
     @apply bg-canvas text-ink font-sans;
   }
