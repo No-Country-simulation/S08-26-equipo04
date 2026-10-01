@@ -452,6 +452,6 @@ La ejecución y las actualizaciones de esta fase deberán mantener relación con
 * Decisiones D-1 a D-6.
 * Issues de defectos correspondientes.
 * Pull Requests relacionados con modificaciones funcionales o correcciones.
-* Evidencias almacenadas en `qa-analyst/testing/evidence/img/fase-a/`.
+* Evidencias almacenadas en `docs/qa/testing/evidence/img/Fase-a/`.
 
 La matriz debe permitir reconstruir la evolución de cada caso desde su diseño hasta su ejecución y, cuando corresponda, su relación con defectos, decisiones y Pull Requests.

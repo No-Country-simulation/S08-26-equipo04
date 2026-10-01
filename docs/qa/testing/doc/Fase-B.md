@@ -5,7 +5,7 @@
 **Responsable QA:** María Chiribao
 **Fase:** B — Producción
 **Base funcional:** PRD V2 + Backlog V2 + DB V2 + Análisis Funcional QA
-**Matriz general relacionada:** `qa-analyst/doc/QualityTrack-Matriz-TestCases-4fases.md`
+**Matriz general relacionada:** `docs/qa/QualityTrack-Matriz-TestCases-4fases.xlsx`
 
 ---
 
@@ -897,7 +897,7 @@ El sistema rechaza el archivo y mantiene la información previamente registrada.
 Las evidencias correspondientes a esta fase deberán almacenarse en:
 
 ```text
-qa-analyst/testing/evidence/img/fase-b/
+docs/qa/testing/evidence/img/Fase-b/
 ```
 
 La evidencia de cada caso deberá vincularse posteriormente desde la columna correspondiente de la matriz general y/o desde este documento.
@@ -905,7 +905,7 @@ La evidencia de cada caso deberá vincularse posteriormente desde la columna cor
 Ejemplo:
 
 ```text
-qa-analyst/testing/evidence/img/fase-b/TC-B-3.1-02.png
+docs/qa/testing/evidence/img/Fase-b/TC-B-3.1-02.png
 ```
 
 Durante la ejecución pueden utilizarse, según corresponda:

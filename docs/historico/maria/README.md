@@ -8,6 +8,8 @@ Quedan registrados como antecedentes. No son fuente vigente: la validación func
 | ------------------------------------------------------------------ | --------------------------------------------------------------------------------- | --------------------------------------- |
 | `01_Macro_sistema_software_MVP.md` (con `images/`)                 | Investigación inicial: macro del sistema y primera matriz de historias de usuario | `docs/funcional/QualityTrack-PRD-v2.md` |
 | `02_QualityTrack_Especificacion_Funcional_Arquitectura_Inicial.md` | Especificación Funcional y de Arquitectura, versión 1                             | `docs/funcional/QualityTrack-PRD-v2.md` |
+| `Matriz-Casos-Prueba-FaseA.md` | Matriz de casos de la Fase A en Markdown, actualizada con las decisiones del 25/09 (PR #228) | `docs/qa/testing/doc/Fase-A.md` |
+| `QualityTrack-QA-Registro-Preventivo-Inconsistencias-E2E.md` | Registro preventivo de inconsistencias E2E, previo al registro de seguimiento | `docs/qa/QualityTrack-QA-Registro-Seguimiento-E2E-Frontend-Backend.md` |
 
 La matriz de casos de prueba de la Fase A en Excel (v1.1), que estaba junto a estos documentos, se movió a `docs/historico/maria/QualityTrack-Matriz-TestCases-FaseA.xlsx`, preservando su contenido histórico.
 
