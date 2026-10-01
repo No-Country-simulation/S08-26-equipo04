@@ -66,7 +66,9 @@ export const OrdenesTrabajoPage = () => {
         header: "Orden de trabajo",
         cell: ({ row }) => (
           <Link
-            to={`/ordenes-trabajo/${row.original.numero_ot}`}
+            // FE-288: navegar por id numérico para que el expediente use su
+            // fast-path sin esperar la lista (por numero_ot sigue andando).
+            to={`/ordenes-trabajo/${row.original.id}`}
             className="font-semibold text-primary hover:underline"
           >
             {row.original.numero_ot}

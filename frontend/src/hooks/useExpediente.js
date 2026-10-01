@@ -50,11 +50,15 @@ export const useExpediente = (otParam) => {
   const { ordenesTrabajo, cargando: cargandoLista } = useOrdenesTrabajo();
   const [datos, setDatos] = useState(estadoInicial);
   const [version, setVersion] = useState(0);
+  // FE-288: con id numérico no se espera la lista (los links ya navegan por
+  // id): el expediente arranca en paralelo. Por numero_ot sí hay que
+  // esperar la lista para resolver el id.
+  const esIdDirecto = /^\d+$/.test(String(otParam ?? ""));
 
   // Todos los setState ocurren en callbacks de la promesa (nunca en el
   // cuerpo del efecto) para cumplir react-hooks/set-state-in-effect.
   useEffect(() => {
-    if (cargandoLista) return undefined;
+    if (!esIdDirecto && cargandoLista) return undefined;
     let cancelado = false;
 
     const cargar = async () => {
@@ -140,7 +144,7 @@ export const useExpediente = (otParam) => {
     return () => {
       cancelado = true;
     };
-  }, [otParam, ordenesTrabajo, cargandoLista, version]);
+  }, [otParam, ordenesTrabajo, cargandoLista, version, esIdDirecto]);
 
   const recargar = useCallback(() => {
     setDatos((prev) => ({ ...prev, cargando: true, error: null }));
