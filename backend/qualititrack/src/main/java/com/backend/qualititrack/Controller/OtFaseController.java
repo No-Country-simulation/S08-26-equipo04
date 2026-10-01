@@ -50,10 +50,6 @@ public class OtFaseController {
         } else {
             lista = otFaseService.listarFasesOperario(authentication.getName());
         }
-        // Operario -> solo sus fases
-
-        // HTTP 201 Created (recurso creado exitosamente)
-        //return ResponseEntity.status(HttpStatus.CREATED).body(lista);
         return ResponseEntity.ok(lista);
     }
 
