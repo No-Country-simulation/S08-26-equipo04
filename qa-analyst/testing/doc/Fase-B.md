@@ -1,11 +1,11 @@
 # QualityTrack — QA Testing — Fase B
 
 **Versión:** 1.0
-**Estado:** Diseñado — `NOT RUN`
+**Estado:** Ejecutado — `TESTER RUN`
 **Responsable QA:** María Chiribao
 **Fase:** B — Producción
 **Base funcional:** PRD V2 + Backlog V2 + DB V2 + Análisis Funcional QA
-**Matriz general relacionada:** `qa-analyst/doc/Matriz-General-TestCases.md`
+**Matriz general relacionada:** `qa-analyst/doc/QualityTrack-Matriz-TestCases-4fases.md`
 
 ---
 
@@ -123,8 +123,8 @@ También se valida el avance automático hacia la siguiente fase y el envío de 
 
 La fase aparece disponible en estado `EN_COLA`.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia C-B-3.1-01](../../testing/evidence/img/Fase-b/TC-B-3.1-01.png)
 **Defecto / PR:** —
 
 ---
@@ -143,8 +143,8 @@ La fase aparece disponible en estado `EN_COLA`.
 
 La fase pasa de `EN_COLA` a `EN_EJECUCION`.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia C-B-3.1-02](../../testing/evidence/img/Fase-b/TC-B-3.1-02.png)
 **Defecto / PR:** —
 
 ---
@@ -163,8 +163,8 @@ La fase pasa de `EN_COLA` a `EN_EJECUCION`.
 
 La tarea activa se muestra correctamente como fase en ejecución.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia C-B-3.1-03](../../testing/evidence/img/Fase-b/TC-B-3.1-03.png)
 **Defecto / PR:** —
 
 ---
@@ -183,8 +183,8 @@ La tarea activa se muestra correctamente como fase en ejecución.
 
 La fase pasa a `TERMINADO`.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia C-B-3.1-04](../../testing/evidence/img/Fase-b/TC-B-3.1-04.png)
 **Defecto / PR:** —
 
 ---
@@ -203,8 +203,8 @@ La fase pasa a `TERMINADO`.
 
 La primera fase queda `TERMINADO` y la siguiente fase pasa a `EN_COLA`.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia C-B-3.1-05](../../testing/evidence/img/Fase-b/TC-B-3.1-05.png)
 **Defecto / PR:** —
 
 ---
@@ -223,8 +223,8 @@ La primera fase queda `TERMINADO` y la siguiente fase pasa a `EN_COLA`.
 
 La última fase queda `TERMINADO` y la OT pasa a `EN_CALIDAD`.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia C-B-3.1-06](../../testing/evidence/img/Fase-b/TC-B-3.1-06.png)
 **Defecto / PR:** —
 
 ---
@@ -242,8 +242,9 @@ La última fase queda `TERMINADO` y la OT pasa a `EN_CALIDAD`.
 
 El Operario visualiza correctamente las tareas que tiene pendientes.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:**
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia C-B-3.1-07](../../testing/evidence/img/Fase-b/TC-B-3.1-07.png)
 **Defecto / PR:** —
 
 ---
@@ -263,8 +264,8 @@ El Operario visualiza correctamente las tareas que tiene pendientes.
 
 Las fases se habilitan respetando el orden establecido para la OT.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia C-B-3.1-08](../../testing/evidence/img/Fase-b/TC-B-3.1-08.png)
 **Defecto / PR:** —
 
 ---
@@ -284,8 +285,8 @@ Las fases se habilitan respetando el orden establecido para la OT.
 
 Cada instancia de la fase se mantiene diferenciada dentro del flujo de producción y respeta el orden definido.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia C-B-3.1-09](../../testing/evidence/img/Fase-b/TC-B-3.1-09.png)
 **Defecto / PR:** —
 
 ---
@@ -304,8 +305,8 @@ Cada instancia de la fase se mantiene diferenciada dentro del flujo de producci�
 
 La fase permanece en `TERMINADO` y no vuelve automáticamente a `EN_COLA`.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia C-B-3.1-10](../../testing/evidence/img/Fase-b/TC-B-3.1-10.png)
 **Defecto / PR:** —
 
 ---
@@ -335,8 +336,8 @@ La decisión D-6 establece almacenamiento en base de datos, límite máximo de *
 
 El archivo queda asociado correctamente a la OT/fase.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia C-B-3.2-01](../../testing/evidence/img/Fase-b/TC-B-3.2-01.png)
 **Defecto / PR:** —
 
 ---
@@ -355,8 +356,8 @@ El archivo queda asociado correctamente a la OT/fase.
 
 El archivo continúa disponible después de recargar la aplicación.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia C-B-3.2-02](../../testing/evidence/img/Fase-b/TC-B-3.2-02.png)
 **Defecto / PR:** —
 
 ---
@@ -374,8 +375,8 @@ El archivo continúa disponible después de recargar la aplicación.
 
 El archivo puede visualizarse en el navegador sin requerir una descarga para su consulta.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia C-B-3.2-03](../../testing/evidence/img/Fase-b/TC-B-3.2-03.png)
 **Defecto / PR:** —
 
 ---
@@ -393,8 +394,8 @@ El archivo puede visualizarse en el navegador sin requerir una descarga para su 
 
 El sistema rechaza el archivo por superar el límite permitido.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia C-B-3.2-04](../../testing/evidence/img/Fase-b/TC-B-3.2-04.png)
 **Defecto / PR:** —
 
 ---
@@ -413,8 +414,8 @@ El sistema rechaza el archivo por superar el límite permitido.
 
 El archivo aparece asociado a la OT/fase correspondiente y no a otra orden.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia C-B-3.2-05](../../testing/evidence/img/Fase-b/TC-B-3.2-05.png)
 **Defecto / PR:** —
 
 ---
@@ -444,8 +445,8 @@ La regla funcional establece:
 
 La fase conserva el tiempo estimado correspondiente.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia C-B-3.3-01](../../testing/evidence/img/Fase-b/TC-B-3.3-01.png)
 **Defecto / PR:** —
 
 ---
@@ -464,8 +465,8 @@ La fase conserva el tiempo estimado correspondiente.
 
 El vencimiento corresponde al ingreso a cola más el tiempo estimado de la fase.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia C-B-3.3-02](../../testing/evidence/img/Fase-b/TC-B-3.3-02.png)
 **Defecto / PR:** —
 
 ---
@@ -483,8 +484,8 @@ El vencimiento corresponde al ingreso a cola más el tiempo estimado de la fase.
 
 La fase se identifica correctamente como dentro del plazo.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia C-B-3.3-03](../../testing/evidence/img/Fase-b/TC-B-3.3-03.png)
 **Defecto / PR:** —
 
 ---
@@ -502,8 +503,8 @@ La fase se identifica correctamente como dentro del plazo.
 
 El sistema identifica correctamente que el plazo fue superado.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia C-B-3.3-04](../../testing/evidence/img/Fase-b/TC-B-3.3-04.png)
 **Defecto / PR:** —
 
 ---
@@ -522,8 +523,8 @@ El sistema identifica correctamente que el plazo fue superado.
 
 La fase queda `TERMINADO` correctamente, independientemente de que el vencimiento todavía no haya sido alcanzado.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:**  `TESTER RUN`
+**Evidencia:** [Evidencia C-B-3.3-05](../../testing/evidence/img/Fase-b/TC-B-3.3-05.png)
 **Defecto / PR:** —
 
 ---
@@ -556,8 +557,8 @@ El Operario no crea notas de estos tipos.
 
 La nota aparece disponible y se identifica como originada por Jefe.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia C-B-3.4-01](../../testing/evidence/img/Fase-b/TC-B-3.4-01.png)
 **Defecto / PR:** —
 
 ---
@@ -575,8 +576,8 @@ La nota aparece disponible y se identifica como originada por Jefe.
 
 La nota aparece disponible y se identifica como originada por Calidad.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia C-B-3.4-02](../../testing/evidence/img/Fase-b/TC-B-3.4-02.png)
 **Defecto / PR:** —
 
 ---
@@ -595,8 +596,8 @@ La nota aparece disponible y se identifica como originada por Calidad.
 
 El Operario no puede crear notas correspondientes a los orígenes definidos para Jefe y Calidad.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia C-B-3.4-03](../../testing/evidence/img/Fase-b/TC-B-3.4-03.png)
 **Defecto / PR:** —
 
 ---
@@ -614,8 +615,8 @@ El Operario no puede crear notas correspondientes a los orígenes definidos para
 
 Las notas disponibles correspondientes a la OT se muestran correctamente.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia C-B-3.4-04](../../testing/evidence/img/Fase-b/TC-B-3.4-04.png)
 **Defecto / PR:** —
 
 ---
@@ -634,8 +635,8 @@ Las notas disponibles correspondientes a la OT se muestran correctamente.
 
 Cada nota conserva correctamente su origen.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia C-B-3.4-05](../../testing/evidence/img/Fase-b/TC-B-3.4-05.png)
 **Defecto / PR:** —
 
 ---
@@ -668,8 +669,8 @@ La reasignación debe actualizar la visibilidad y registrar el cambio en el hist
 
 Se muestran los operadores habilitados para esa fase.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:**[Evidencia TC-B-2.2-01](../../testing/evidence/img/Fase-b/TC-B-2.2-01.png)
 **Defecto / PR:** —
 
 ---
@@ -689,8 +690,8 @@ Se muestran los operadores habilitados para esa fase.
 
 La fase queda asignada al nuevo operador.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia TC-B-2.2-02](../../testing/evidence/img/Fase-b/TC-B-2.2-02.png)
 **Defecto / PR:** —
 
 ---
@@ -709,8 +710,8 @@ La fase queda asignada al nuevo operador.
 
 El sistema impide la reasignación porque la fase ya fue iniciada.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia TC-B-2.2-03](../../testing/evidence/img/Fase-b/TC-B-2.2-03.png)
 **Defecto / PR:** —
 
 ---
@@ -729,8 +730,8 @@ El sistema impide la reasignación porque la fase ya fue iniciada.
 
 El sistema impide la asignación.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia TC-B-2.2-04](../../testing/evidence/img/Fase-b/TC-B-2.2-04.png)
 **Defecto / PR:** —
 
 ---
@@ -749,8 +750,8 @@ El sistema impide la asignación.
 
 La fase deja de estar disponible para el operador anterior y aparece disponible para el nuevo operador.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:**[Evidencia TC-B-2.2-05](../../testing/evidence/img/Fase-b/TC-B-2.2-05.png)
 **Defecto / PR:** —
 
 ---
@@ -773,8 +774,8 @@ El historial registra:
 * usuario que realizó el cambio;
 * fecha/hora del cambio.
 
-**Estado:** `NOT RUN`
-**Evidencia:** —
+**Estado:** `TESTER RUN`
+**Evidencia:** [Evidencia TC-B-2.2-06](../../testing/evidence/img/Fase-b/TC-B-2.2-06.png)
 **Defecto / PR:** —
 
 ---
@@ -795,18 +796,18 @@ Validar de extremo a extremo el circuito productivo desde una OT correctamente g
 
 | Paso | Acción                        | Resultado esperado                           | Estado    |
 | ---: | ----------------------------- | -------------------------------------------- | --------- |
-|    1 | Ingresar con usuario Operario | Acceso correcto                              | `NOT RUN` |
-|    2 | Consultar tareas pendientes   | Aparece la primera fase de la OT             | `NOT RUN` |
-|    3 | Identificar fase en cola      | Estado `EN_COLA`                             | `NOT RUN` |
-|    4 | Iniciar fase                  | Estado `EN_EJECUCION`                        | `NOT RUN` |
-|    5 | Ejecutar operación            | La tarea permanece disponible para completar | `NOT RUN` |
-|    6 | Finalizar fase                | Estado `TERMINADO`                           | `NOT RUN` |
-|    7 | Consultar siguiente fase      | Siguiente fase disponible en `EN_COLA`       | `NOT RUN` |
-|    8 | Iniciar siguiente fase        | Estado `EN_EJECUCION`                        | `NOT RUN` |
-|    9 | Completar las fases restantes | Cada fase pasa a `TERMINADO`                 | `NOT RUN` |
-|   10 | Finalizar última fase         | Última fase queda `TERMINADO`                | `NOT RUN` |
-|   11 | Consultar estado de OT        | OT pasa a `EN_CALIDAD`                       | `NOT RUN` |
-|   12 | Consultar desde Calidad       | OT disponible para el circuito de Calidad    | `NOT RUN` |
+|    1 | Ingresar con usuario Operario | Acceso correcto                              |  `PASS`   |
+|    2 | Consultar tareas pendientes   | Aparece la primera fase de la OT             |  `PASS`   |
+|    3 | Identificar fase en cola      | Estado `EN_COLA`                             |  `PASS`   |
+|    4 | Iniciar fase                  | Estado `EN_EJECUCION`                        |  `PASS`   |
+|    5 | Ejecutar operación            | La tarea permanece disponible para completar |  `PASS`   |
+|    6 | Finalizar fase                | Estado `TERMINADO`                           |  `PASS`   |
+|    7 | Consultar siguiente fase      | Siguiente fase disponible en `EN_COLA`       |  `PASS`   |
+|    8 | Iniciar siguiente fase        | Estado `EN_EJECUCION`                        |  `PASS`   |
+|    9 | Completar las fases restantes | Cada fase pasa a `TERMINADO`                 |  `PASS`   |
+|   10 | Finalizar última fase         | Última fase queda `TERMINADO`                |  `PASS`   |
+|   11 | Consultar estado de OT        | OT pasa a `EN_CALIDAD`                       |  `PASS`   |
+|   12 | Consultar desde Calidad       | OT disponible para el circuito de Calidad    |  `PASS`   |
 
 ---
 
@@ -822,7 +823,7 @@ Intentar iniciar una fase sin un operador habilitado/asignado correctamente.
 
 La fase no puede comenzar su ejecución.
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 **Evidencia:** —
 **Defecto / PR:** —
 
@@ -838,7 +839,7 @@ Intentar modificar el operador de una fase que ya está en `EN_EJECUCION`.
 
 La reasignación es rechazada conforme a D-1.
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 **Evidencia:** —
 **Defecto / PR:** —
 
@@ -854,7 +855,7 @@ Intentar asignar una fase a un operador que no está habilitado para esa fase.
 
 El sistema rechaza la asignación.
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 **Evidencia:** —
 **Defecto / PR:** —
 
@@ -870,7 +871,7 @@ Intentar cargar un archivo superior a 10 MB durante producción.
 
 El sistema rechaza el archivo y mantiene la información previamente registrada.
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 **Evidencia:** —
 **Defecto / PR:** —
 
@@ -985,10 +986,10 @@ Al incorporar este documento al repositorio:
 
 ```text
 FASE B
-Estado: NOT RUN
+Estado: TESTER RUN
 Casos diseñados: 36
-Casos ejecutados: 0
-PASS: 0
+Casos ejecutados:36
+PASS: 36
 FAIL: 0
 BLOCKED: 0
 ```
