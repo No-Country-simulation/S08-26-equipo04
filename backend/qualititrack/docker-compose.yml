@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   ms-auth:
     build:
@@ -7,7 +5,7 @@ services:
       dockerfile: ms-auth/Dockerfile
     container_name: ms-auth
     env_file:
-      - .env.docker.local
+      - .env
     ports:
       - "8081:8081"
     networks:
@@ -25,7 +23,7 @@ services:
       dockerfile: ms-business/Dockerfile
     container_name: ms-business
     env_file:
-      - .env.docker.local
+      - .env
     ports:
       - "8082:8082"
     depends_on:
@@ -46,7 +44,7 @@ services:
       dockerfile: ms-execution/Dockerfile
     container_name: ms-execution
     env_file:
-      - .env.docker.local
+      - .env
     ports:
       - "8084:8084"
     depends_on:
@@ -67,7 +65,7 @@ services:
       dockerfile: api-gateway/Dockerfile
     container_name: api-gateway
     env_file:
-      - .env.docker.local
+      - .env
     ports:
       - "8080:8080"
     depends_on:

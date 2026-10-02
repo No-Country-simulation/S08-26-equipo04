@@ -49,7 +49,7 @@
         </dependency>
         <dependency>
             <groupId>me.paulschwarz</groupId>
-            <artifactId>springboot4-dotenv</artifactId>
+            <artifactId>springboot3-dotenv</artifactId>
         </dependency>
     </dependencies>
 

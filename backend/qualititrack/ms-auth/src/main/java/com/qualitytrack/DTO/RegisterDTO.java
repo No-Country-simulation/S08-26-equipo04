@@ -57,7 +57,7 @@ public class RegisterDTO {
     @Size(min = 6, message = "La contraseña debe tener mínimo 6 caracteres")
     private String password;
 
-    @NotBlank(message = "El rol no puede estar vacío")
+    /** Opcional. En /api/auth/register solo se acepta OPERARIO; en /api/usuarios (GERENTE) define el rol. */
     private String rol;
 }
 

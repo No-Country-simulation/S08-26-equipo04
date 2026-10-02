@@ -1,9 +1,15 @@
 # SECRETS & CREDENTIALS - NUNCA SUBIR A GIT
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+*.env
+application-*.properties
+application-*.yml
+application-*.yaml
 *.key
 *.pem
+*.jks
+*.p12
 credentials.json
 secret.key
 
@@ -104,4 +110,6 @@ venv/
 
 # Docker
 docker-compose.override.yml
-.dockerignore
+
+# Archivos subidos en desarrollo
+uploads/

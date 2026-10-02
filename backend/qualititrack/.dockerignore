@@ -1,0 +1,16 @@
+# Secretos: nunca entran a la imagen (las variables se inyectan con env_file)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Artefactos de build e IDE
+**/target/
+.idea/
+.vscode/
+*.iml
+*.log
+
+# Git
+.git/

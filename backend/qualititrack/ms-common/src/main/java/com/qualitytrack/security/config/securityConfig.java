@@ -1,5 +1,5 @@
 package com.qualitytrack.security.config;
-import com.qualitytrack.Service.CustomUserDetailService;
+
 import com.qualitytrack.utils.jwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -15,17 +15,17 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
-
+/**
+ * Configuración de seguridad compartida por los microservicios:
+ * API stateless, validación de JWT en cada request y autorización por roles con @PreAuthorize.
+ */
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity  // ✅ AGREGAR ESTO - Habilita @PreAuthorize
+@EnableMethodSecurity
 public class securityConfig {
 
     @Autowired
     private jwtUtils jwtUtils;
-
-    @Autowired
-    private CustomUserDetailService userDetailsService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
@@ -35,32 +35,16 @@ public class securityConfig {
                 .authorizeHttpRequests(http -> {
                     http.requestMatchers("/actuator/health").permitAll();
                     http.requestMatchers("/api/auth/**").permitAll();
-                    
-                    // Todos los demás requieren autenticación
                     http.anyRequest().authenticated();
                 })
                 .addFilterBefore(new JwtTokenValidator(jwtUtils), BasicAuthenticationFilter.class)
                 .build();
     }
 
-    /*@Bean
-    public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(userDetailsService);
-        provider.setPasswordEncoder(passwordEncoder());
-        System.out.println("✅ AuthenticationProvider configurado con BCryptPasswordEncoder");
-        return provider;
-    }*/
-
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
-
-    /*@Bean
-    public AuthenticationManager authenticationManager() throws Exception {
-        return new ProviderManager(authenticationProvider());
-    }*/
 
     @Bean
     public PasswordEncoder passwordEncoder() {
