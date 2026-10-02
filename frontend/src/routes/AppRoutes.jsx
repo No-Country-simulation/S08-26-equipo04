@@ -1,25 +1,101 @@
+import { Suspense, lazy } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { AppLayout, OperarioLayout } from "../layouts";
-import { CatalogoFasesPage } from "../pages/config/CatalogoFasesPage";
-import { OperariosFasePage } from "../pages/config/OperariosFasePage";
-import { CotizacionesPage } from "../pages/cotizaciones/CotizacionesPage";
-import { CotizacionFormPage } from "../pages/cotizaciones/CotizacionFormPage";
-import { CotizacionDetailPage } from "../pages/cotizaciones/CotizacionDetailPage";
-import { DashboardPage } from "../pages/dashboard/DashboardPage";
-import { LoginPage } from "../pages/LoginPage";
-import { GestionPlantaPage } from "../pages/planta/GestionPlantaPage";
-import { NoConformidadesPage } from "../pages/jefe/NoConformidadesPage";
-import { SolicitudFormPage } from "../pages/solicitudes/SolicitudFormPage";
-import { SolicitudesPage } from "../pages/solicitudes/SolicitudesPage";
+import { LoadingSpinner } from "../components/ui/LoadingSpinner";
 import { ProtectedRoute } from "./ProtectedRoute";
-import { OperarioPage } from "../pages/operario/OperarioPage";
-import { CalidadPage } from "../pages/calidad/CalidadPage";
-import { CalidadAuditPage } from "../pages/calidad/CalidadAuditPage";
-import { DespachoPage } from "../pages/despacho/DespachoPage";
-import { OrdenesEntregadasPage } from "../pages/despacho/OrdenesEntregadasPage";
-import { OrdenesTrabajoPage } from "../pages/ordenes-trabajo/OrdenesTrabajoPage";
-import { ExpedientePage } from "../pages/vendedor/ExpedientePage";
+import { LoginPage } from "../pages/LoginPage";
+import { LandingPage } from "../pages/LandingPage";
+
+// FE-288: las páginas van con import dinámico para que el build genere un
+// chunk por ruta en vez de un único bundle (~1,3 MB). `lazy` exige default
+// export y las páginas son named exports, por eso el `.then` mapea.
+// Login queda eager: es la primera pintura y no gana nada difiriéndose.
+const CatalogoFasesPage = lazy(() =>
+  import("../pages/config/CatalogoFasesPage").then((m) => ({
+    default: m.CatalogoFasesPage,
+  })),
+);
+const OperariosFasePage = lazy(() =>
+  import("../pages/config/OperariosFasePage").then((m) => ({
+    default: m.OperariosFasePage,
+  })),
+);
+const CotizacionesPage = lazy(() =>
+  import("../pages/cotizaciones/CotizacionesPage").then((m) => ({
+    default: m.CotizacionesPage,
+  })),
+);
+const CotizacionFormPage = lazy(() =>
+  import("../pages/cotizaciones/CotizacionFormPage").then((m) => ({
+    default: m.CotizacionFormPage,
+  })),
+);
+const CotizacionDetailPage = lazy(() =>
+  import("../pages/cotizaciones/CotizacionDetailPage").then((m) => ({
+    default: m.CotizacionDetailPage,
+  })),
+);
+const DashboardPage = lazy(() =>
+  import("../pages/dashboard/DashboardPage").then((m) => ({
+    default: m.DashboardPage,
+  })),
+);
+const GestionPlantaPage = lazy(() =>
+  import("../pages/planta/GestionPlantaPage").then((m) => ({
+    default: m.GestionPlantaPage,
+  })),
+);
+const NoConformidadesPage = lazy(() =>
+  import("../pages/jefe/NoConformidadesPage").then((m) => ({
+    default: m.NoConformidadesPage,
+  })),
+);
+const SolicitudFormPage = lazy(() =>
+  import("../pages/solicitudes/SolicitudFormPage").then((m) => ({
+    default: m.SolicitudFormPage,
+  })),
+);
+const SolicitudesPage = lazy(() =>
+  import("../pages/solicitudes/SolicitudesPage").then((m) => ({
+    default: m.SolicitudesPage,
+  })),
+);
+const OperarioPage = lazy(() =>
+  import("../pages/operario/OperarioPage").then((m) => ({
+    default: m.OperarioPage,
+  })),
+);
+const CalidadPage = lazy(() =>
+  import("../pages/calidad/CalidadPage").then((m) => ({
+    default: m.CalidadPage,
+  })),
+);
+const CalidadAuditPage = lazy(() =>
+  import("../pages/calidad/CalidadAuditPage").then((m) => ({
+    default: m.CalidadAuditPage,
+  })),
+);
+const DespachoPage = lazy(() =>
+  import("../pages/despacho/DespachoPage").then((m) => ({
+    default: m.DespachoPage,
+  })),
+);
+const OrdenesEntregadasPage = lazy(() =>
+  import("../pages/despacho/OrdenesEntregadasPage").then((m) => ({
+    default: m.OrdenesEntregadasPage,
+  })),
+);
+const OrdenesTrabajoPage = lazy(() =>
+  import("../pages/ordenes-trabajo/OrdenesTrabajoPage").then((m) => ({
+    default: m.OrdenesTrabajoPage,
+  })),
+);
+const ExpedientePage = lazy(() =>
+  import("../pages/vendedor/ExpedientePage").then((m) => ({
+    default: m.ExpedientePage,
+  })),
+);
 
 export const AppRoutes = () => {
   const { user } = useAuth();
@@ -30,9 +106,11 @@ export const AppRoutes = () => {
       ? "/operario"
       : user?.rol === "CALIDAD"
         ? "/calidad"
-        : "/";
+        : "/dashboard";
   return (
+    <Suspense fallback={<LoadingSpinner label="Cargando vista..." />}>
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route
         path="/login"
         element={user ? <Navigate to={home} replace /> : <LoginPage />}
@@ -40,7 +118,7 @@ export const AppRoutes = () => {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route
-            index
+            path="dashboard"
             element={
               user?.rol === "OPERARIO" ? (
                 <Navigate to="/operario" replace />
@@ -132,5 +210,6 @@ export const AppRoutes = () => {
         element={<Navigate to={user ? home : "/login"} replace />}
       />
     </Routes>
+    </Suspense>
   );
 };

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import {
   Activity,
   ClipboardCheck,
@@ -7,17 +7,6 @@ import {
   ShieldCheck,
   Timer,
 } from "lucide-react";
-import {
-  Bar,
-  BarChart,
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import { apiGet, formatDateTime } from "../../api";
 import {
   Badge,
@@ -31,6 +20,14 @@ import {
   SkeletonChart,
   Title,
 } from "../../components/ui";
+
+// FE-288: `recharts` va en chunk diferido (ver GraficosGerente.jsx).
+const GraficosPlanta = lazy(() =>
+  import("./GraficosGerente").then((m) => ({ default: m.GraficosPlanta })),
+);
+const GraficosCalidad = lazy(() =>
+  import("./GraficosGerente").then((m) => ({ default: m.GraficosCalidad })),
+);
 
 /**
  * Panel del gerente. A diferencia de los paneles operativos no reutiliza
@@ -223,37 +220,9 @@ export const ManagerDashboard = () => {
           />
         </div>
         <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(260px,1fr)]">
-          <Card>
-            <CardHeader>
-              <CardTitle>OTs acumuladas por fase</CardTitle>
-            </CardHeader>
-            {planta.fases.length ? (
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={planta.fases} margin={{ bottom: 28 }}>
-                  <XAxis
-                    dataKey="nombre"
-                    angle={-25}
-                    textAnchor="end"
-                    height={60}
-                    tick={{ fontSize: 12 }}
-                  />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip />
-                  <Bar
-                    dataKey="cantidad"
-                    name="OTs"
-                    fill="#177245"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <EmptyState
-                title="Sin fases registradas"
-                description="No hay acumulaciones para mostrar."
-              />
-            )}
-          </Card>
+          <Suspense fallback={<SkeletonChart title="OTs acumuladas por fase" />}>
+            <GraficosPlanta fases={planta.fases} />
+          </Suspense>
           <Card>
             <CardHeader>
               <CardTitle>Cuello de botella</CardTitle>
@@ -292,61 +261,9 @@ export const ManagerDashboard = () => {
           />
         </div>
         <div className="grid gap-6 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Conformes vs. no conformes</CardTitle>
-            </CardHeader>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={calidad.conformidad}
-                  dataKey="cantidad"
-                  nameKey="nombre"
-                  outerRadius={82}
-                  label
-                >
-                  {calidad.conformidad.map((item, index) => (
-                    <Cell
-                      key={item.nombre}
-                      fill={["#177245", "#b42318"][index]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Retrabajos por fase</CardTitle>
-            </CardHeader>
-            {calidad.retrabajos.length ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={calidad.retrabajos} margin={{ bottom: 28 }}>
-                  <XAxis
-                    dataKey="nombre"
-                    angle={-25}
-                    textAnchor="end"
-                    height={60}
-                    tick={{ fontSize: 12 }}
-                  />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip />
-                  <Bar
-                    dataKey="cantidad"
-                    name="Retrabajos"
-                    fill="#b42318"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <EmptyState
-                title="Sin retrabajos"
-                description="No hay retrabajos registrados por fase."
-              />
-            )}
-          </Card>
+          <Suspense fallback={<SkeletonChart title="Conformes vs. no conformes" />}>
+            <GraficosCalidad calidad={calidad} />
+          </Suspense>
         </div>
         <Card>
           <CardHeader>

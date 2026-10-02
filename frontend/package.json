@@ -25,6 +25,7 @@
     "react-router-dom": "^7.18.3",
     "recharts": "^3.10.1",
     "sonner": "^2.0.8",
+    "three": "^0.186.1",
     "zod": "^4.5.4"
   },
   "devDependencies": {
