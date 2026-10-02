@@ -1,16 +1,21 @@
 package com.qualitytrack.Controller;
 
+import com.qualitytrack.DTO.RegisterDTO;
 import com.qualitytrack.DTO.UsuarioDTO;
 import com.qualitytrack.Enum.NivelRol;
 import com.qualitytrack.Service.UsuarioService;
+import com.qualitytrack.modelos.Usuario;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -43,16 +48,23 @@ public class UsuarioController {
      *   "fechaCreacion": "2024-09-03T10:30:00"
      * }
      */
-    // @PostMapping
-    // @PreAuthorize("hasAnyRole('GERENTE', 'JEFE_PRODUCCION')")
-    // public ResponseEntity<UsuarioDTO> crear(@RequestBody @Valid UsuarioDTO dto) {
-    //     log.info("POST /api/usuarios - Creando usuario: {}", dto.getEmail());
-
-    //     UsuarioDTO creado = usuarioService.crear(dto);
-
-    //     // HTTP 201 Created (recurso creado exitosamente)
-    //     return ResponseEntity.status(HttpStatus.CREATED).body(creado);
-    // }
+    @PostMapping
+    @PreAuthorize("hasRole('GERENTE')")
+    public ResponseEntity<?> crear(@Valid @RequestBody RegisterDTO dto) {
+        NivelRol rol;
+        try {
+            rol = NivelRol.valueOf(dto.getRol() == null ? "" : dto.getRol().trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Rol inválido"));
+        }
+        try {
+            Usuario creado = usuarioService.crear(dto.getEmail(), dto.getNombre(), dto.getPassword(), rol);
+            log.info("Usuario creado por GERENTE con rol {}", rol);
+            return ResponseEntity.status(HttpStatus.CREATED).body(usuarioService.obtenerPorId(creado.getId()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
+        }
+    }
 
     // ================== READ ==================
 

@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -18,6 +20,8 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     // 400 - MethodArgumentNotValidException (Jakarta Bean Validation en los DTOs)
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -90,9 +94,7 @@ public class GlobalExceptionHandler {
     // 500 - Cualquier otra excepción no controlada
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex) {
-        // La especificación pide que el error interno se loguee completo y devuelva
-        // mensaje genérico
-        ex.printStackTrace(); // O utiliza un logger como SLF4J: log.error("Error no controlado", ex);
+        log.error("Error no controlado", ex);
 
         ErrorResponse errorResponse = new ErrorResponse("Error interno del servidor", new ArrayList<>());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
