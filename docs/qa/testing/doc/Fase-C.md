@@ -5,7 +5,7 @@
 **Responsable QA:** María Chiribao
 **Fase:** C — Calidad y cierre
 **Base funcional:** PRD V2 + Backlog V2 + DB V2 + Análisis Funcional QA
-**Matriz general relacionada:** `qa/testing/doc/QualityTrack-Matriz-TestCases-4fases.md`
+**Matriz general relacionada:** `docs/qa/QualityTrack-Matriz-TestCases-4fases.xlsx`
 
 ---
 
@@ -1013,13 +1013,17 @@ El sistema impide el despacho.
 Las evidencias de ejecución de Fase C deberán almacenarse en:
 
 ```text
-doc/qa/testing/evidence/img/fase-c/
+docs/qa/testing/evidence/img/Fase-c/
 ```
 
 Ejemplos:
 
 ```text
-doc/qa/testing/evidence/img/fase-c/TC-C-4.1-01.png
+docs/qa/testing/evidence/img/Fase-c/TC-C-4.1-01.png
+docs/qa/testing/evidence/img/Fase-c/TC-C-4.2-05.png
+docs/qa/testing/evidence/img/Fase-c/TC-C-4.3-02.png
+docs/qa/testing/evidence/img/Fase-c/TC-C-2.3-07.png
+docs/qa/testing/evidence/img/Fase-c/TC-C-1.4-06.png
 ```
 
 La evidencia deberá incorporarse únicamente cuando el caso sea ejecutado.

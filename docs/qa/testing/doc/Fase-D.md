@@ -6,7 +6,7 @@
 **Proyecto:** QualityTrack — S08-26-equipo04
 **Rama de trabajo:** `doc/qa/testing/Fase-D`
 **Base funcional:** PRD v2 + Backlog v2 + Análisis Funcional QA + decisiones D-1 a D-6
-**Evidencia:** `doc/qa/testing/evidence/img/fase-d/`
+**Evidencia:** `docs/qa/testing/evidence/img/Fase-d/`
 
 ---
 
@@ -853,6 +853,7 @@ Las evidencias de ejecución deberán almacenarse en:
 
 ```text
 doc/qa/testing/evidence/img/fase-d/
+docs/qa/testing/evidence/img/Fase-d/
 ```
 
 Convención sugerida:
@@ -871,7 +872,7 @@ La columna **Evidencia** deberá contener el enlace relativo al archivo correspo
 Ejemplo:
 
 ```text
-[evidencia](../evidence/img/fase-d/TC-D-5.4-02.png)
+[evidencia](../evidence/img/Fase-d/TC-D-5.4-02.png)
 ```
 
 ---
@@ -973,29 +974,35 @@ La fase podrá considerarse ejecutada cuando:
 Esta documentación forma parte de la estructura permanente:
 
 ```text
-qa-analyst/
+docs/qa/
 ├── README.md
 ├── doc/
 │   ├── Matriz-General-TestCases-4fases.md
 │   └── Matriz-General-TestCases-4fases.xlsx
+├── Analisis-Funcional.md
+├── Plan-Trabajo.md
+├── QualityTrack-Matriz-TestCases-4fases.xlsx
+├── QualityTrack-QA-Registro-Seguimiento-E2E-Frontend-Backend.md
+│
 └── testing/
     ├── doc/
     │   ├── Fase-A.md
     │   ├── Fase-B.md
     │   ├── Fase-C.md
     │   └── Fase-D.md
+    │
     └── evidence/
         └── img/
-            ├── fase-a/
-            ├── fase-b/
-            ├── fase-c/
-            └── fase-d/
+            ├── Fase-a/
+            ├── Fase-b/
+            ├── Fase-c/
+            └── Fase-d/
 ```
 
 La creación de esta estructura no reemplaza ni elimina la documentación QA histórica existente en:
 
 ```text
-docs/qa/
+docs/historico/maria/
 ```
 
 ni modifica el historial de las ramas, Issues o PR anteriores.

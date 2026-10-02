@@ -2,7 +2,7 @@
 
 ## 1. Propósito
 
-La carpeta `qa-analyst/` contiene la estructura organizada para la documentación, planificación, diseño y ejecución de QA Funcional y Testing End-to-End del proyecto **QualityTrack**.
+La carpeta `docs/qa/` contiene la estructura organizada para la documentación, planificación, diseño y ejecución de QA Funcional y Testing End-to-End del proyecto **QualityTrack**.
 
 Su objetivo es mantener en un único espacio la documentación QA actual, los casos de prueba por fase, la planificación de trabajo, el seguimiento E2E y las evidencias generadas durante las ejecuciones.
 
@@ -23,42 +23,33 @@ Esta estructura también permite mantener la trazabilidad entre:
 ## 2. Estructura actual
 
 ```text
-qa-analyst/
-├── doc/
-│   ├── Analisis-Funcional.md
-│   ├── Matriz_General_TC.md
-│   ├── Matriz-General-CI.xlsx
-│   ├── Plan-Trabajo.md
-│   └── QualityTrack-QA-Registro-Seguimiento-E2E-Frontend-Backend.md
+docs/qa/
+├── README.md
+├── Analisis-Funcional.md
+├── Plan-Trabajo.md
+├── QualityTrack-Matriz-TestCases-4fases.xlsx
+├── QualityTrack-QA-Registro-Seguimiento-E2E-Frontend-Backend.md
 │
-├── testing/
-│   └── doc/
-│       ├── Fase-A.md
-│       ├── Fase-B.md
-│       ├── Fase-C.md
-│       └── Fase-D.md
-│
-├── evidence/
-│   └── img/
-│       ├── Fase-a/
-│       ├── Fase-b/
-│       ├── Fase-c/
-│       └── Fase-d/
-│
-└── README.md
+└── testing/
+    ├── doc/
+    │   ├── Fase-A.md
+    │   ├── Fase-B.md
+    │   ├── Fase-C.md
+    │   └── Fase-D.md
+    │
+    └── evidence/
+        └── img/
+            ├── Fase-a/
+            ├── Fase-b/
+            ├── Fase-c/
+            └── Fase-d/
 ```
 
 ---
 
 # 3. Documentación QA general
 
-La carpeta:
-
-```text
-doc/
-```
-
-contiene la documentación transversal de QA del proyecto.
+La raíz de `docs/qa/` contiene la documentación transversal de QA del proyecto.
 
 ## `Analisis-Funcional.md`
 
@@ -68,51 +59,11 @@ Su función es establecer el marco funcional utilizado para diseñar los casos d
 
 ---
 
-## `Matriz_General_TC.md`
+## `QualityTrack-Matriz-TestCases-4fases.xlsx`
 
-Contiene la matriz general de casos de prueba del proyecto.
+Matriz en Excel con los casos de las cuatro fases, para filtrar, organizar y seguir la ejecución.
 
-Consolida los casos correspondientes a las diferentes fases del MVP:
-
-* Fase A;
-* Fase B;
-* Fase C;
-* Fase D.
-
-Los casos pueden encontrarse inicialmente como:
-
-```text
-NOT RUN
-```
-
-Durante la ejecución real se registrarán los resultados correspondientes.
-
-Estados de ejecución:
-
-| Estado    | Significado                                       |
-| --------- | ------------------------------------------------- |
-| `NOT RUN` | Caso diseñado pero todavía no ejecutado           |
-| `PASS`    | Resultado esperado verificado                     |
-| `FAIL`    | Resultado observado diferente al esperado         |
-| `BLOCKED` | No puede ejecutarse por una dependencia o bloqueo |
-
-La matriz general permite obtener una visión consolidada de la cobertura QA.
-
----
-
-## `Matriz-General-CI.xlsx`
-
-Archivo Excel utilizado como matriz complementaria para la planificación y seguimiento de los casos de prueba.
-
-Permite facilitar tareas como:
-
-* filtrado;
-* organización;
-* seguimiento;
-* revisión;
-* control de ejecución.
-
-Cuando se realicen cambios relevantes en la matriz, deberá mantenerse la correspondencia entre la documentación Markdown y el archivo Excel según la fuente de trabajo definida para el proyecto.
+La fuente de verdad de cada caso, su resultado y su evidencia es el archivo `testing/doc/Fase-X.md` de su fase. Cuando cambie un caso, se actualiza primero el `.md` y después el Excel.
 
 ---
 
@@ -427,7 +378,7 @@ Cuando se detecta una diferencia entre el comportamiento esperado y el observado
 
 # 12. Conservación del histórico
 
-La creación de `qa-analyst/` no elimina ni reemplaza la documentación QA histórica existente en otras ubicaciones del repositorio.
+La organización de `docs/qa/` no elimina ni reemplaza la documentación QA histórica. La documentación anterior a esta estructura (matriz de la Fase A en Markdown y en Excel, y el registro preventivo de inconsistencias E2E) está en `docs/historico/maria/`.
 
 En particular, deben conservarse las referencias relacionadas con:
 
@@ -469,7 +420,7 @@ No se deben eliminar silenciosamente referencias históricas que permitan compre
 
 # 14. Estado de la estructura
 
-La carpeta `qa-analyst/` constituye la estructura organizada de trabajo QA para el seguimiento del MVP.
+La carpeta `docs/qa/` constituye la estructura organizada de trabajo QA para el seguimiento del MVP.
 
 Los casos de prueba que todavía no fueron ejecutados permanecen como:
 
@@ -507,4 +458,4 @@ Requisito
 → Regresión
 ```
 
-De esta manera, la carpeta `qa-analyst/` funciona como espacio organizado para el trabajo QA actual.
+De esta manera, la carpeta `docs/qa/` funciona como espacio organizado para el trabajo QA actual.
