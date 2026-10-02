@@ -1,12 +1,12 @@
 # QualityTrack — QA Testing — Fase D
 
 **Versión:** 1.0
-**Estado:** Diseñado — `NOT RUN`
+**Estado:**Ejecutado — `PASS`
 **Responsable QA:** María Chiribao
 **Proyecto:** QualityTrack — S08-26-equipo04
-**Rama de trabajo:** `qa-analyst`
+**Rama de trabajo:** `doc/qa/testing/Fase-D`
 **Base funcional:** PRD v2 + Backlog v2 + Análisis Funcional QA + decisiones D-1 a D-6
-**Evidencia:** `qa-analyst/testing/evidence/img/fase-d/`
+**Evidencia:** `doc/qa/testing/evidence/img/fase-d/`
 
 ---
 
@@ -110,7 +110,7 @@ El tiempo promedio de Calidad se considera desde la finalización de la última 
 
 ## TC-D-1.2-01 — Acceso a búsqueda de órdenes
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Precondiciones
 
@@ -127,7 +127,7 @@ El tiempo promedio de Calidad se considera desde la finalización de la última 
 
 La funcionalidad de búsqueda se encuentra disponible para el usuario autorizado.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** [Evidencia TC-D-1.2-01](../../testing/evidence/img/Fase-d/TC-D-1.2-01.png)
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 **Observaciones:** `N/A`
@@ -136,7 +136,7 @@ La funcionalidad de búsqueda se encuentra disponible para el usuario autorizado
 
 ## TC-D-1.2-02 — Buscar orden existente
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Precondiciones
 
@@ -152,7 +152,7 @@ La funcionalidad de búsqueda se encuentra disponible para el usuario autorizado
 
 El sistema encuentra la orden correspondiente y permite acceder a su información.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** [Evidencia TC-D-1.2-02](../../testing/evidence/img/Fase-d/TC-D-1.2-01.png)
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 **Observaciones:** `N/A`
@@ -161,7 +161,7 @@ El sistema encuentra la orden correspondiente y permite acceder a su informació
 
 ## TC-D-1.2-03 — Buscar orden inexistente
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Pasos
 
@@ -172,7 +172,7 @@ El sistema encuentra la orden correspondiente y permite acceder a su informació
 
 El sistema informa que no existen resultados para el criterio utilizado y no muestra información correspondiente a otra orden.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** [Evidencia TC-D-1.2-03](../../testing/evidence/img/Fase-d/TC-D-1.2-03.png)
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 **Observaciones:** `N/A`
@@ -181,7 +181,7 @@ El sistema informa que no existen resultados para el criterio utilizado y no mue
 
 ## TC-D-1.2-04 — Visualizar expediente completo
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Precondiciones
 
@@ -197,7 +197,7 @@ El sistema informa que no existen resultados para el criterio utilizado y no mue
 
 El expediente permite consultar la información correspondiente a la orden y mantiene relación con los datos registrados durante su ciclo.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** [Evidencia TC-D-1.2-04](../../testing/evidence/img/Fase-d/TC-D-1.2-04.png)
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 **Observaciones:** `N/A`
@@ -206,7 +206,7 @@ El expediente permite consultar la información correspondiente a la orden y man
 
 ## TC-D-1.2-05 — Consistencia de estados del expediente
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Precondiciones
 
@@ -222,7 +222,7 @@ El expediente permite consultar la información correspondiente a la orden y man
 
 El estado informado en el expediente coincide con el estado registrado para la orden.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** [Evidencia TC-D-1.2-05](../../testing/evidence/img/Fase-d/TC-D-1.2-05.png)
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 **Observaciones:** `N/A`
@@ -231,7 +231,7 @@ El estado informado en el expediente coincide con el estado registrado para la o
 
 ## TC-D-1.2-06 — Visualización de fases y trazabilidad
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Precondiciones
 
@@ -248,7 +248,7 @@ El estado informado en el expediente coincide con el estado registrado para la o
 
 Las fases correspondientes a la orden pueden identificarse y sus estados coinciden con los registrados en producción.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** [Evidencia TC-D-1.2-06](../../testing/evidence/img/Fase-d/TC-D-1.2-06.png)
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 **Observaciones:** `N/A`
@@ -257,7 +257,7 @@ Las fases correspondientes a la orden pueden identificarse y sus estados coincid
 
 ## TC-D-1.2-07 — Visualización de información de Calidad
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Precondiciones
 
@@ -273,7 +273,7 @@ Las fases correspondientes a la orden pueden identificarse y sus estados coincid
 
 La información de Calidad asociada a la OT puede consultarse y corresponde a la orden seleccionada.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** [Evidencia TC-D-1.2-07](../../testing/evidence/img/Fase-d/TC-D-1.2-07.png)
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 **Observaciones:** `N/A`
@@ -282,7 +282,7 @@ La información de Calidad asociada a la OT puede consultarse y corresponde a la
 
 ## TC-D-1.2-08 — Visualización de adjuntos del expediente
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Precondiciones
 
@@ -298,7 +298,7 @@ La información de Calidad asociada a la OT puede consultarse y corresponde a la
 
 El adjunto corresponde a la orden consultada y puede visualizarse según las reglas definidas para adjuntos.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** [Evidencia TC-D-1.2-08](../../testing/evidence/img/Fase-d/TC-D-1.2-08.png)
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 **Observaciones:** `N/A`
@@ -309,7 +309,7 @@ El adjunto corresponde a la orden consultada y puede visualizarse según las reg
 
 ## TC-D-5.3-01 — Acceso a vista global de planta
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Precondiciones
 
@@ -325,7 +325,7 @@ El adjunto corresponde a la orden consultada y puede visualizarse según las reg
 
 La vista se encuentra disponible y presenta información de producción.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** [Evidencia TC-D-5.3-01](../../testing/evidence/img/Fase-d/TC-D-5.3-01.png)
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 **Observaciones:** `N/A`
@@ -334,7 +334,7 @@ La vista se encuentra disponible y presenta información de producción.
 
 ## TC-D-5.3-02 — Visualización de órdenes en producción
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Precondiciones
 
@@ -349,7 +349,7 @@ La vista se encuentra disponible y presenta información de producción.
 
 La vista presenta las órdenes/fases que corresponden al estado productivo actual.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** [Evidencia TC-D-5.3-02](../../testing/evidence/img/Fase-d/TC-D-5.3-02.png)
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 **Observaciones:** `N/A`
@@ -358,7 +358,7 @@ La vista presenta las órdenes/fases que corresponden al estado productivo actua
 
 ## TC-D-5.3-03 — Visualización de fases en cola
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Precondiciones
 
@@ -373,7 +373,7 @@ La vista presenta las órdenes/fases que corresponden al estado productivo actua
 
 La fase aparece con el estado correspondiente y puede diferenciarse de las fases en ejecución o terminadas.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** [Evidencia TC-D-5.3-03](../../testing/evidence/img/Fase-d/TC-D-5.3-03.png)
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 **Observaciones:** `N/A`
@@ -382,7 +382,7 @@ La fase aparece con el estado correspondiente y puede diferenciarse de las fases
 
 ## TC-D-5.3-04 — Visualización de fases en ejecución
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Precondiciones
 
@@ -397,7 +397,7 @@ La fase aparece con el estado correspondiente y puede diferenciarse de las fases
 
 La fase se presenta como actualmente en ejecución.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** [Evidencia TC-D-5.3-04](../../testing/evidence/img/Fase-d/TC-D-5.3-04.png)
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 **Observaciones:** `N/A`
@@ -406,7 +406,7 @@ La fase se presenta como actualmente en ejecución.
 
 ## TC-D-5.3-05 — Visualización de fases terminadas
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Precondiciones
 
@@ -421,7 +421,7 @@ La fase se presenta como actualmente en ejecución.
 
 La fase aparece con estado `TERMINADO` y no se presenta como pendiente o en ejecución.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** [Evidencia TC-D-5.3-05](../../testing/evidence/img/Fase-d/TC-D-5.3-05.png)
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 **Observaciones:** `N/A`
@@ -430,7 +430,7 @@ La fase aparece con estado `TERMINADO` y no se presenta como pendiente o en ejec
 
 ## TC-D-5.3-06 — Orden y consistencia de información productiva
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Precondiciones
 
@@ -445,7 +445,7 @@ La fase aparece con estado `TERMINADO` y no se presenta como pendiente o en ejec
 
 La información presentada mantiene correspondencia con los estados reales de producción.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** [Evidencia TC-D-5.3-06](../../testing/evidence/img/Fase-d/TC-D-5.3-06.png)
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 **Observaciones:** `N/A`
@@ -454,7 +454,7 @@ La información presentada mantiene correspondencia con los estados reales de pr
 
 ## TC-D-5.3-07 — No mostrar rendimiento individual de operadores
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Pasos
 
@@ -466,7 +466,7 @@ La información presentada mantiene correspondencia con los estados reales de pr
 
 La vista global no presenta métricas de rendimiento individual de operadores, dado que ese comportamiento no forma parte del alcance definido para HU-5.3.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** [Evidencia TC-D-5.3-07](../../testing/evidence/img/Fase-d/TC-D-5.3-07.png)
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 **Observaciones:** `N/A`
@@ -477,7 +477,7 @@ La vista global no presenta métricas de rendimiento individual de operadores, d
 
 ## TC-D-5.4-01 — Acceso a vista global de Calidad
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Precondiciones
 
@@ -493,7 +493,7 @@ La vista global no presenta métricas de rendimiento individual de operadores, d
 
 La vista se encuentra disponible y presenta información consolidada de Calidad.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** [Evidencia TC-D-5.4-01](../../testing/evidence/img/Fase-d/TC-D-5.4-01.png)
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 **Observaciones:** `N/A`
@@ -502,7 +502,7 @@ La vista se encuentra disponible y presenta información consolidada de Calidad.
 
 ## TC-D-5.4-02 — Porcentaje de órdenes conformes
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Precondiciones
 
@@ -517,7 +517,7 @@ La vista se encuentra disponible y presenta información consolidada de Calidad.
 
 El porcentaje mostrado corresponde a las órdenes con veredicto conforme registradas en el período/conjunto de datos correspondiente.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** [Evidencia TC-D-5.4-02](../../testing/evidence/img/Fase-d/TC-D-5.4-02.png)
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 **Observaciones:** `N/A`
@@ -526,7 +526,7 @@ El porcentaje mostrado corresponde a las órdenes con veredicto conforme registr
 
 ## TC-D-5.4-03 — Porcentaje de órdenes no conformes
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Precondiciones
 
@@ -541,7 +541,7 @@ El porcentaje mostrado corresponde a las órdenes con veredicto conforme registr
 
 El porcentaje mostrado corresponde a las órdenes con veredicto no conforme registradas.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** [Evidencia TC-D-5.4-03](../../testing/evidence/img/Fase-d/TC-D-5.4-03.png)
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 **Observaciones:** `N/A`
@@ -550,7 +550,7 @@ El porcentaje mostrado corresponde a las órdenes con veredicto no conforme regi
 
 ## TC-D-5.4-04 — Consistencia entre conformidad y no conformidad
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Precondiciones
 
@@ -565,7 +565,7 @@ El porcentaje mostrado corresponde a las órdenes con veredicto no conforme regi
 
 Los indicadores reflejan los datos reales registrados y no incluyen órdenes sin veredicto como conformes o no conformes.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** [Evidencia TC-D-5.4-04](../../testing/evidence/img/Fase-d/TC-D-5.4-04.png)
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 **Observaciones:** `N/A`
@@ -574,7 +574,7 @@ Los indicadores reflejan los datos reales registrados y no incluyen órdenes sin
 
 ## TC-D-5.4-05 — Reprocesos por fase
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Precondiciones
 
@@ -590,7 +590,7 @@ Los indicadores reflejan los datos reales registrados y no incluyen órdenes sin
 
 Los reprocesos se reflejan asociados a la fase correspondiente.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** [Evidencia TC-D-5.4-05](../../testing/evidence/img/Fase-d/TC-D-5.4-05.png)
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 **Observaciones:** `N/A`
@@ -599,7 +599,7 @@ Los reprocesos se reflejan asociados a la fase correspondiente.
 
 ## TC-D-5.4-06 — Auditorías recientes
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Precondiciones
 
@@ -614,7 +614,7 @@ Los reprocesos se reflejan asociados a la fase correspondiente.
 
 Las auditorías recientes disponibles corresponden a registros reales del sistema.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** [Evidencia TC-D-5.4-06](../../testing/evidence/img/Fase-d/TC-D-5.4-06.png)
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 **Observaciones:** `N/A`
@@ -623,7 +623,7 @@ Las auditorías recientes disponibles corresponden a registros reales del sistem
 
 ## TC-D-5.4-07 — Tiempo promedio de Calidad
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Precondiciones
 
@@ -639,7 +639,7 @@ Las auditorías recientes disponibles corresponden a registros reales del sistem
 
 El cálculo utiliza como intervalo el tiempo comprendido entre la finalización de la última fase de producción y el veredicto de Calidad.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** [Evidencia TC-D-5.4-07](../../testing/evidence/img/Fase-d/TC-D-5.4-07.png)
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 **Observaciones:** `N/A`
@@ -648,7 +648,7 @@ El cálculo utiliza como intervalo el tiempo comprendido entre la finalización 
 
 ## TC-D-5.4-08 — Actualización de indicadores después de una nueva auditoría
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Precondiciones
 
@@ -666,7 +666,7 @@ El cálculo utiliza como intervalo el tiempo comprendido entre la finalización 
 
 La información consolidada refleja el nuevo registro cuando corresponda.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** [Evidencia TC-D-5.4-08](../../testing/evidence/img/Fase-d/TC-D-5.4-08.png)
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 **Observaciones:** `N/A`
@@ -675,7 +675,7 @@ La información consolidada refleja el nuevo registro cuando corresponda.
 
 # 8. E2E-D-01 — Consulta y visibilidad global
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ## Objetivo
 
@@ -717,7 +717,7 @@ Validar que la información generada durante el ciclo de una orden pueda ser con
 
 La información consultada desde el expediente y las vistas globales mantiene consistencia con los datos registrados en el sistema.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** `N/A`
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 **Observaciones:** `N/A`
@@ -728,13 +728,13 @@ La información consultada desde el expediente y las vistas globales mantiene co
 
 ## E2E-D-NEG-01 — Consulta de orden inexistente
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Resultado esperado
 
 El sistema no muestra información de una orden diferente cuando la búsqueda no encuentra coincidencias.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** `N/A`
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 
@@ -742,7 +742,7 @@ El sistema no muestra información de una orden diferente cuando la búsqueda no
 
 ## E2E-D-NEG-02 — Información inconsistente entre expediente y vista global
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Resultado esperado
 
@@ -750,7 +750,7 @@ Los datos presentados en el expediente y las vistas globales deben corresponder 
 
 Si se detecta una diferencia, debe registrarse como defecto con evidencia suficiente para determinar el dato esperado y el dato observado.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** `N/A`
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 
@@ -758,13 +758,13 @@ Si se detecta una diferencia, debe registrarse como defecto con evidencia sufici
 
 ## E2E-D-NEG-03 — Indicadores sin datos suficientes
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Resultado esperado
 
 Cuando no existan registros suficientes para calcular un indicador, el sistema no debe presentar un valor que pueda interpretarse como un dato real incorrecto.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** `N/A`
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 
@@ -772,7 +772,7 @@ Cuando no existan registros suficientes para calcular un indicador, el sistema n
 
 ## E2E-D-NEG-04 — Datos de una orden mezclados con otra
 
-**Estado:** `NOT RUN`
+**Estado:** `PASS`
 
 ### Resultado esperado
 
@@ -791,7 +791,7 @@ No deben mezclarse:
 
 pertenecientes a otra orden.
 
-**Evidencia:** `NOT RUN`
+**Evidencia:** `N/A`
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 
@@ -808,7 +808,7 @@ pertenecientes a otra orden.
 | E2E negativos                        |      4 |
 | **Total Fase D**                     | **28** |
 
-**Estado inicial:** 28 casos `NOT RUN`.
+**Estado inicial:** 28 casos `PASS`.
 
 ---
 
@@ -816,34 +816,34 @@ pertenecientes a otra orden.
 
 | ID           | Resultado | Evidencia | Issue / Defecto | PR | Observaciones |
 | ------------ | --------- | --------- | --------------- | -- | ------------- |
-| TC-D-1.2-01  | NOT RUN   | —         | —               | —  | —             |
-| TC-D-1.2-02  | NOT RUN   | —         | —               | —  | —             |
-| TC-D-1.2-03  | NOT RUN   | —         | —               | —  | —             |
-| TC-D-1.2-04  | NOT RUN   | —         | —               | —  | —             |
-| TC-D-1.2-05  | NOT RUN   | —         | —               | —  | —             |
-| TC-D-1.2-06  | NOT RUN   | —         | —               | —  | —             |
-| TC-D-1.2-07  | NOT RUN   | —         | —               | —  | —             |
-| TC-D-1.2-08  | NOT RUN   | —         | —               | —  | —             |
-| TC-D-5.3-01  | NOT RUN   | —         | —               | —  | —             |
-| TC-D-5.3-02  | NOT RUN   | —         | —               | —  | —             |
-| TC-D-5.3-03  | NOT RUN   | —         | —               | —  | —             |
-| TC-D-5.3-04  | NOT RUN   | —         | —               | —  | —             |
-| TC-D-5.3-05  | NOT RUN   | —         | —               | —  | —             |
-| TC-D-5.3-06  | NOT RUN   | —         | —               | —  | —             |
-| TC-D-5.3-07  | NOT RUN   | —         | —               | —  | —             |
-| TC-D-5.4-01  | NOT RUN   | —         | —               | —  | —             |
-| TC-D-5.4-02  | NOT RUN   | —         | —               | —  | —             |
-| TC-D-5.4-03  | NOT RUN   | —         | —               | —  | —             |
-| TC-D-5.4-04  | NOT RUN   | —         | —               | —  | —             |
-| TC-D-5.4-05  | NOT RUN   | —         | —               | —  | —             |
-| TC-D-5.4-06  | NOT RUN   | —         | —               | —  | —             |
-| TC-D-5.4-07  | NOT RUN   | —         | —               | —  | —             |
-| TC-D-5.4-08  | NOT RUN   | —         | —               | —  | —             |
-| E2E-D-01     | NOT RUN   | —         | —               | —  | —             |
-| E2E-D-NEG-01 | NOT RUN   | —         | —               | —  | —             |
-| E2E-D-NEG-02 | NOT RUN   | —         | —               | —  | —             |
-| E2E-D-NEG-03 | NOT RUN   | —         | —               | —  | —             |
-| E2E-D-NEG-04 | NOT RUN   | —         | —               | —  | —             |
+| TC-D-1.2-01  | PASS   | —         | —               | —  | —             |
+| TC-D-1.2-02  | PASS   | —         | —               | —  | —             |
+| TC-D-1.2-03  | PASS   | —         | —               | —  | —             |
+| TC-D-1.2-04  | PASS   | —         | —               | —  | —             |
+| TC-D-1.2-05  | PASS   | —         | —               | —  | —             |
+| TC-D-1.2-06  | PASS   | —         | —               | —  | —             |
+| TC-D-1.2-07  | PASS   | —         | —               | —  | —             |
+| TC-D-1.2-08  | PASS   | —         | —               | —  | —             |
+| TC-D-5.3-01  | PASS   | —         | —               | —  | —             |
+| TC-D-5.3-02  | PASS   | —         | —               | —  | —             |
+| TC-D-5.3-03  | PASS   | —         | —               | —  | —             |
+| TC-D-5.3-04  | PASS   | —         | —               | —  | —             |
+| TC-D-5.3-05  | PASS   | —         | —               | —  | —             |
+| TC-D-5.3-06  | PASS   | —         | —               | —  | —             |
+| TC-D-5.3-07  | PASS   | —         | —               | —  | —             |
+| TC-D-5.4-01  | PASS   | —         | —               | —  | —             |
+| TC-D-5.4-02  | PASS   | —         | —               | —  | —             |
+| TC-D-5.4-03  | PASS   | —         | —               | —  | —             |
+| TC-D-5.4-04  | PASS   | —         | —               | —  | —             |
+| TC-D-5.4-05  | PASS   | —         | —               | —  | —             |
+| TC-D-5.4-06  | PASS   | —         | —               | —  | —             |
+| TC-D-5.4-07  | PASS   | —         | —               | —  | —             |
+| TC-D-5.4-08  | PASS   | —         | —               | —  | —             |
+| E2E-D-01     | PASS   | —         | —               | —  | —             |
+| E2E-D-NEG-01 | PASS   | —         | —               | —  | —             |
+| E2E-D-NEG-02 | PASS   | —         | —               | —  | —             |
+| E2E-D-NEG-03 | PASS   | —         | —               | —  | —             |
+| E2E-D-NEG-04 | PASS   | —         | —               | —  | —             |
 
 ---
 
@@ -852,7 +852,7 @@ pertenecientes a otra orden.
 Las evidencias de ejecución deberán almacenarse en:
 
 ```text
-qa-analyst/testing/evidence/img/fase-d/
+doc/qa/testing/evidence/img/fase-d/
 ```
 
 Convención sugerida:
@@ -956,13 +956,13 @@ La fase podrá considerarse ejecutada cuando:
 
 ---
 
-# 17. Estado inicial de la Fase D
+# 17. Estado final de la Fase D
 
 **Total de casos diseñados:** 28
-**PASS:** 0
+**PASS:** 28
 **FAIL:** 0
 **BLOCKED:** 0
-**NOT RUN:** 28
+**NOT RUN:** 0
 
 > La condición `NOT RUN` indica únicamente que el caso está diseñado y pendiente de ejecución. No representa un resultado de calidad ni implica que la funcionalidad esté aprobada o rechazada.
 
@@ -976,8 +976,8 @@ Esta documentación forma parte de la estructura permanente:
 qa-analyst/
 ├── README.md
 ├── doc/
-│   ├── Matriz-General-TestCases.md
-│   └── Matriz-General-TestCases.xlsx
+│   ├── Matriz-General-TestCases-4fases.md
+│   └── Matriz-General-TestCases-4fases.xlsx
 └── testing/
     ├── doc/
     │   ├── Fase-A.md
