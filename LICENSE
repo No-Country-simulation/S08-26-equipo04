@@ -1,21 +1,23 @@
-MIT License
+Copyright (c) 2026 Equipo QualityTrack. Todos los derechos reservados.
 
-Copyright (c) 2026 No Country Simulation
+Integrantes del equipo QualityTrack:
+Mel Zarate, Felipe Arroyo, Abel Fucili, Luis Feliz, Lisandro Sánchez Morales,
+Alicia Zuñega, Alfredo Agüero Ortiz, Hazael Degante, Maria Chiribao.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Este repositorio y su contenido (código fuente, diseño, documentación e
+imágenes) son propiedad exclusiva de los integrantes del equipo QualityTrack.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Se permite consultar el contenido de este repositorio con fines de evaluación
+académica y como referencia de portfolio de sus integrantes.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Queda prohibido, sin autorización previa y por escrito del equipo QualityTrack,
+copiar, modificar, distribuir, sublicenciar o utilizar este software o
+cualquiera de sus partes con fines comerciales.
+
+EL SOFTWARE SE PROPORCIONA "TAL CUAL", SIN GARANTÍA DE NINGÚN TIPO, EXPRESA O
+IMPLÍCITA. EN NINGÚN CASO LOS AUTORES SERÁN RESPONSABLES POR RECLAMOS, DAÑOS U
+OTRAS RESPONSABILIDADES DERIVADAS DEL USO DEL SOFTWARE.
+
+Este proyecto se publicó entre el 31/08/2026 y el 02/10/2026 bajo la
+licencia MIT. A partir de esa fecha, esa licencia queda reemplazada por estos
+términos.
