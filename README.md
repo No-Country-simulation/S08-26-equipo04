@@ -61,7 +61,7 @@ El MVP se desarrolló en 32 días dentro del programa **NO-Country**, con 5 role
 | `frontend/` | Aplicación React y landing page | Frontend |
 | `docs/funcional/` | PRD, Backlog, Changelog de decisiones | Mel |
 | `docs/datos/` | Esquema de Base de Datos | Mel |
-| `docs/backend/` | Especificación Técnica y Plan de Trabajo de Backend | Lisandro / Felipe |
+| `docs/backend/` | Especificación Técnica y Plan de Trabajo de Backend | Felipe |
 | `docs/frontend/` | Especificación Técnica, Plan de Trabajo, Service Blueprint | Alicia / Alfredo |
 | `docs/qa/` | Análisis Funcional, Plan de Trabajo, casos de prueba por fase con resultados y evidencias (`testing/`) y registro E2E de QA | Maria |
 | `docs/historico/` | Antecedentes del proyecto y propuestas paralelas, superados por las versiones vigentes | — |
