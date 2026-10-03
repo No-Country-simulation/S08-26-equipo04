@@ -108,4 +108,4 @@ El equipo trabaja sobre `develop` como rama de integración, con una rama por ta
 
 ## 📄 Licencia
 
-Este proyecto se distribuye bajo la licencia **MIT**. Consultá el archivo [`LICENSE`](LICENSE) para más detalles.
+© 2026 Equipo QualityTrack. **Todos los derechos reservados.** El código puede consultarse con fines de evaluación y portfolio, pero no puede copiarse, modificarse ni utilizarse comercialmente sin autorización del equipo. Ver [`LICENSE`](LICENSE).
