@@ -152,7 +152,7 @@ La funcionalidad de búsqueda se encuentra disponible para el usuario autorizado
 
 El sistema encuentra la orden correspondiente y permite acceder a su información.
 
-**Evidencia:** [Evidencia TC-D-1.2-02](../../testing/evidence/img/Fase-d/TC-D-1.2-01.png)
+**Evidencia:** [Evidencia TC-D-1.2-02](../../testing/evidence/img/Fase-d/TC-D-1.2-02.png)
 **Defecto / Issue:** `N/A`
 **PR:** `N/A`
 **Observaciones:** `N/A`
@@ -808,7 +808,7 @@ pertenecientes a otra orden.
 | E2E negativos                        |      4 |
 | **Total Fase D**                     | **28** |
 
-**Estado inicial:** 28 casos `PASS`.
+**Resultado:** 28 casos `PASS`.
 
 ---
 
@@ -816,29 +816,29 @@ pertenecientes a otra orden.
 
 | ID           | Resultado | Evidencia | Issue / Defecto | PR | Observaciones |
 | ------------ | --------- | --------- | --------------- | -- | ------------- |
-| TC-D-1.2-01  | PASS   | —         | —               | —  | —             |
-| TC-D-1.2-02  | PASS   | —         | —               | —  | —             |
+| TC-D-1.2-01  | PASS   | [Evidencia](../../testing/evidence/img/Fase-d/TC-D-1.2-01.png) | —               | —  | —             |
+| TC-D-1.2-02  | PASS   | [Evidencia](../../testing/evidence/img/Fase-d/TC-D-1.2-02.png) | —               | —  | —             |
 | TC-D-1.2-03  | PASS   | —         | —               | —  | —             |
-| TC-D-1.2-04  | PASS   | —         | —               | —  | —             |
-| TC-D-1.2-05  | PASS   | —         | —               | —  | —             |
-| TC-D-1.2-06  | PASS   | —         | —               | —  | —             |
-| TC-D-1.2-07  | PASS   | —         | —               | —  | —             |
-| TC-D-1.2-08  | PASS   | —         | —               | —  | —             |
-| TC-D-5.3-01  | PASS   | —         | —               | —  | —             |
-| TC-D-5.3-02  | PASS   | —         | —               | —  | —             |
-| TC-D-5.3-03  | PASS   | —         | —               | —  | —             |
-| TC-D-5.3-04  | PASS   | —         | —               | —  | —             |
-| TC-D-5.3-05  | PASS   | —         | —               | —  | —             |
-| TC-D-5.3-06  | PASS   | —         | —               | —  | —             |
-| TC-D-5.3-07  | PASS   | —         | —               | —  | —             |
-| TC-D-5.4-01  | PASS   | —         | —               | —  | —             |
-| TC-D-5.4-02  | PASS   | —         | —               | —  | —             |
-| TC-D-5.4-03  | PASS   | —         | —               | —  | —             |
-| TC-D-5.4-04  | PASS   | —         | —               | —  | —             |
-| TC-D-5.4-05  | PASS   | —         | —               | —  | —             |
-| TC-D-5.4-06  | PASS   | —         | —               | —  | —             |
-| TC-D-5.4-07  | PASS   | —         | —               | —  | —             |
-| TC-D-5.4-08  | PASS   | —         | —               | —  | —             |
+| TC-D-1.2-04  | PASS   | [Evidencia](../../testing/evidence/img/Fase-d/TC-D-1.2-04.png) | —               | —  | —             |
+| TC-D-1.2-05  | PASS   | [Evidencia](../../testing/evidence/img/Fase-d/TC-D-1.2-05.png) | —               | —  | —             |
+| TC-D-1.2-06  | PASS   | [Evidencia](../../testing/evidence/img/Fase-d/TC-D-1.2-06.png) | —               | —  | —             |
+| TC-D-1.2-07  | PASS   | [Evidencia](../../testing/evidence/img/Fase-d/TC-D-1.2-07.png) | —               | —  | —             |
+| TC-D-1.2-08  | PASS   | [Evidencia](../../testing/evidence/img/Fase-d/TC-D-1.2-08.png) | —               | —  | —             |
+| TC-D-5.3-01  | PASS   | [Evidencia](../../testing/evidence/img/Fase-d/TC-D-5.3-01.png) | —               | —  | —             |
+| TC-D-5.3-02  | PASS   | [Evidencia](../../testing/evidence/img/Fase-d/TC-D-5.3-02.png) | —               | —  | —             |
+| TC-D-5.3-03  | PASS   | [Evidencia](../../testing/evidence/img/Fase-d/TC-D-5.3-03.png) | —               | —  | —             |
+| TC-D-5.3-04  | PASS   | [Evidencia](../../testing/evidence/img/Fase-d/TC-D-5.3-04.png) | —               | —  | —             |
+| TC-D-5.3-05  | PASS   | [Evidencia](../../testing/evidence/img/Fase-d/TC-D-5.3-05.png) | —               | —  | —             |
+| TC-D-5.3-06  | PASS   | [Evidencia](../../testing/evidence/img/Fase-d/TC-D-5.3-06.png) | —               | —  | —             |
+| TC-D-5.3-07  | PASS   | [Evidencia](../../testing/evidence/img/Fase-d/TC-D-5.3-07.png) | —               | —  | —             |
+| TC-D-5.4-01  | PASS   | [Evidencia](../../testing/evidence/img/Fase-d/TC-D-5.4-01.png) | —               | —  | —             |
+| TC-D-5.4-02  | PASS   | [Evidencia](../../testing/evidence/img/Fase-d/TC-D-5.4-02.png) | —               | —  | —             |
+| TC-D-5.4-03  | PASS   | [Evidencia](../../testing/evidence/img/Fase-d/TC-D-5.4-03.png) | —               | —  | —             |
+| TC-D-5.4-04  | PASS   | [Evidencia](../../testing/evidence/img/Fase-d/TC-D-5.4-04.png) | —               | —  | —             |
+| TC-D-5.4-05  | PASS   | [Evidencia](../../testing/evidence/img/Fase-d/TC-D-5.4-05.png) | —               | —  | —             |
+| TC-D-5.4-06  | PASS   | [Evidencia](../../testing/evidence/img/Fase-d/TC-D-5.4-06.png) | —               | —  | —             |
+| TC-D-5.4-07  | PASS   | [Evidencia](../../testing/evidence/img/Fase-d/TC-D-5.4-07.png) | —               | —  | —             |
+| TC-D-5.4-08  | PASS   | [Evidencia](../../testing/evidence/img/Fase-d/TC-D-5.4-08.png) | —               | —  | —             |
 | E2E-D-01     | PASS   | —         | —               | —  | —             |
 | E2E-D-NEG-01 | PASS   | —         | —               | —  | —             |
 | E2E-D-NEG-02 | PASS   | —         | —               | —  | —             |
@@ -852,7 +852,7 @@ pertenecientes a otra orden.
 Las evidencias de ejecución deberán almacenarse en:
 
 ```text
-doc/qa/testing/evidence/img/fase-d/
+docs/qa/testing/evidence/img/Fase-d/
 docs/qa/testing/evidence/img/Fase-d/
 ```
 

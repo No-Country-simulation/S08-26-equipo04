@@ -242,7 +242,6 @@ La última fase queda `TERMINADO` y la OT pasa a `EN_CALIDAD`.
 
 El Operario visualiza correctamente las tareas que tiene pendientes.
 
-**Estado:**
 **Estado:** `PASS`
 **Evidencia:** [Evidencia C-B-3.1-07](../../testing/evidence/img/Fase-b/TC-B-3.1-07.png)
 **Defecto / PR:** —
@@ -879,7 +878,7 @@ NOT RUN
 
 # 12. Matriz resumida de cobertura
 
-| User Story                                |  Casos | Estado inicial |
+| User Story                                |  Casos | Resultado      |
 | ----------------------------------------- | -----: | -------------- |
 | HU-3.1 — Tareas en ejecución y pendientes |     10 | `PASS`      |
 | HU-3.2 — Adjuntos                         |      5 | `PASS`      |
@@ -980,18 +979,18 @@ La ejecución deberá mantener relación con:
 
 ---
 
-# 17. Estado inicial
+# 17. Estado final
 
 Al incorporar este documento al repositorio:
 
 ```text
 FASE B
-Estado: TESTER RUN
+Estado: PASS
 Casos diseñados: 36
-Casos ejecutados:36
+Casos ejecutados: 36
 PASS: 36
 FAIL: 0
 BLOCKED: 0
 ```
 
-Este documento representa el **diseño FINAL de pruebas de Fase B** y no constituye evidencia de ejecución ni de validación funcional del sistema.
+Este documento representa el **diseño FINAL de pruebas de Fase B** y constituye evidencia de ejecución de validación funcional del sistema.

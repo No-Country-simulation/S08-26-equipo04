@@ -1,7 +1,7 @@
 # QualityTrack — QA Testing — Fase C
 
 **Versión:** 1.0
-**Estado:** Ejecutado
+**Estado:** Ejecutado — `PASS`
 **Responsable QA:** María Chiribao
 **Fase:** C — Calidad y cierre
 **Base funcional:** PRD V2 + Backlog V2 + DB V2 + Análisis Funcional QA
@@ -167,8 +167,8 @@ Validar la recepción de las OT terminadas por parte de Calidad y el ordenamient
 
 La OT aparece disponible para revisión en Calidad.
 
-**Estado:** Ejecutado
-**Evidencia:** [Evidencia TC-C-1.4-01](../../testing/evidence/img/Fase-c/TC-C-1.4-01.png)
+**Estado:** `PASS`
+**Evidencia:** [Evidencia TC-C-4.1-01](../../testing/evidence/img/Fase-c/TC-C-4.1-01.png)
 **Defecto / PR:** —
 
 ---
@@ -186,8 +186,8 @@ La OT aparece disponible para revisión en Calidad.
 
 La OT se encuentra en `EN_CALIDAD`.
 
-**Estado:** Ejecutado
-**Evidencia:** [Evidencia TC-C-1.4-02](../../testing/evidence/img/Fase-c/TC-C-1.4-02.png)
+**Estado:** `PASS`
+**Evidencia:** [Evidencia TC-C-4.1-02](../../testing/evidence/img/Fase-c/TC-C-4.1-02.png)
 **Defecto / PR:** —
 
 ---
@@ -206,8 +206,8 @@ La OT se encuentra en `EN_CALIDAD`.
 
 Las OT aparecen ordenadas según la finalización de la última fase de producción.
 
-**Estado:** Ejecutado
-**Evidencia:** [Evidencia TC-C-1.4-03](../../testing/evidence/img/Fase-c/TC-C-1.4-03.png)
+**Estado:** `PASS`
+**Evidencia:** [Evidencia TC-C-4.1-03](../../testing/evidence/img/Fase-c/TC-C-4.1-03.png)
 **Defecto / PR:** —
 
 ---
@@ -226,8 +226,8 @@ Las OT aparecen ordenadas según la finalización de la última fase de producci
 
 La OT no se presenta como lista para auditoría mientras tenga producción pendiente.
 
-**Estado:** Ejecutado
-**Evidencia:** [Evidencia TC-C-1.4-04](../../testing/evidence/img/Fase-c/TC-C-1.4-04.png)
+**Estado:** `PASS`
+**Evidencia:** [Evidencia TC-C-4.1-04](../../testing/evidence/img/Fase-c/TC-C-4.1-04.png)
 **Defecto / PR:** —
 
 ---
@@ -246,8 +246,8 @@ La OT no se presenta como lista para auditoría mientras tenga producción pendi
 
 Se visualiza el expediente correspondiente a la OT.
 
-**Estado:** Ejecutados
-**Evidencia:** [Evidencia TC-C-1.4-05](../../testing/evidence/img/Fase-c/TC-C-1.4-05.png)
+**Estado:** `PASS`
+**Evidencia:** [Evidencia TC-C-4.1-05](../../testing/evidence/img/Fase-c/TC-C-4.1-05.png)
 **Defecto / PR:** —
 
 ---
@@ -276,7 +276,7 @@ El checklist está compuesto por **7 puntos** y el resultado debe registrarse co
 
 Se visualizan los 7 puntos de control definidos.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:** [Evidencia TC-C-4.2-01](../../testing/evidence/img/Fase-c/TC-C-4.2-01.png)
 **Defecto / PR:** —
 
@@ -295,7 +295,7 @@ Se visualizan los 7 puntos de control definidos.
 
 Las 7 respuestas quedan correctamente preparadas para su registro.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:** [Evidencia TC-C-4.2-02](../../testing/evidence/img/Fase-c/TC-C-4.2-02.png)
 **Defecto / PR:** —
 
@@ -333,7 +333,7 @@ El sistema permite seleccionar `No cumple` y exige la observación correspondien
 
 El sistema permite utilizar `No aplica` como respuesta válida.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:** [Evidencia TC-C-4.2-04](../../testing/evidence/img/Fase-c/TC-C-4.2-04.png)
 **Defecto / PR:** —
 
@@ -353,7 +353,7 @@ El sistema permite utilizar `No aplica` como respuesta válida.
 
 El sistema impide completar el checklist porque la observación es obligatoria.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:** [Evidencia TC-C-4.2-05](../../testing/evidence/img/Fase-c/TC-C-4.2-05.png)
 **Defecto / PR:** —
 
@@ -373,8 +373,8 @@ El sistema impide completar el checklist porque la observación es obligatoria.
 
 El sistema permite continuar con la observación registrada.
 
-**Estado:** Ejecutado
-**Evidencia:** `No cumple`
+**Estado:** `PASS`
+**Evidencia:** [Evidencia TC-C-4.2-06](../../testing/evidence/img/Fase-c/TC-C-4.2-06.png)
 **Defecto / PR:** —
 
 ---
@@ -393,7 +393,7 @@ El sistema permite continuar con la observación registrada.
 
 Las respuestas y el veredicto se registran conjuntamente.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:** [Evidencia TC-C-4.2-07](../../testing/evidence/img/Fase-c/TC-C-4.2-07.png)
 **Defecto / PR:** —
 
@@ -413,7 +413,7 @@ Las respuestas y el veredicto se registran conjuntamente.
 
 No quedan respuestas parciales persistidas como una auditoría finalizada.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:** [Evidencia TC-C-4.2-08](../../testing/evidence/img/Fase-c/TC-C-4.2-08.png)
 **Defecto / PR:** —
 
@@ -432,7 +432,7 @@ No quedan respuestas parciales persistidas como una auditoría finalizada.
 
 Las respuestas registradas permanecen disponibles para consulta.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:** [Evidencia TC-C-4.2-09](../../testing/evidence/img/Fase-c/TC-C-4.2-09.png)
 **Defecto / PR:** —
 
@@ -460,7 +460,7 @@ Validar las transiciones posteriores al resultado de la auditoría.
 
 La OT queda habilitada para el circuito de `DESPACHO`.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:** [Evidencia TC-C-4.3-01](../../testing/evidence/img/Fase-c/TC-C-4.3-01.png)
 **Defecto / PR:** —
 
@@ -481,7 +481,7 @@ La OT queda habilitada para el circuito de `DESPACHO`.
 
 La OT pasa a `NO_CONFORME`.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:** [Evidencia TC-C-4.3-02](../../testing/evidence/img/Fase-c/TC-C-4.3-02.png)
 **Defecto / PR:** —
 
@@ -501,7 +501,7 @@ La OT pasa a `NO_CONFORME`.
 
 Las observaciones quedan asociadas a la OT y disponibles para el circuito posterior.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:** [Evidencia TC-C-4.3-03](../../testing/evidence/img/Fase-c/TC-C-4.3-03.png)
 **Defecto / PR:** —
 
@@ -521,7 +521,7 @@ Las observaciones quedan asociadas a la OT y disponibles para el circuito poster
 
 El Jefe puede visualizar la OT y las observaciones de Calidad.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:**[Evidencia TC-C-4.3-04](../../testing/evidence/img/Fase-c/TC-C-4.3-04.png)
 **Defecto / PR:** —
 
@@ -542,7 +542,7 @@ El Jefe puede visualizar la OT y las observaciones de Calidad.
 
 Calidad registra el resultado y las observaciones, pero la selección de la fase de retrabajo corresponde al Jefe.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:**[Evidencia TC-C-4.3-05](../../testing/evidence/img/Fase-c/TC-C-4.3-05.png)
 **Defecto / PR:** —
 
@@ -577,7 +577,7 @@ Cuando corresponda, los valores anteriores pueden utilizarse como sugerencia.
 
 La OT no conforme aparece disponible junto con las observaciones de Calidad.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:**[Evidencia TC-C-2.3-01](../../testing/evidence/img/Fase-c/TC-C-2.3-01.png)
 **Defecto / PR:** —
 
@@ -597,7 +597,7 @@ La OT no conforme aparece disponible junto con las observaciones de Calidad.
 
 El Jefe puede seleccionar la fase correspondiente al retrabajo.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:** [Evidencia TC-C-2.3-02](../../testing/evidence/img/Fase-c/TC-C-2.3-02.png)
 **Defecto / PR:** —
 
@@ -617,7 +617,7 @@ El Jefe puede seleccionar la fase correspondiente al retrabajo.
 
 El operador puede ser asignado correctamente.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:** [Evidencia TC-C-2.3-03](../../testing/evidence/img/Fase-c/TC-C-2.3-03.png)
 **Defecto / PR:** —
 
@@ -636,7 +636,7 @@ El operador puede ser asignado correctamente.
 
 El sistema impide la asignación.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:** [Evidencia TC-C-2.3-04](../../testing/evidence/img/Fase-c/TC-C-2.3-04.png)
 **Defecto / PR:** —
 
@@ -655,7 +655,7 @@ El sistema impide la asignación.
 
 El tiempo de retrabajo queda registrado correctamente.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:** [Evidencia TC-C-2.3-05](../../testing/evidence/img/Fase-c/TC-C-2.3-05.png)
 **Defecto / PR:** —
 
@@ -674,7 +674,7 @@ El tiempo de retrabajo queda registrado correctamente.
 
 Cuando corresponda, se muestran como sugerencia los valores anteriores, sin impedir que el Jefe seleccione otros valores válidos.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:** [Evidencia TC-C-2.3-06](../../testing/evidence/img/Fase-c/TC-C-2.3-06.png)
 **Defecto / PR:** —
 
@@ -693,7 +693,7 @@ Cuando corresponda, se muestran como sugerencia los valores anteriores, sin impe
 
 La fase seleccionada vuelve al circuito de producción correspondiente.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:** [Evidencia TC-C-2.3-07](../../testing/evidence/img/Fase-c/TC-C-2.3-07.png)
 **Defecto / PR:** —
 
@@ -713,7 +713,7 @@ La fase seleccionada vuelve al circuito de producción correspondiente.
 
 La OT vuelve al circuito de Calidad para una nueva revisión.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:** [Evidencia TC-C-2.3-08](../../testing/evidence/img/Fase-c/TC-C-2.3-08.png)
 **Defecto / PR:** —
 
@@ -740,7 +740,7 @@ Validar el cierre del circuito cuando una OT obtiene un resultado conforme.
 
 La OT está habilitada para pasar a `DESPACHO`.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:** [Evidencia TC-C-1.4-01](../../testing/evidence/img/Fase-c/TC-C-1.4-01.png)
 **Defecto / PR:** —
 
@@ -759,7 +759,7 @@ La OT está habilitada para pasar a `DESPACHO`.
 
 El sistema impide el despacho de una OT no conforme.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:** [Evidencia TC-C-1.4-02](../../testing/evidence/img/Fase-c/TC-C-1.4-02.png)
 **Defecto / PR:** —
 
@@ -779,7 +779,7 @@ El sistema impide el despacho de una OT no conforme.
 
 La OT pasa a `DESPACHO`.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:** [Evidencia TC-C-1.4-03](../../testing/evidence/img/Fase-c/TC-C-1.4-03.png)
 **Defecto / PR:** —
 
@@ -799,7 +799,7 @@ La OT pasa a `DESPACHO`.
 
 La OT pasa a `ENTREGADA`.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:** [Evidencia TC-C-1.4-04](../../testing/evidence/img/Fase-c/TC-C-1.4-04.png)
 **Defecto / PR:** —
 
@@ -819,7 +819,7 @@ La OT pasa a `ENTREGADA`.
 
 El sistema impide completar la entrega porque el receptor es obligatorio.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:** [Evidencia TC-C-1.4-05](../../testing/evidence/img/Fase-c/TC-C-1.4-05.png)
 **Defecto / PR:** —
 
@@ -839,7 +839,7 @@ El sistema impide completar la entrega porque el receptor es obligatorio.
 
 La entrega queda registrada con receptor y fecha y la OT pasa a `ENTREGADA`.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:** [Evidencia TC-C-1.4-06](../../testing/evidence/img/Fase-c/TC-C-1.4-06.png)
 **Defecto / PR:** —
 
@@ -857,7 +857,7 @@ La entrega queda registrada con receptor y fecha y la OT pasa a `ENTREGADA`.
 
 El sistema impide completar la entrega.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:** [Evidencia TC-C-1.4-07](../../testing/evidence/img/Fase-c/TC-C-1.4-07.png)
 **Defecto / PR:** —
 
@@ -938,7 +938,7 @@ Intentar emitir un veredicto sin completar las respuestas requeridas.
 
 El sistema impide finalizar la auditoría.
 
-**Estado:** Ejecutado
+**Estado:** `PASS`
 **Evidencia:** —
 **Defecto / PR:** —
 
@@ -994,7 +994,7 @@ El sistema impide el despacho.
 
 # 15. Matriz resumida de cobertura
 
-| User Story                                |  Casos | Estado inicial |
+| User Story                                |  Casos | Resultado      |
 | ----------------------------------------- | -----: | -------------- |
 | HU-4.1 — Órdenes terminadas               |      5 | `PASS`      |
 | HU-4.2 — Auditoría / checklist            |      9 | `PASS`      |
