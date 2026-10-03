@@ -3,6 +3,7 @@
 > **Plataforma para PyMEs con producción por fases: centraliza el recorrido completo de cada Orden de Trabajo, de la solicitud del cliente a la entrega, con trazabilidad de cada etapa.**
 
 [![Demo](https://img.shields.io/badge/demo-qualitytrack--six.vercel.app-0D6C7C)](https://qualitytrack-six.vercel.app)
+[![Video](https://img.shields.io/badge/video-demo%20en%20YouTube-FF0000?logo=youtube)](https://www.youtube.com/watch?v=u0yK_OM8CLY)
 [![Repo](https://img.shields.io/badge/repo-GitHub-181717?logo=github)](https://github.com/No-Country-simulation/S08-26-equipo04)
 [![Board](https://img.shields.io/badge/tablero-Project-blue)](https://github.com/orgs/No-Country-simulation/projects/490)
 [![Figma](https://img.shields.io/badge/diseño-Figma-F24E1E?logo=figma)](https://www.figma.com/design/icUziVsu86Dl1fhjNhxfk2/QualityTrack)
@@ -24,6 +25,7 @@ El MVP se desarrolló en 32 días dentro del programa **NO-Country**, con 5 role
 - **MVP completo y presentado el 02/10/2026.** Las 17 historias de usuario tienen backend y pantalla conectados.
 - **QA ejecutado en las 4 fases del flujo:** 134 casos en PASS, con evidencia por caso ([`docs/qa/testing/`](docs/qa/testing/)).
 - **Demo:** [qualitytrack-six.vercel.app](https://qualitytrack-six.vercel.app). El primer ingreso puede tardar hasta un minuto, porque el servidor gratuito se activa con la primera visita.
+- **Video de la demo:** [recorrido completo del flujo en YouTube](https://www.youtube.com/watch?v=u0yK_OM8CLY).
 
 ---
 
