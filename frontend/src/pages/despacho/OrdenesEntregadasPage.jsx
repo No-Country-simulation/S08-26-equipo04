@@ -1,0 +1,157 @@
+import { useMemo, useState } from "react";
+import { PackageCheck, RefreshCw, Search } from "lucide-react";
+import { useOrdenesTrabajo } from "../../hooks/useOrdenesTrabajo";
+import {
+  Button,
+  Card,
+  DataTable,
+  EmptyState,
+  ErrorBanner,
+  SkeletonTable,
+  Title,
+} from "../../components/ui";
+import { formatDateTime, formatFechaEntrega } from "../../api/helpers";
+
+/**
+ * Vista de solo lectura del historial de OTs entregadas.
+ * Accesible para VENDEDOR y JEFE_PRODUCCION.
+ * No incluye ninguna acción de entrega (RBAC - issue #157).
+ */
+export const OrdenesEntregadasPage = () => {
+  const { ordenesTrabajo, cargando, error, recargar } = useOrdenesTrabajo();
+  const [busqueda, setBusqueda] = useState("");
+
+  const ordenesEntregadas = useMemo(
+    () => ordenesTrabajo.filter((ot) => ot.estado === "ENTREGADA"),
+    [ordenesTrabajo],
+  );
+
+  const ordenesFiltradas = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase();
+    if (!texto) return ordenesEntregadas;
+    return ordenesEntregadas.filter((ot) =>
+      [
+        ot.numero_ot,
+        ot.cliente_razon_social,
+        ot.descripcion_pieza,
+        ot.receptor_nombre,
+      ].some((value) => value?.toLowerCase().includes(texto)),
+    );
+  }, [ordenesEntregadas, busqueda]);
+
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: "numero_ot",
+        header: "Orden de trabajo",
+        cell: ({ getValue }) => (
+          <span className="font-medium text-ink">{getValue()}</span>
+        ),
+      },
+      {
+        accessorKey: "cliente_razon_social",
+        header: "Cliente",
+        cell: ({ getValue }) => getValue() || "—",
+      },
+      {
+        accessorKey: "descripcion_pieza",
+        header: "Pieza o trabajo",
+        cell: ({ getValue }) => getValue() || "—",
+      },
+      {
+        accessorKey: "cantidad",
+        header: "Cantidad",
+        cell: ({ getValue }) => getValue() ?? "—",
+      },
+      {
+        accessorKey: "fecha_entrega",
+        header: "Fecha de entrega",
+        cell: ({ getValue }) => {
+          const value = getValue();
+          return value ? formatDateTime(value) : "—";
+        },
+      },
+      {
+        accessorKey: "receptor_nombre",
+        header: "Recibida por",
+        cell: ({ getValue }) => getValue() || "—",
+      },
+      {
+        accessorKey: "fecha_esperada_entrega",
+        header: "Entrega solicitada",
+        cell: ({ getValue }) => formatFechaEntrega(getValue()),
+      },
+    ],
+    [],
+  );
+
+  return (
+    <div className="mx-auto max-w-7xl space-y-6">
+      <Title>Órdenes entregadas</Title>
+
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-h1 text-ink">Órdenes entregadas</h1>
+          <p className="mt-1 text-body text-text-secondary">
+            Historial de órdenes de trabajo entregadas (solo lectura).
+          </p>
+        </div>
+        <Button
+          variant="secondary"
+          onClick={recargar}
+          loading={cargando}
+          aria-label="Actualizar órdenes entregadas"
+        >
+          <RefreshCw
+            className={`h-4 w-4 ${cargando ? "hidden" : ""}`}
+            aria-hidden={cargando}
+          />
+          Actualizar
+        </Button>
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <label className="relative flex-1" htmlFor="entregadas-busqueda">
+          <Search
+            className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted"
+            aria-hidden="true"
+          />
+          <input
+            id="entregadas-busqueda"
+            name="busqueda"
+            type="search"
+            className="input h-11 w-full pl-10 text-body"
+            value={busqueda}
+            onChange={(event) => setBusqueda(event.target.value)}
+            placeholder="Buscar por OT, cliente, pieza o receptor"
+            aria-label="Buscar por OT, cliente, pieza o receptor"
+          />
+        </label>
+      </div>
+
+      <Card>
+        {cargando ? (
+          <SkeletonTable columns={7} rows={5} />
+        ) : error ? (
+          <ErrorBanner message={error} onRetry={recargar} />
+        ) : ordenesFiltradas.length === 0 ? (
+          <EmptyState
+            icon={PackageCheck}
+            title="No hay OTs entregadas"
+            description="Cuando el vendedor registre entregas, aparecerán aquí para consulta."
+          />
+        ) : (
+          <DataTable
+            columns={columns}
+            data={ordenesFiltradas}
+            footer={`${ordenesFiltradas.length} ${
+              ordenesFiltradas.length === 1
+                ? "orden entregada"
+                : "órdenes entregadas"
+            }`}
+          />
+        )}
+      </Card>
+    </div>
+  );
+};

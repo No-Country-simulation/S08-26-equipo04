@@ -1,0 +1,171 @@
+package com.backend.qualititrack.Service;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.backend.qualititrack.DTO.CrearFaseRequestDTO;
+import com.backend.qualititrack.DTO.FaseOperarioHabilitadoResponseDTO;
+import com.backend.qualititrack.DTO.OperarioDTO;
+import com.backend.qualititrack.Enum.NivelRol;
+import com.backend.qualititrack.exception.EntityNotFoundException;
+import com.backend.qualititrack.modelos.FaseCatalogo;
+import com.backend.qualititrack.modelos.FaseOperarioHabilitado;
+import com.backend.qualititrack.modelos.Usuario;
+import com.backend.qualititrack.repository.FaseOperarioHabilitadoRepository;
+import com.backend.qualititrack.repository.FaseRepository;
+import com.backend.qualititrack.repository.UsuarioRepository;
+
+@Service
+public class FaseService {
+
+    private final FaseRepository faseRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final FaseOperarioHabilitadoRepository faseOperarioRepository;
+
+    public FaseService(FaseRepository faseRepository, UsuarioRepository usuarioRepository, FaseOperarioHabilitadoRepository faseOperarioRepository) {
+        this.faseRepository = faseRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.faseOperarioRepository = faseOperarioRepository;
+    }
+
+    // lista las fases, ya sea todas (para el gerente) o las que tienen operarios habilitados (para el jefe)
+    public List<FaseCatalogo> listarFases(boolean soloConOperarios) {
+        return soloConOperarios
+                ? faseOperarioRepository.findFasesActivasConOperarios()
+                : faseRepository.findAll();
+    }
+
+    @Transactional
+    public FaseCatalogo crearFase(CrearFaseRequestDTO dto, String emailGerente) {
+        Usuario gerente = usuarioRepository.findByEmail(emailGerente)
+                .orElseThrow(() -> new EntityNotFoundException("Gerente autenticado no encontrado"));
+
+        FaseCatalogo fase = faseRepository.save(FaseCatalogo.builder()
+                .codigo(dto.getCodigo())
+                .nombre(dto.getNombre())
+                .descripcion(dto.getDescripcion())
+                .build());
+
+        for (Long operarioId : dto.getOperariosIds()) {
+            Usuario operario = usuarioRepository.findById(operarioId)
+                    .orElseThrow(() -> new EntityNotFoundException("Operario no encontrado con ID: " + operarioId));
+            if (operario.getRol() != NivelRol.OPERARIO) {
+                throw new IllegalArgumentException("El usuario con ID " + operarioId + " no es un operario");
+            }
+            faseOperarioRepository.save(FaseOperarioHabilitado.builder()
+                    .faseCatalogo(fase)
+                    .operario(operario)
+                    .habilitado(true)
+                    .asignadoPor(gerente)
+                    .createdAt(java.time.OffsetDateTime.now())
+                    .build());
+        }
+        return fase;
+    }
+
+    // Actualizar campos de una fase existente
+    public FaseCatalogo actualizarFase(Long id, FaseCatalogo detallesFase) {
+        FaseCatalogo fase = faseRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Fase no encontrada con ID: " + id));
+
+        // Se actualizan los campos que lleguen no nulos en detallesFase
+        if (detallesFase.getNombre() != null) {
+            fase.setNombre(detallesFase.getNombre());
+        }
+        if (detallesFase.getCodigo() != null) {
+            fase.setCodigo(detallesFase.getCodigo());
+        }
+        if (detallesFase.getDescripcion() != null) {
+            fase.setDescripcion(detallesFase.getDescripcion());
+        }
+        if (detallesFase.getActivo() != null) {
+            fase.setActivo(detallesFase.getActivo());
+        }
+
+        return faseRepository.save(fase);
+    }
+
+    /**
+     * POST /api/fases/{id}/habilitar
+     * Habilita o deshabilita operarios sobre una fase específica
+     */
+    @Transactional
+    public FaseOperarioHabilitadoResponseDTO gestionarHabilitacionOperario(Long faseId, Long operarioId,
+            Boolean habilitar, String emailGerenteAutenticado) {
+        // Validar fase
+        FaseCatalogo fase = faseRepository.findById(faseId)
+                .orElseThrow(() -> new EntityNotFoundException("Fase no encontrada con ID: " + faseId));
+
+        // Validar usuario y su rol
+        Usuario usuario = usuarioRepository.findById(operarioId)
+                .orElseThrow(() -> new EntityNotFoundException("Operario no encontrado con ID: " + operarioId));
+        if (usuario.getRol() != NivelRol.OPERARIO) {
+            throw new AccessDeniedException("El usuario no es un operario");
+        }
+
+        // Obtener id del gerente que hace la solicitud
+        Usuario gerente = usuarioRepository.findByEmail(emailGerenteAutenticado)
+                .orElseThrow(
+                        () -> new IllegalArgumentException("Gerente autenticado no encontrado en la base de datos"));
+
+        // 4. Buscar si la relación ya existe
+        java.util.Optional<FaseOperarioHabilitado> existente = faseOperarioRepository
+                .findByFaseCatalogoIdAndOperarioId(faseId, operarioId);
+
+        // Generar o actualizar relacion
+        FaseOperarioHabilitado relacion;
+        if (existente.isPresent()) {
+            relacion = existente.get();
+            relacion.setHabilitado(habilitar);
+            relacion.setAsignadoPor(gerente);
+        } else {
+            // Si no existe, creamos el nuevo registro
+            relacion = FaseOperarioHabilitado.builder()
+                    .faseCatalogo(fase)
+                    .operario(usuario)
+                    .habilitado(habilitar)
+                    .asignadoPor(gerente)
+                    .createdAt(java.time.OffsetDateTime.now())
+                    .build();
+        }
+
+        FaseOperarioHabilitado saved = faseOperarioRepository.save(relacion);
+
+        return convertirADTO(saved);
+    }
+
+    // GET /api/fases/{id}/operarios
+    @Transactional(readOnly = true)
+    public List<OperarioDTO> listarOperariosHabilitados(Long faseId) {
+        List<Usuario> operarios = faseOperarioRepository.findOperariosHabilitadosByFaseId(faseId);
+        return operarios.stream()
+                .map(this::convertirAUsuarioDTO)
+                .toList();
+    }
+
+    private OperarioDTO convertirAUsuarioDTO(Usuario operario) {
+        return OperarioDTO.builder()
+                .id(operario.getId())
+                .nombre(operario.getNombre())
+                .email(operario.getEmail())
+                .tipoTarea(operario.getTipoTarea())
+                .activo(operario.getActivo())
+                .build();
+    }
+
+    private FaseOperarioHabilitadoResponseDTO convertirADTO(FaseOperarioHabilitado faseOperacion) {
+        FaseOperarioHabilitadoResponseDTO dto = new FaseOperarioHabilitadoResponseDTO();
+        dto.setId(faseOperacion.getId());
+        dto.setFaseCatalogoId(faseOperacion.getFaseCatalogo().getId());
+        dto.setOperarioId(faseOperacion.getOperario().getId());
+        dto.setHabilitado(faseOperacion.getHabilitado());
+        dto.setAsignadoPorId(faseOperacion.getAsignadoPor().getId());
+        dto.setNombreOperario(faseOperacion.getOperario().getNombre());
+        dto.setCreatedAt(faseOperacion.getCreatedAt());
+        return dto;
+    }
+}

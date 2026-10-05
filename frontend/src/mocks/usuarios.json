@@ -1,0 +1,68 @@
+[
+  {
+    "id": 1,
+    "nombre": "Gonzalo Gerente",
+    "email": "gerente@qualitytrack.com",
+    "rol": "GERENTE",
+    "tipo_tarea": null,
+    "telefono": "+54 351 555-0101",
+    "activo": true,
+    "created_at": "2026-09-01T10:00:00Z",
+    "updated_at": "2026-09-01T10:00:00Z"
+  },
+  {
+    "id": 2,
+    "nombre": "Martín Jefe",
+    "email": "jefe@qualitytrack.com",
+    "rol": "JEFE_PRODUCCION",
+    "tipo_tarea": null,
+    "telefono": "+54 351 555-0102",
+    "activo": true,
+    "created_at": "2026-09-01T10:00:00Z",
+    "updated_at": "2026-09-01T10:00:00Z"
+  },
+  {
+    "id": 3,
+    "nombre": "Carlos Vendedor",
+    "email": "vendedor@qualitytrack.com",
+    "rol": "VENDEDOR",
+    "tipo_tarea": null,
+    "telefono": "+54 351 555-0103",
+    "activo": true,
+    "created_at": "2026-09-01T10:00:00Z",
+    "updated_at": "2026-09-01T10:00:00Z"
+  },
+  {
+    "id": 4,
+    "nombre": "Valeria Calidad",
+    "email": "calidad@qualitytrack.com",
+    "rol": "CALIDAD",
+    "tipo_tarea": null,
+    "telefono": "+54 351 555-0104",
+    "activo": true,
+    "created_at": "2026-09-01T10:00:00Z",
+    "updated_at": "2026-09-01T10:00:00Z"
+  },
+  {
+    "id": 5,
+    "nombre": "Lucas Operario",
+    "email": "lucas@qualitytrack.com",
+    "rol": "OPERARIO",
+    "tipo_tarea": "Corte y plegado",
+    "telefono": "+54 351 555-0105",
+    "activo": true,
+    "created_at": "2026-09-01T10:00:00Z",
+    "updated_at": "2026-09-01T10:00:00Z"
+  },
+  {
+    "id": 6,
+    "nombre": "Jorge Operario",
+    "email": "jorge@qualitytrack.com",
+    "rol": "OPERARIO",
+    "tipo_tarea": "Soldador",
+    "telefono": "+54 351 555-0106",
+    "activo": true,
+    "created_at": "2026-09-01T10:00:00Z",
+    "updated_at": "2026-09-01T10:00:00Z"
+  }
+]

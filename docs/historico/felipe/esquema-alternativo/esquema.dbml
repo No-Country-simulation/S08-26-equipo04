@@ -1,0 +1,191 @@
+// Use DBML to define your database structure
+// Docs: https://dbml.dbdiagram.io/docs
+
+Project project_name {
+  database_type: 'PostgreSQL'
+  Note: 'Description for QualityTrack database'
+}
+
+enum rol_usuario {
+  VENDEDOR
+  JEFE_PRODUCCION
+  OPERARIO
+  CALIDAD
+  GERENTE
+}
+
+Table cliente {
+  id bigserial [pk, note: "ejemplo de nota"]
+  nombre varchar(150) [not null]
+  email varchar(150) [not null]
+  telefono varchar(50) [not null]
+  direccion varchar(255) [not null]
+}
+
+Table usuario {
+  id bigserial [pk]
+  nombre varchar(150) [not null]
+  email varchar(150) [unique]
+  password varchar(255) [not null]
+  rol rol_usuario [not null]
+  activo boolean [not null, default: `true`]
+}
+
+enum estado_solicitud {
+  CREADA
+  COTIZACION_ENVIADA
+  ACEPTADA
+  RECHAZADA
+}
+
+// Cliente-Solicitud (1:N)
+Ref fk_cliente_solicitud: solicitud.cliente_id > cliente.id
+
+Table solicitud {
+  id bigserial [pk]
+  cliente_id bigint [not null] //fk
+  descripcion text [not null]
+  plano_url varchar(500) [null]
+  fecha_esperada timestamp [null]
+  estado estado_solicitud [not null]
+  fecha_creacion timestamp [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+// Solicitud-Documento (1:N)
+Ref fk_solicitud_documento: documento.solicitud_id ?> solicitud.id
+
+Table documento {
+  id bigserial [pk]
+  solicitud_id bigint [not null] //fk
+  ot_id bigint [null] //fk
+  tipo varchar(100) [not null]
+  nombre varchar(255) [not null]
+  archivo_url varchar(500) [not null]
+  fecha_carga timestamp [not null, default: `CURRENT_TIMESTAMP`]
+}
+
+enum estado_cotizacion {
+  GENERADA
+  ENVIADA
+  ACEPTADA
+  RECHAZADA
+}
+
+// Solicitud-Cotización (1:1)
+Ref fk_solicitud_cotizacion: solicitud.id - cotizacion.solicitud_id
+
+Table cotizacion {
+  id bigserial [pk]
+  solicitud_id bigint [unique, not null] //fk
+  precio_total numeric(12,2) [null] //fk
+  estado estado_cotizacion [not null]
+  fecha_creacion timestamp [not null, default: `CURRENT_TIMESTAMP`]
+  fecha_respuesta timestamp [null]
+}
+
+Ref fk_cotizacion_cotizacion_fase: cotizacion.id <? cotizacion_fase.cotizacion_id
+Ref fk_cotizacion_fase_fase: fase.id <? cotizacion_fase.fase_id
+Table cotizacion_fase {
+  id bigserial [PK]
+  cotizacion_id bigint [not null] // fk
+  fase_id bigint [not null] // fk
+  operario_id bigint [not null] // fk
+  orden_secuencia integer [not null]
+  tiempo_estimado integer [null]
+}
+
+// Cotizacion-OT (1:1)
+Ref fk_cotizacion_ot: cotizacion.id -? orden_trabajo.cotizacion_id
+
+enum estado_ot {
+  CREADA
+  EN_PROGRESO
+  EN_CALIDAD
+  DESPACHO
+  ENTREGADA
+  COMPLETADA
+  CANCELADA
+}
+
+Table orden_trabajo {
+  id bigserial [PK]
+  numero_ot varchar(50) [unique, not null]
+  cotizacion_id bigint [unique, not null] // fk
+  estado estado_ot [not null]
+  fecha_creacion timestamp [not null]
+  fecha_vencimiento timestamp [null]
+  fecha_despacho timestamp [null]
+  fecha_entrega timestamp [null]
+  receptor_entrega varchar(150) [null]
+}
+
+enum estado_ot_fase {
+  PENDIENTE
+  EJECUCION
+  TERMINADO
+}
+
+Ref fk_ot_ot_fase: orden_trabajo.id <? ot_fase.ot_id
+
+Table ot_fase {
+  id bigserial [PK]
+  ot_id bigint [not null] // fk
+  fase_id bigint [not null] // fk
+  operario_id bigint [not null] // fk
+  estado estado_ot_fase [not null]
+  orden_secuencia integer [not null]
+  tiempo_estimado integer [null]
+  fecha_inicio timestamp [null]
+  fecha_fin timestamp [null]
+  notas_jefe text [null]
+  notas_calidad text [null]
+}
+
+Ref fk_ot_fase_fase: fase.id <? ot_fase.fase_id
+
+Table fase {
+  id bigserial [pk]
+  nombre varchar(100) [not null]
+  descripcion varchar(255) [null]
+  tiempo_estandar integer [null]
+  activo boolean [not null]
+}
+
+Ref fk_ot_fase_operarios: usuario.id <? ot_fase.operario_id
+
+enum resultado_calidad {
+  EN_ESPERA
+  CONFORME
+  NO_CONFORME
+}
+
+Ref fk_ot_calidad_checklist: orden_trabajo.id <? calidad_checklist.ot_id
+
+Table calidad_checklist {
+  id bigserial [pk]
+  ot_id BIGINT [not null] // fk
+  dimensional boolean [not null]
+  fases_completas boolean [not null]
+  acabado boolean [not null]
+  cantidad boolean [not null]
+  identificacion boolean [not null]
+  prueba_funcional boolean [not null]
+  documentacion boolean [not null]
+  resultado resultado_calidad [not null]
+  observaciones text [null, note:"obligatorio si estado=NO_CONFORME"]
+  fecha_auditoria timestamp [not null]
+}
+
+Records cliente(id, nombre) {
+  1, 'Alice'
+  2, 'Bob'
+  3, 'Candice'
+  4, 'David'
+}
+
+Records solicitud(id, cliente_id, descripcion, estado) {
+  1, 1, 'Pedido de Alice', 'ACEPTADA'
+  2, 2, 'Pedido de Bob', 'ACEPTADA'
+  3, 3, 'Pedido de Candice', 'ACEPTADA'
+  4, 4, 'Pedido de David', 'ACEPTADA'
+}

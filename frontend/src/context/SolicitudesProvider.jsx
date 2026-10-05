@@ -1,0 +1,164 @@
+import { useCallback, useEffect, useState } from 'react';
+import { apiGet, apiPost, extractApiMessage, subirAdjunto } from '../api';
+import { useAuth } from './AuthContext';
+import { SolicitudesContext } from './SolicitudesContext';
+
+// El DTO de lista del backend no trae razon social del cliente ni
+// vendedor (solo cliente_id / razon_social cruda). Se enriquece en
+// cliente para no romper las vistas hasta que el backend lo incluya.
+const mapItem = (item, listaClientes = []) => ({
+  ...item,
+  cliente_razon_social:
+    item.cliente_razon_social ??
+    item.razon_social ??
+    listaClientes.find((c) => c.id === item.cliente_id)?.razon_social ??
+    null,
+});
+
+const extractMessage = (error, fallback) => {
+  const mensaje = extractApiMessage(error, '');
+  return mensaje ||
+    (error?.code === 'ECONNABORTED'
+      ? 'El servidor tarda en responder (Render en frio). Reintenta.'
+      : fallback);
+};
+
+// Los adjuntos van en un request aparte (POST /api/documentos) porque el
+// backend guarda el archivo en la base. Un archivo que falla no tira la
+// solicitud: se devuelve el detalle para avisarle al vendedor (DoD #206).
+const subirAdjuntos = async (solicitudId, archivos) => {
+  const resultados = await Promise.allSettled(
+    archivos.map(({ archivo, tipoArchivo }) =>
+      subirAdjunto({ solicitudId, archivo, tipoArchivo }),
+    ),
+  );
+  return resultados.reduce((fallidos, resultado, index) => {
+    if (resultado.status === 'fulfilled') return fallidos;
+    return [
+      ...fallidos,
+      {
+        nombre: archivos[index].archivo.name,
+        mensaje: extractMessage(resultado.reason, 'No se pudo subir el archivo.'),
+      },
+    ];
+  }, []);
+};
+
+export const SolicitudesProvider = ({ children }) => {
+  const { isAuthenticated, user } = useAuth();
+  // El GET /api/solicitudes solo permite VENDEDOR y JEFE_PRODUCCION: no
+  // pedirlo con otros roles para no disparar 403 (toast de permisos).
+  const puedeConsultar = user?.rol === 'VENDEDOR' || user?.rol === 'JEFE_PRODUCCION';
+  const [solicitudes, setSolicitudes] = useState([]);
+  const [clientes, setClientes] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(null);
+  const [version, setVersion] = useState(0);
+
+  // Todos los setState ocurren en callbacks de la promesa (nunca en el
+  // cuerpo del efecto) para cumplir react-hooks/set-state-in-effect.
+  useEffect(() => {
+    let cancelado = false;
+    const promesa = isAuthenticated && puedeConsultar
+      ? Promise.all([
+        apiGet('/api/solicitudes'),
+        // Sin fallback a mock: si clientes falla se muestra el error.
+        apiGet('/api/clientes'),
+      ])
+      : Promise.resolve(null);
+    promesa.then(
+      (resultado) => {
+        if (cancelado) return;
+        if (!resultado) {
+          setSolicitudes([]);
+        } else {
+          const [{ data: lista }, { data: listaClientes }] = resultado;
+          const listaNormalizada = Array.isArray(listaClientes)
+            ? listaClientes
+            : undefined;
+          setSolicitudes(
+            (lista ?? []).map((item) => mapItem(item, listaNormalizada)),
+          );
+          if (Array.isArray(listaClientes)) setClientes(listaClientes);
+        }
+        setError(null);
+        setCargando(false);
+      },
+      (err) => {
+        if (cancelado) return;
+        setError(extractMessage(err, 'No se pudieron cargar las solicitudes.'));
+        setCargando(false);
+      },
+    );
+    return () => {
+      cancelado = true;
+    };
+  }, [isAuthenticated, puedeConsultar, version]);
+
+  const recargar = useCallback(() => {
+    setCargando(true);
+    setError(null);
+    setVersion((v) => v + 1);
+  }, []);
+
+  const agregarSolicitud = async ({ solicitud, archivos = [] }) => {
+    const base = {
+      descripcion_pieza: solicitud.descripcion_pieza,
+      cantidad: Number(solicitud.cantidad),
+      fecha_esperada_entrega: solicitud.fecha_esperada_entrega || null,
+      notas_comerciales: solicitud.notas_comerciales || '',
+    };
+    const payload = solicitud.cliente_nuevo
+      ? { ...base, ...solicitud.cliente_nuevo }
+      : { ...base, cliente_id: solicitud.cliente_id };
+
+    try {
+      const { data } = await apiPost('/api/solicitudes', payload);
+      // La respuesta ya trae las fechas reales (created_at/fecha_creacion):
+      // se usan en vez de fabricarlas en cliente.
+      const ahora = new Date().toISOString();
+      const nueva = mapItem({
+        ...solicitud,
+        id: data.id,
+        numero_solicitud: data.numero_solicitud,
+        estado: data.estado,
+        created_at:
+          data.created_at ?? data.createdAt ?? data.fecha_creacion ?? ahora,
+        updated_at:
+          data.updated_at ??
+          data.updatedAt ??
+          data.fecha_actualizacion ??
+          ahora,
+      });
+      delete nueva.cliente_nuevo;
+      setSolicitudes((prev) => [...prev, nueva]);
+
+      const adjuntosFallidos = await subirAdjuntos(data.id, archivos);
+      return { solicitud: nueva, adjuntosFallidos };
+    } catch (err) {
+      throw new Error(
+        extractMessage(err, 'No se pudo crear la solicitud.'),
+        { cause: err },
+      );
+    }
+  };
+
+  const obtenerSolicitud = (id) =>
+    solicitudes.find((item) => item.id === Number(id)) ?? null;
+
+  return (
+    <SolicitudesContext.Provider
+      value={{
+        solicitudes,
+        clientes,
+        cargando,
+        error,
+        recargar,
+        agregarSolicitud,
+        obtenerSolicitud,
+      }}
+    >
+      {children}
+    </SolicitudesContext.Provider>
+  );
+};
